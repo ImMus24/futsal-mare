@@ -143,12 +143,10 @@
             </table>
         </div>
         
-        <!-- Pagination Links -->
-        @if($reservasis->hasPages())
-            <div class="p-6 border-t border-slate-800 bg-[#0F172A]/20 data-dark-pagination">
-                {{ $reservasis->links() }}
-            </div>
-        @endif
+        <!-- INFO DATA FOOTER (Pengganti Pagination Karena Data Dibatasi Oleh Method take() ) -->
+        <div class="p-4 border-t border-slate-800 bg-[#0F172A]/20 text-[10px] text-slate-500 font-bold uppercase tracking-wider text-center">
+            Menampilkan 10 Transaksi Log Masuk Terbaru
+        </div>
     </div>
 </div>
 @endsection
