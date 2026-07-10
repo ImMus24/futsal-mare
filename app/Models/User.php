@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasOne; // Tambahkan import ini untuk tipe data relasi
 
 class User extends Authenticatable
 {
@@ -45,5 +46,14 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * 🏆 Relasi One-to-One ke Model Membership
+     * Menghubungkan user dengan tingkatan tier loyalitas mereka.
+     */
+    public function membership(): HasOne
+    {
+        return $this->hasOne(Membership::class);
     }
 }
