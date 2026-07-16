@@ -8,6 +8,7 @@
 </head>
 <body class="bg-[#0B131F] font-sans antialiased text-slate-200 scroll-smooth">
 
+    <!-- NAVIGATION BAR -->
     <nav class="bg-[#0F172A]/80 backdrop-blur-md shadow-lg sticky top-0 z-50 border-b border-slate-800 transition-all duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-20 items-center">
@@ -22,6 +23,11 @@
                 </a>
 
                 <div class="flex items-center space-x-6">
+                    <!-- 🛡️ PORTAL LOGIN ADMIN (MODERN & PROFESIONAL) -->
+                    <a href="{{ route('admin.login') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl text-[10px] font-black uppercase tracking-wider text-slate-400 hover:text-white transition duration-200 shadow-sm">
+                        🛡️ Portal Admin
+                    </a>
+
                     @if (Route::has('login'))
                         @auth
                             <a href="{{ route('dashboard') }}" class="text-xs font-black uppercase tracking-wider text-slate-300 hover:text-[#E25E20] transition duration-200">
@@ -47,6 +53,7 @@
         </div>
     </nav>
 
+    <!-- HERO SECTION -->
     <header class="relative bg-gradient-to-br from-[#0B131F] via-[#111C2C] to-[#080D16] text-white overflow-hidden py-24 lg:py-32 border-b border-slate-900">
         <div class="absolute inset-0 pointer-events-none opacity-[0.03] bg-[radial-gradient(#ffffff_1px,transparent_1px)] bg-[size:24px_24px]"></div>
         <div class="absolute -top-40 -right-40 w-96 h-96 bg-[#E25E20] rounded-full filter blur-[150px] opacity-15 pointer-events-none"></div>
@@ -88,6 +95,7 @@
         </div>
     </header>
 
+    <!-- METRICS/HIGHLIGHTS SECTION -->
     <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 relative z-10">
         <div class="bg-[#111C2C]/90 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-800 p-6 sm:p-8 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center divide-y sm:divide-y-0 sm:divide-x divide-slate-800">
             <div class="py-3 sm:py-0">
@@ -105,6 +113,7 @@
         </div>
     </section>
 
+    <!-- ARENA CATALOG SECTION -->
     <section class="bg-[#0E1726] border-t border-b border-slate-900 mt-20">
         <main id="daftar-lapangan" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
             
@@ -167,6 +176,7 @@
         </main>
     </section>
 
+    <!-- FOOTER SECTION -->
     <footer class="bg-[#070C14] text-slate-500 pt-16 pb-12 border-t-4 border-[#E25E20]">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col items-center justify-center text-center">

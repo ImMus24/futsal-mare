@@ -11,7 +11,53 @@ use Illuminate\Http\Request;
 class AdminDashboardController extends Controller
 {
     /**
-     * Modul 1: Menampilkan halaman utama Dashboard Admin Futsal Mare (Overview).
+     * ==========================================
+     * 🛡️ MODUL KHUSUS: AUTENTIKASI PORTAL ADMIN
+     * ==========================================
+     */
+
+    /**
+     * Menampilkan Form Login Khusus Portal Admin
+     */
+    public function showLoginForm()
+    {
+        // Jika sudah login dan memiliki status admin, langsung bypass ke dashboard
+        if (auth()->check() && auth()->user()->is_admin) { 
+            return redirect()->route('admin.dashboard');
+        }
+        return view('admin.auth.login');
+    }
+
+    /**
+     * Memproses Autentikasi Login Masuk Admin
+     */
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'email'    => 'required|email',
+            'password' => 'required|string',
+        ]);
+
+        // Mencoba mencocokkan kredensial dengan database
+        if (auth()->attempt($credentials, $request->remember)) {
+            // Validasi hak akses flag admin di tabel user
+            if (auth()->user()->is_admin) {
+                $request->session()->regenerate();
+                return redirect()->route('admin.dashboard')->with('success', 'Selamat Datang Kembali di Panel Kontrol Utama!');
+            }
+
+            // Jika berhasil masuk tapi bukan admin, paksa keluar sesi demi keamanan
+            auth()->logout();
+            return redirect()->back()->withErrors(['email' => 'Akses Ditolak. Akun Anda tidak memiliki otoritas Administrator.'])->withInput();
+        }
+
+        return redirect()->back()->withErrors(['email' => 'Kredensial atau kata sandi yang Anda masukkan salah.'])->withInput();
+    }
+
+    /**
+     * ==========================================
+     * 📊 MODUL 1: DASHBOARD OVERVIEW ADMIN
+     * ==========================================
      */
     public function index()
     {
@@ -34,28 +80,27 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * Modul 2: Log Data Reservasi Lengkap (Terhubung dengan Filter Status)
+     * ==========================================
+     * 📅 MODUL 2: LOG & PENGELOLAAN RESERVASI
+     * ==========================================
      */
     public function reservasi(Request $request)
     {
         $status = $request->get('status');
         
-        // Membuka query dasar dengan eager loading relasi lapangan dan user
         $query = Reservasi::with(['lapangan', 'user']);
 
-        // Jika ada filter status yang dipilih
         if ($status && $status != '') {
             $query->where('status', $status);
         }
 
-        // Ambil data terbaru dengan pembatasan 15 baris per halaman
         $reservasis = $query->latest()->paginate(15);
 
         return view('admin.reservasi.index', compact('reservasis'));
     }
 
     /**
-     * Modul 2b: Fitur Ekspor Excel Data Reservasi Dinamis
+     * Fitur Ekspor Excel Data Reservasi Dinamis
      */
     public function exportExcel(Request $request)
     {
@@ -63,14 +108,12 @@ class AdminDashboardController extends Controller
         
         $query = Reservasi::with(['lapangan', 'user']);
 
-        // Menyesuaikan data ekspor dengan filter status yang sedang aktif di halaman admin
         if ($status && $status != '') {
             $query->where('status', $status);
         }
 
         $reservasis = $query->latest()->get();
 
-        // Mengatur header agar browser mendownload file sebagai Excel .xls asli
         $filename = "Laporan_Reservasi_Futsal_Mare_" . date('Ymd_His') . ".xls";
         
         header("Content-Type: application/vnd.ms-excel; charset=utf-8");
@@ -81,32 +124,38 @@ class AdminDashboardController extends Controller
         return view('admin.reservasi.excel', compact('reservasis'));
     }
 
-    public function updateStatus(Request $request, $id)
-{
-    $request->validate([
-        'status' => 'required|in:Confirmed,Waiting Payment,Completed,Cancelled'
-    ]);
-
-    $reservasi = Reservasi::findOrFail($id);
-    $reservasi->update([
-        'status' => $request->status
-    ]);
-
-    return redirect()->back()->with('success', "Status nota transaksi {$reservasi->nomor_reservasi} berhasil diperbarui!");
-}
-
-/**
- * Fitur Aksi 2: Menghapus Data Reservasi dari Log Sistem
- */
-public function deleteReservasi($id)
-{
-    $reservasi = Reservasi::findOrFail($id);
-    $reservasi->delete();
-
-    return redirect()->back()->with('success', "Record data log reservasi berhasil dihapus dari sistem.");
-}
     /**
-     * Modul 3: Kelola Arena Lapangan (Mengambil Seluruh Inventaris Lapangan)
+     * Mengubah Status Reservasi secara Manual
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:Confirmed,Waiting Payment,Completed,Cancelled'
+        ]);
+
+        $reservasi = Reservasi::findOrFail($id);
+        $reservasi->update([
+            'status' => $request->status
+        ]);
+
+        return redirect()->back()->with('success', "Status nota transaksi {$reservasi->nomor_reservasi} berhasil diperbarui!");
+    }
+
+    /**
+     * Menghapus Data Reservasi dari Log Sistem
+     */
+    public function deleteReservasi($id)
+    {
+        $reservasi = Reservasi::findOrFail($id);
+        $reservasi->delete();
+
+        return redirect()->back()->with('success', "Record data log reservasi berhasil dihapus dari sistem.");
+    }
+
+    /**
+     * ==========================================
+     * 🌱 MODUL 3: KELOLA ARENA LAPANGAN
+     * ==========================================
      */
     public function lapangan()
     {
@@ -115,59 +164,60 @@ public function deleteReservasi($id)
     }
 
     /**
-     * Modul 4: Database & Tingkat Loyalitas Member Futsal Mare
+     * ==========================================
+     * 👥 MODUL 4: LOYALITAS & DATA MEMBER
+     * ==========================================
      */
     public function member(Request $request)
-{
-    // Mengambil user terdaftar beserta poin yang di-join dari relasi memberships
-    $members = User::with('membership')
-        ->leftJoin('memberships', 'users.id', '=', 'memberships.user_id')
-        ->select('users.*', 'memberships.points as total_points')
-        ->orderBy('total_points', 'desc')
-        ->paginate(10);
+    {
+        $members = User::with('membership')
+            ->leftJoin('memberships', 'users.id', '=', 'memberships.user_id')
+            ->select('users.*', 'memberships.points as total_points')
+            ->orderBy('total_points', 'desc')
+            ->paginate(10);
 
-    return view('admin.member.index', compact('members'));
-}
-
-/**
- * Form Edit Member / Poin
- */
-public function editMember($id)
-{
-    $member = User::with('membership')->findOrFail($id);
-    return view('admin.member.edit', compact('member'));
-}
-
-/**
- * Eksekusi Update Data & Poin Member
- */
-public function updateMember(Request $request, $id)
-{
-    $request->validate([
-        'name'   => 'required|string|max:255',
-        'points' => 'required|integer|min:0',
-    ]);
-
-    $member = User::findOrFail($id);
-    $member->update([
-        'name' => $request->name,
-    ]);
-
-    // Update atau buat data poin baru di tabel memberships secara otomatis
-    $tierEvaluasi = 'Bronze';
-    if ($request->points >= 300) {
-        $tierEvaluasi = 'Gold';
-    } elseif ($request->points >= 100) {
-        $tierEvaluasi = 'Silver';
+        return view('admin.member.index', compact('members'));
     }
 
-    $member->membership()->updateOrCreate(
-        ['user_id' => $member->id],
-        [
-            'points' => $request->points,
-            'membership_type' => $tierEvaluasi
-        ]
-    );
+    /**
+     * Form Edit Member / Poin
+     */
+    public function editMember($id)
+    {
+        $member = User::with('membership')->findOrFail($id);
+        return view('admin.member.edit', compact('member'));
+    }
 
-    return redirect()->route('admin.member.index')->with('success', "Data poin loyalitas member {$member->name} berhasil diperbarui!");
-}}
+    /**
+     * Eksekusi Update Data & Poin Member
+     */
+    public function updateMember(Request $request, $id)
+    {
+        $request->validate([
+            'name'   => 'required|string|max:255',
+            'points' => 'required|integer|min:0',
+        ]);
+
+        $member = User::findOrFail($id);
+        $member->update([
+            'name' => $request->name,
+        ]);
+
+        $tierEvaluasi = 'Bronze';
+        if ($request->points >= 300) {
+            $tierEvaluasi = 'Gold';
+        } elseif ($request->points >= 100) {
+            $tierEvaluasi = 'Silver';
+        }
+
+        $member->membership()->updateOrCreate(
+            ['user_id' => $member->id],
+            [
+                'points' => $request->points,
+                'membership_type' => $tierEvaluasi
+            ]
+        );
+
+        return redirect()->route('admin.member.index')->with('success', "Data poin loyalitas member {$member->name} berhasil diperbarui!");
+    }
+}
