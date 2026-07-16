@@ -16,6 +16,14 @@ Route::get('/', [ReservasiController::class, 'landingPage'])->name('landingPage'
 
 
 // ==========================================
+// 🛡️ 1b. PORTAL AUTHENTICATION ADMIN GATEWAY
+// ==========================================
+// Diletakkan secara publik agar halaman login admin bisa diakses sebelum masuk dashboard
+Route::get('/admin/login', [AdminDashboardController::class, 'showLoginForm'])->name('admin.login');
+Route::post('/admin/login', [AdminDashboardController::class, 'login'])->name('admin.login.submit');
+
+
+// ==========================================
 // 2. GOOGLE OAUTH ROUTES (Proses Autentikasi)
 // ==========================================
 Route::get('auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google');
@@ -67,12 +75,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // 📝 Amankan Urutan: Taruh rute statis excel di atas agar tidak termakan parameter dinamis resource
     Route::get('/reservasi/export-excel', [AdminDashboardController::class, 'exportExcel'])->name('reservasi.exportExcel');
     Route::get('/reservasi', [AdminDashboardController::class, 'reservasi'])->name('reservasi.index');
-Route::patch('/reservasi/{id}/update-status', [AdminDashboardController::class, 'updateStatus'])->name('reservasi.updateStatus');
-Route::delete('/reservasi/{id}/delete', [AdminDashboardController::class, 'deleteReservasi'])->name('reservasi.delete');
-// Tempatkan ini di dalam grup admin pada routes/web.php
-Route::get('/member/{id}/edit', [AdminDashboardController::class, 'editMember'])->name('member.edit');
-Route::put('/member/{id}/update', [AdminDashboardController::class, 'updateMember'])->name('member.update');
-Route::delete('/member/{id}/delete', [AdminDashboardController::class, 'deleteMember'])->name('member.delete');
+    Route::patch('/reservasi/{id}/update-status', [AdminDashboardController::class, 'updateStatus'])->name('reservasi.updateStatus');
+    Route::delete('/reservasi/{id}/delete', [AdminDashboardController::class, 'deleteReservasi'])->name('reservasi.delete');
+    
+    // 👥 Modul 2b: Manajemen Aksi Modifikasi & Poin Member
+    Route::get('/member/{id}/edit', [AdminDashboardController::class, 'editMember'])->name('member.edit');
+    Route::put('/member/{id}/update', [AdminDashboardController::class, 'updateMember'])->name('member.update');
+    Route::delete('/member/{id}/delete', [AdminDashboardController::class, 'deleteMember'])->name('member.delete');
+    
     // 🏟️ Modul 3: Kelola Lapangan / Arena Inventaris
     Route::resource('kelola-lapangan', LapanganController::class)->names([
         'index'   => 'lapangan.index',

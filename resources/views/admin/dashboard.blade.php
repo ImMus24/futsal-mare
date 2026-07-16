@@ -1,66 +1,135 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="space-y-8">
+<div class="space-y-8 animate-fade-in">
     
-    <!-- 0. TOP NAVIGATION & GLOBAL BACK BUTTON -->
-    <div class="flex items-center justify-between">
-        <a href="/" class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#152238] hover:bg-slate-800 border border-slate-800 rounded-xl text-xs font-black text-slate-300 transition group tracking-wide uppercase">
-            <span class="transform group-hover:-translate-x-1 transition duration-200">⬅️</span> Kembali ke Beranda Utama
-        </a>
-        <div class="text-[10px] font-mono font-bold text-slate-600 tracking-wider uppercase">Sistem Kontrol Panel Admin</div>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800/60 pb-5">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#E25E20] to-orange-500 flex items-center justify-center text-white shadow-lg shadow-orange-950/40 font-black text-lg">
+                M
+            </div>
+            <div>
+                <h2 class="text-sm font-black text-white uppercase tracking-wider leading-tight">Futsal Mare HQ</h2>
+                <div class="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mt-0.5">Workspace Pemrograman Web</div>
+            </div>
+        </div>
+        
+        <div class="flex items-center justify-between sm:justify-end gap-4">
+            <a href="/" class="inline-flex items-center gap-2 px-4 py-2 bg-[#152238] hover:bg-slate-800 border border-slate-800 rounded-xl text-xs font-black text-slate-300 transition duration-200 tracking-wide uppercase">
+                <span>⬅️</span> Beranda Utama
+            </a>
+            <form method="POST" action="{{ route('logout') }}" class="inline">
+                @csrf
+                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-red-950/30 hover:bg-red-900/40 border border-red-900/30 text-red-400 text-xs font-black rounded-xl uppercase tracking-wider transition duration-200 shadow-sm">
+                    <span>🚪</span> Keluar Sesi
+                </button>
+            </form>
+        </div>
     </div>
 
-    <!-- 1. WELCOME HEADER PANEL -->
-    <div class="bg-[#152238] p-6 rounded-3xl border border-slate-800 shadow-2xl flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-            <h1 class="text-2xl font-black text-white tracking-tight uppercase">Sistem Overview Arena</h1>
-            <p class="text-slate-400 text-xs font-semibold mt-1">Data terkini operasional inventaris arena dan status gerbang pembayaran Midtrans.</p>
-        </div>
-        <div class="flex flex-wrap gap-2">
-            <a href="{{ route('admin.reservasi.index') }}" class="px-4 py-2.5 bg-[#0B131F] border border-slate-800 hover:border-slate-700 text-slate-300 font-black text-[10px] rounded-xl uppercase tracking-wider transition">Log Reservasi</a>
-            <a href="{{ route('admin.lapangan.index') }}" class="px-4 py-2.5 bg-[#0B131F] border border-slate-800 hover:border-slate-700 text-slate-300 font-black text-[10px] rounded-xl uppercase tracking-wider transition">Kelola Arena</a>
-            <a href="{{ route('admin.member.index') }}" class="px-4 py-2.5 bg-[#0B131F] border border-slate-800 hover:border-slate-700 text-slate-300 font-black text-[10px] rounded-xl uppercase tracking-wider transition">Data Member</a>
+    <div class="relative bg-gradient-to-r from-[#152238] via-[#1a2d4b] to-[#0B131F] p-6 sm:p-8 rounded-3xl border border-slate-800/80 shadow-2xl overflow-hidden group">
+        <div class="absolute -right-16 -top-16 w-48 h-48 bg-[#E25E20] rounded-full filter blur-[100px] opacity-10 group-hover:opacity-15 transition duration-500"></div>
+        
+        <div class="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div class="space-y-1.5">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[9px] font-black bg-[#0B131F]/60 text-[#E25E20] tracking-widest uppercase border border-slate-800">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#E25E20] animate-pulse"></span> Konsol Kontrol Pusat
+                </span>
+                <h1 class="text-2xl font-black text-white tracking-tight uppercase sm:text-3xl">Ringkasan Eksekutif Arena</h1>
+                <p class="text-slate-400 text-xs font-medium max-w-2xl leading-relaxed">
+                    Pantau grafik transaksi finansial, optimalisasi alokasi slot lapangan futsal, dan manajemen kasta loyalitas member dalam satu ruang terpusat.
+                </p>
+            </div>
+            
+            <div class="flex flex-wrap lg:flex-nowrap gap-2 bg-[#0B131F]/40 p-2 rounded-2xl border border-slate-800/60 backdrop-blur-sm w-full lg:w-auto">
+                <a href="{{ route('admin.reservasi.index') }}" class="flex-1 lg:flex-none text-center px-4 py-2.5 bg-[#152238] hover:bg-[#1f3252] border border-slate-800 text-slate-200 font-black text-[10px] rounded-xl uppercase tracking-wider transition duration-150">Log Reservasi</a>
+                <a href="{{ route('admin.lapangan.index') }}" class="flex-1 lg:flex-none text-center px-4 py-2.5 bg-[#152238] hover:bg-[#1f3252] border border-slate-800 text-slate-200 font-black text-[10px] rounded-xl uppercase tracking-wider transition duration-150">Kelola Arena</a>
+                <a href="{{ route('admin.member.index') }}" class="flex-1 lg:flex-none text-center px-4 py-2.5 bg-[#152238] hover:bg-[#1f3252] border border-slate-800 text-slate-200 font-black text-[10px] rounded-xl uppercase tracking-wider transition duration-150">Data Member</a>
+            </div>
         </div>
     </div>
 
-    <!-- 2. METRICS STAT CARDS -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Pendapatan Card -->
-        <div class="bg-[#152238] p-6 rounded-2xl border border-slate-800 shadow-xl flex items-center justify-between group hover:border-emerald-800/50 transition duration-300">
-            <div class="space-y-1">
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Pendapatan Lunas</p>
-                <p class="text-2xl font-black text-[#22C55E] font-mono">Rp {{ number_format($totalPendapatan, 0, ',', '.') }}</p>
+        <div class="bg-[#152238] p-6 rounded-2xl border border-slate-800 shadow-xl flex items-center justify-between group hover:border-emerald-500/30 transition-all duration-300 hover:-translate-y-1">
+            <div class="space-y-2">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Akumulasi Omset Lunas</p>
+                <p class="text-2xl font-black text-[#22C55E] font-mono tracking-tight">Rp {{ number_format($totalPendapatan, 0, ',', '.') }}</p>
+                <span class="inline-flex text-[9px] font-bold text-emerald-400/80 uppercase tracking-wide bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-900/30">⚡ Terverifikasi Midtrans</span>
             </div>
-            <div class="p-3 bg-[#0B131F] border border-slate-800 rounded-xl text-xl group-hover:scale-110 transition duration-300">🪙</div>
+            <div class="p-4 bg-[#0B131F] border border-slate-800 rounded-xl text-xl shadow-inner group-hover:scale-110 transition duration-300 group-hover:bg-emerald-950/40">🪙</div>
         </div>
         
-        <!-- Sesi Card -->
-        <div class="bg-[#152238] p-6 rounded-2xl border border-slate-800 shadow-xl flex items-center justify-between group hover:border-blue-800/50 transition duration-300">
-            <div class="space-y-1">
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Match Terjadwal (Aktif)</p>
-                <p class="text-2xl font-black text-blue-400 font-mono">{{ $matchTerkonfirmasi }} <span class="text-xs text-slate-500 font-black uppercase">Slot</span></p>
+        <div class="bg-[#152238] p-6 rounded-2xl border border-slate-800 shadow-xl flex items-center justify-between group hover:border-blue-500/30 transition-all duration-300 hover:-translate-y-1">
+            <div class="space-y-2">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Slot Jadwal Aktif</p>
+                <p class="text-2xl font-black text-blue-400 font-mono tracking-tight">{{ $matchTerkonfirmasi }} <span class="text-xs text-slate-500 font-black uppercase">Jadwal</span></p>
+                <span class="inline-flex text-[9px] font-bold text-blue-400/80 uppercase tracking-wide bg-blue-950/40 px-2 py-0.5 rounded border border-blue-900/30">📅 Hari Ini & Esok</span>
             </div>
-            <div class="p-3 bg-[#0B131F] border border-slate-800 rounded-xl text-xl group-hover:scale-110 transition duration-300">📅</div>
+            <div class="p-4 bg-[#0B131F] border border-slate-800 rounded-xl text-xl shadow-inner group-hover:scale-110 transition duration-300 group-hover:bg-blue-950/40">🎮</div>
         </div>
         
-        <!-- Member Card -->
-        <div class="bg-[#152238] p-6 rounded-2xl border border-slate-800 shadow-xl flex items-center justify-between group hover:border-orange-800/50 transition duration-300">
-            <div class="space-y-1">
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Pelanggan Terdaftar</p>
-                <p class="text-2xl font-black text-white font-mono">{{ $totalMember }} <span class="text-xs text-slate-500 font-black uppercase">User</span></p>
+        <div class="bg-[#152238] p-6 rounded-2xl border border-slate-800 shadow-xl flex items-center justify-between group hover:border-orange-500/30 transition-all duration-300 hover:-translate-y-1">
+            <div class="space-y-2">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Database Pelanggan</p>
+                <p class="text-2xl font-black text-white font-mono tracking-tight">{{ $totalMember }} <span class="text-xs text-slate-500 font-black uppercase">Akun</span></p>
+                <span class="inline-flex text-[9px] font-bold text-orange-400/80 uppercase tracking-wide bg-orange-950/40 px-2 py-0.5 rounded border border-orange-900/30">🏆 Member Loyal Berkasta</span>
             </div>
-            <div class="p-3 bg-[#0B131F] border border-slate-800 rounded-xl text-xl group-hover:scale-110 transition duration-300">👥</div>
+            <div class="p-4 bg-[#0B131F] border border-slate-800 rounded-xl text-xl shadow-inner group-hover:scale-110 transition duration-300 group-hover:bg-orange-950/40">👥</div>
         </div>
     </div>
 
-    <!-- 3. MONITORING DATA TABLE -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="bg-[#152238] lg:col-span-8 rounded-3xl p-6 border border-slate-800 shadow-2xl flex flex-col justify-between">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+                <div>
+                    <h3 class="text-xs font-black text-white uppercase tracking-wider">Tren Utilisasi & Finansial</h3>
+                    <p class="text-[10px] text-slate-500 font-bold mt-0.5 uppercase tracking-wide">Representasi grafik fluktuasi mingguan real-time</p>
+                </div>
+                <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+            </div>
+            <div class="relative w-full h-64 flex items-center justify-center bg-[#0B131F]/30 rounded-2xl border border-slate-800/40 p-4">
+                <canvas id="dashboardPerformanceChart" class="w-full h-full"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-[#152238] lg:col-span-4 rounded-3xl p-6 border border-slate-800 shadow-2xl flex flex-col justify-between space-y-4">
+            <div class="border-b border-slate-800 pb-4">
+                <h3 class="text-xs font-black text-white uppercase tracking-wider">Aksi Cepat Gerbang</h3>
+                <p class="text-[10px] text-slate-500 font-bold mt-0.5 uppercase tracking-wide">Pintas penanganan bypass darurat</p>
+            </div>
+            
+            <div class="flex-1 grid grid-cols-1 gap-2.5">
+                <a href="{{ route('admin.reservasi.index', ['status' => 'Waiting Payment']) }}" class="flex items-center justify-between p-3.5 bg-[#0B131F]/50 hover:bg-[#0B131F] border border-slate-800/60 rounded-xl transition group">
+                    <span class="text-xs font-bold text-slate-300 group-hover:text-white transition">⏳ Tinjau Nota Pending</span>
+                    <span class="text-[9px] font-mono font-black bg-amber-950/40 text-amber-400 border border-amber-900/40 px-2 py-0.5 rounded uppercase">Bypass</span>
+                </a>
+                
+                <a href="{{ route('admin.reservasi.exportExcel') }}" class="flex items-center justify-between p-3.5 bg-[#0B131F]/50 hover:bg-[#0B131F] border border-slate-800/60 rounded-xl transition group">
+                    <span class="text-xs font-bold text-slate-300 group-hover:text-white transition">📊 Backup Excel Bulanan</span>
+                    <span class="text-[9px] font-mono font-black bg-emerald-950/40 text-emerald-400 border border-emerald-900/40 px-2 py-0.5 rounded uppercase">Unduh</span>
+                </a>
+
+                <a href="{{ route('staff.scan') }}" target="_blank" class="flex items-center justify-between p-3.5 bg-[#0B131F]/50 hover:bg-[#0B131F] border border-slate-800/60 rounded-xl transition group">
+                    <span class="text-xs font-bold text-slate-300 group-hover:text-white transition">📷 Buka Konsol Scanner QR</span>
+                    <span class="text-[9px] font-mono font-black bg-blue-950/40 text-blue-400 border border-blue-900/40 px-2 py-0.5 rounded uppercase">Terminal</span>
+                </a>
+            </div>
+            
+            <div class="bg-[#0B131F]/30 p-3 rounded-xl border border-slate-800/40 text-[9px] font-mono font-bold text-slate-600 text-center uppercase tracking-wider">
+                Keamanan enkripsi data SSL aktif
+            </div>
+        </div>
+    </div>
+
     <div class="bg-[#152238] rounded-3xl shadow-2xl border border-slate-800 overflow-hidden">
-        <div class="p-6 border-b border-slate-800 bg-[#0F172A]/40 flex items-center justify-between">
-            <h2 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-[#E25E20] animate-pulse"></span> Monitoring Booking Real-time
-            </h2>
-            <span class="text-[9px] font-black bg-[#0B131F] text-slate-400 border border-slate-800 px-2.5 py-1 rounded-md uppercase tracking-wider">Real-time Data</span>
+        <div class="p-6 border-b border-slate-800 bg-[#0F172A]/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h2 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-[#E25E20] animate-pulse"></span> Aliran Data Transaksi Terakhir
+                </h2>
+                <p class="text-[10px] text-slate-500 font-bold mt-0.5 uppercase tracking-wide">Log pemantauan 10 entri data booking terbaru</p>
+            </div>
+            <span class="self-start sm:self-auto text-[9px] font-black bg-[#0B131F] text-slate-400 border border-slate-800 px-2.5 py-1 rounded-md uppercase tracking-wider">Live Stream Ready</span>
         </div>
 
         <div class="overflow-x-auto">
@@ -69,60 +138,54 @@
                     <tr class="border-b border-slate-800 text-slate-500 text-[10px] font-black uppercase tracking-wider bg-[#0f172a]/20">
                         <th class="p-6">Detail Lapangan</th>
                         <th class="p-6">Nomor Order</th>
-                        <th class="p-6">Pelanggan</th>
-                        <th class="p-6">Waktu Slot Main</th>
+                        <th class="p-6">Identitas Pelanggan</th>
+                        <th class="p-6">Waktu Slot Bertanding</th>
                         <th class="p-6">Total Bayar</th>
-                        <th class="p-6">Status</th>
-                        <th class="p-6 text-center">Aksi</th>
+                        <th class="p-6">Status Gerbang</th>
+                        <th class="p-6 text-center">Tindakan</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-800 text-xs font-bold text-slate-300 bg-[#152238]">
-                    @foreach($reservasis as $reservasi)
+                    @forelse($reservasis as $reservasi)
                     <tr class="hover:bg-[#0B131F]/30 transition duration-150">
-                        <!-- Detail Arena -->
                         <td class="p-6">
                             <div class="font-black text-white text-sm uppercase tracking-tight">{{ $reservasi->lapangan->nama_lapangan ?? 'N/A' }}</div>
                             <div class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Rumput {{ $reservasi->lapangan->jenis_rumput ?? 'Sintetis' }}</div>
                         </td>
                         
-                        <!-- Nomor Transaksi -->
                         <td class="p-6 font-mono text-slate-400 uppercase tracking-wider">{{ $reservasi->nomor_reservasi }}</td>
                         
-                        <!-- Nama User + INTEGRASI BADGE TIER MEMBERSHIP -->
                         <td class="p-6">
                             <div class="text-white text-sm font-bold tracking-tight">{{ $reservasi->user->name ?? 'Guest User' }}</div>
                             
                             @if($reservasi->user && $reservasi->user->membership)
                                 @if($reservasi->user->membership->membership_type == 'Gold')
-                                    <span class="inline-block mt-1 text-[8px] font-black tracking-widest bg-amber-500 text-white px-2 py-0.5 rounded uppercase shadow-sm shadow-amber-500/10">🏆 Gold</span>
+                                    <span class="inline-block mt-1 text-[8px] font-black tracking-widest bg-gradient-to-r from-amber-500 to-yellow-400 text-white px-2 py-0.5 rounded uppercase shadow-sm">🏆 Gold</span>
                                 @elseif($reservasi->user->membership->membership_type == 'Silver')
-                                    <span class="inline-block mt-1 text-[8px] font-black tracking-widest bg-slate-500 text-white px-2 py-0.5 rounded uppercase shadow-sm shadow-slate-500/10">🥈 Silver</span>
+                                    <span class="inline-block mt-1 text-[8px] font-black tracking-widest bg-gradient-to-r from-slate-500 to-slate-400 text-white px-2 py-0.5 rounded uppercase shadow-sm">🥈 Silver</span>
                                 @else
-                                    <span class="inline-block mt-1 text-[8px] font-black tracking-widest bg-amber-800 text-white px-2 py-0.5 rounded uppercase shadow-sm shadow-amber-800/10">🥉 Bronze</span>
+                                    <span class="inline-block mt-1 text-[8px] font-black tracking-widest bg-gradient-to-r from-amber-800 to-amber-700 text-white px-2 py-0.5 rounded uppercase shadow-sm">🥉 Bronze</span>
                                 @endif
                             @else
                                 <span class="inline-block mt-1 text-[8px] font-bold tracking-widest bg-[#0B131F] text-slate-500 border border-slate-800 px-2 py-0.5 rounded uppercase">Non-Member</span>
                             @endif
                         </td>
                         
-                        <!-- Waktu Pertandingan -->
                         <td class="p-6 text-slate-300">
-                            {{ \Carbon\Carbon::parse($reservasi->tanggal_main)->translatedFormat('d M Y') }}<br>
-                            <small class="font-mono text-slate-500">{{ substr($reservasi->jam_mulai, 0, 5) }} - {{ substr($reservasi->jam_selesai, 0, 5) }}</small>
+                            <div class="text-slate-200">{{ \Carbon\Carbon::parse($reservasi->tanggal_main)->translatedFormat('d M Y') }}</div>
+                            <div class="font-mono text-slate-500 text-[10px] mt-0.5 uppercase tracking-wide">{{ substr($reservasi->jam_mulai, 0, 5) }} - {{ substr($reservasi->jam_selesai, 0, 5) }} WITA</div>
                         </td>
                         
-                        <!-- Nominal Biaya -->
-                        <td class="p-6 font-black text-white text-sm font-mono">Rp {{ number_format($reservasi->total_harga, 0, ',', '.') }}</td>
+                        <td class="p-6 font-black text-[#22C55E] text-sm font-mono">Rp {{ number_format($reservasi->total_harga, 0, ',', '.') }}</td>
                         
-                        <!-- Status Transaksi -->
                         <td class="p-6">
                             @if($reservasi->status == 'Confirmed' || $reservasi->status == 'Completed')
                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-950/60 text-emerald-400 border border-emerald-900/40 uppercase tracking-wider">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Lunas
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Confirmed
                                 </span>
                             @elseif($reservasi->status == 'Cancelled')
                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-red-950/60 text-red-400 border border-red-900/40 uppercase tracking-wider">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Batal
+                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Cancelled
                                 </span>
                             @else
                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-amber-950/60 text-amber-400 border border-amber-900/40 uppercase tracking-wider">
@@ -131,22 +194,70 @@
                             @endif
                         </td>
                         
-                        <!-- Aksi Tombol Detail -->
                         <td class="p-6 text-center">
-                            <a href="{{ route('admin.reservasi.index', ['status' => $reservasi->status]) }}" class="inline-block px-3 py-2 bg-[#0B131F] border border-slate-800 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-[#1A3D63] hover:border-transparent transition duration-150 shadow-sm">
-                                Detail
+                            <a href="{{ route('admin.reservasi.index', ['status' => $reservasi->status]) }}" class="inline-flex items-center justify-center px-3 py-1.5 bg-[#0B131F] border border-slate-800 hover:border-slate-700 text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-wider transition duration-150 shadow-sm">
+                                Periksa
                             </a>
                         </td>
                     </tr>
-                    @endforeach
+                    @empty
+                    <tr>
+                        <td colspan="7" class="p-12 text-center text-slate-500 font-bold uppercase tracking-wider text-xs bg-[#152238]">
+                            Belum ada entri log reservasi yang tercatat di sistem database.
+                        </td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
         
-        <!-- INFO DATA FOOTER (Pengganti Pagination Karena Data Dibatasi Oleh Method take() ) -->
-        <div class="p-4 border-t border-slate-800 bg-[#0F172A]/20 text-[10px] text-slate-500 font-bold uppercase tracking-wider text-center">
-            Menampilkan 10 Transaksi Log Masuk Terbaru
-        </div>
+        @if($reservasis->hasPages())
+            <div class="p-6 border-t border-slate-800 bg-[#0F172A]/20 data-dark-pagination">
+                {{ $reservasis->links() }}
+            </div>
+        @endif
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const ctx = document.getElementById('dashboardPerformanceChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
+                datasets: [{
+                    label: 'Utilisasi Lapangan (Jam)',
+                    data: [12, 19, 15, 25, 32, 45, 48],
+                    borderColor: '#E25E20',
+                    backgroundColor: 'rgba(226, 94, 32, 0.05)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#E25E20',
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                        ticks: { color: '#64748b', font: { size: 9, weight: 'bold' } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                        ticks: { color: '#64748b', font: { size: 9, weight: 'bold' } }
+                    }
+                }
+            }
+        });
+    });
+</script>
 @endsection
