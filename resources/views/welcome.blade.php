@@ -3,319 +3,400 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Futsal Mare - Reservasi Lapangan Futsal Premium Kota Baubau</title>
+    <title>Futsal Mare - Reservasi Lapangan Premium Kota Baubau</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        :root {
+            --ink: #0a0f14;
+            --surface: #121a23;
+            --surface-2: #1a2431;
+            --surface-3: #212d3c;
+            --turf: #e25e20;
+            --turf-dark: #cb5119;
+            --turf-glow: rgba(226, 94, 32, 0.2);
+            --floodlight: #f5c518;
+            --floodlight-dim: rgba(245, 197, 24, 0.15);
+            --line: #eef1ea;
+            --muted: #8b97a6;
+            --muted-2: #5c6979;
+            --radius: 14px;
+            --display: 'Anton', sans-serif;
+            --body: 'Work Sans', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            background: var(--ink);
+            color: var(--line);
+            font-family: var(--body);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+        img { display: block; max-width: 100%; }
+        .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+        .eyebrow {
+            font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+            color: var(--turf); display: flex; align-items: center; gap: 8px; font-weight: 500;
+        }
+        .eyebrow::before { content: ""; width: 16px; height: 2px; background: var(--turf); display: inline-block; }
+        h1, h2, h3 { font-family: var(--display); font-weight: 400; letter-spacing: .01em; text-transform: uppercase; }
+        
+        .btn-ui {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 14px 26px; border-radius: 8px; font-weight: 600; font-size: 15px;
+            cursor: pointer; border: 1px solid transparent; transition: transform .15s ease, background .15s ease, border-color .15s ease;
+            font-family: var(--body); text-transform: uppercase; letter-spacing: .03em;
+        }
+        .btn-ui:active { transform: scale(.97); }
+        .btn-ui-primary { background: var(--turf); color: white; }
+        .btn-ui-primary:hover { background: var(--turf-dark); }
+        .btn-ui-ghost { background: transparent; border-color: rgba(238, 241, 234, 0.25); color: var(--line); }
+        .btn-ui-ghost:hover { border-color: var(--line); }
+        .btn-ui-sm { padding: 9px 16px; font-size: 13px; border-radius: 6px; }
+
+        /* ---------- HEADER ---------- */
+        header {
+            position: sticky; top: 0; z-index: 50;
+            background: rgba(10, 15, 20, 0.85); backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(238, 241, 234, 0.08);
+        }
+        .nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; }
+        .logo { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 24px; letter-spacing: .03em; color: white;}
+        .logo .dot { width: 10px; height: 10px; background: var(--turf); border-radius: 2px; transform:rotate(45deg); }
+        .nav-links { display: flex; gap: 32px; font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+        .nav-links a:hover { color: var(--line); }
+        .nav-actions { display: flex; align-items: center; gap: 12px; }
+
+        /* ---------- HERO ---------- */
+        .hero {
+            position: relative; overflow: hidden;
+            background: radial-gradient(ellipse 900px 500px at 85% -10%, var(--turf-glow), transparent 60%), var(--ink);
+            padding: 88px 0 60px;
+            border-bottom: 1px solid rgba(238, 241, 234, 0.08);
+        }
+        .hero-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 56px; align-items: center; }
+        @media (max-width: 920px) { .hero-grid { grid-template-columns: 1fr; } }
+        .hero h1 { font-size: clamp(38px, 5.5vw, 64px); line-height: .98; margin: 18px 0 20px; }
+        .hero h1 span { color: var(--turf); }
+        .hero p.lead { color: var(--muted); font-size: 16px; max-width: 520px; margin-bottom: 32px; font-weight: 500; }
+        .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 44px; }
+        .stat-row { display: flex; gap: 36px; flex-wrap: wrap; }
+        .stat b { display: block; font-family: var(--mono); font-size: 26px; color: var(--floodlight); }
+        .stat span { font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+
+        /* Board Card Widget */
+        .board-card {
+            background: var(--surface); border: 1px solid rgba(238, 241, 234, 0.1); border-radius: var(--radius);
+            padding: 24px; box-shadow: 0 20px 60px -20px rgba(0,0,0,0.6);
+        }
+        .board-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px; }
+        .board-head h3 { font-size: 14px; letter-spacing: .05em; color: var(--muted); }
+        .board-head .live { font-family: var(--mono); font-size: 11px; color: var(--turf); display: flex; align-items: center; gap: 6px; font-weight: 700; }
+        .live .pip { width: 7px; height: 7px; border-radius: 50%; background: var(--turf); animation: pulse 1.6s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+        
+        /* ---------- COURTS ---------- */
+        section { padding: 96px 0; border-bottom: 1px solid rgba(238, 241, 234, 0.08); }
+        .sec-head { max-width: 600px; margin-bottom: 48px; }
+        .sec-head h2 { font-size: clamp(28px, 4vw, 42px); margin-top: 14px; }
+        .sec-head p { color: var(--muted); margin-top: 12px; font-size: 15px; font-weight: 500; }
+        .courts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        @media (max-width: 900px) { .courts-grid { grid-template-columns: 1fr; } }
+        
+        .court-card {
+            background: var(--surface); border-radius: var(--radius); overflow: hidden; border: 1px solid rgba(238, 241, 234, 0.08);
+            transition: border-color .2s ease, transform .2s ease; display: flex; flex-col; justify-content: space-between;
+        }
+        .court-card:hover { border-color: var(--turf); transform: translateY(-4px); }
+        .court-media { height: 180px; position: relative; background: #0B131F; overflow: hidden; }
+        .court-media img { width: 100%; height: 100%; object-cover: cover; }
+        .court-media .price-tag {
+            position: absolute; bottom: 12px; right: 12px; background: var(--ink); border: 1px solid var(--turf);
+            color: var(--turf); font-family: var(--mono); font-size: 13px; padding: 5px 12px; border-radius: 6px; font-weight: 700;
+        }
+        .court-body { padding: 24px; }
+        .court-body h3 { font-family: var(--body); font-weight: 700; font-size: 18px; text-transform: none; margin-bottom: 6px; color: white; }
+        .court-meta { display: flex; gap: 14px; font-size: 11px; color: var(--muted); margin-bottom: 14px; font-family: var(--mono); font-weight: 700; }
+        .court-desc { color: var(--muted); font-size: 13px; margin-bottom: 20px; font-weight: 500; }
+
+        /* ---------- MEMBERSHIP SYSTEM TIER BENTO ---------- */
+        .tier-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        @media (max-width: 820px) { .tier-grid { grid-template-columns: 1fr; } }
+        .tier-card { background: var(--surface); border-radius: var(--radius); padding: 28px; border: 1px solid rgba(238, 241, 234, 0.08); position: relative; overflow: hidden; }
+        .tier-card h3 { font-size: 16px; margin-bottom: 8px; font-family: var(--body); font-weight: 700; }
+        .tier-points { font-family: var(--mono); font-size: 12px; color: var(--turf); margin-bottom: 18px; display: block; font-weight: 700; }
+        .tier-card ul { space-y: 12px; }
+        .tier-card li { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; font-weight: 500; }
+        .tier-card li.active { color: var(--line); font-weight: 600; }
+
+        /* ---------- STEPS ---------- */
+        .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+        @media (max-width: 820px) { .steps { grid-template-columns: 1fr; } }
+        .step { position: relative; padding-top: 8px; }
+        .step .num { font-family: var(--mono); font-size: 13px; color: var(--floodlight); border: 1px solid var(--floodlight); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 18px; font-weight: 700; }
+        .step h3 { font-family: var(--body); font-weight: 700; text-transform: none; font-size: 18px; margin-bottom: 8px; color: white; }
+        .step p { color: var(--muted); font-size: 13px; font-weight: 500; }
+
+        /* ---------- CTA BAND ---------- */
+        .cta-band { background: linear-gradient(120deg, var(--turf-dark), var(--turf)); border-radius: var(--radius); padding: 56px; text-align: center; }
+        .cta-band h2 { color: var(--ink); font-size: clamp(26px, 4vw, 40px); }
+        .cta-band p { color: rgba(10,15,20,0.8); margin: 14px 0 28px; font-size: 15px; font-weight: 600; }
+        .cta-band .btn-ui-primary { background: var(--ink); color: white; }
+        .cta-band .btn-ui-primary:hover { background: #17232f; }
+
+        /* ---------- FOOTER ---------- */
+        footer { padding: 80px 0 40px; background: #070c12; }
+        .foot-grid { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 40px; margin-bottom: 48px; }
+        @media (max-width: 820px) { .foot-grid { grid-template-columns: 1fr 1fr; } }
+        .foot-grid h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted-2); margin-bottom: 16px; font-weight: 700; }
+        .foot-grid li { margin-bottom: 10px; font-size: 13px; color: var(--muted); font-weight: 500; }
+        .foot-grid li a:hover { color: var(--line); }
+        .foot-bottom { display: flex; justify-content: space-between; padding-top: 24px; border-top: 1px solid rgba(238,241,234,0.05); font-size: 12px; color: var(--muted-2); flex-wrap: wrap; gap: 12px; font-weight: 500; }
+    </style>
 </head>
-<body class="bg-[#0B131F] font-sans antialiased text-slate-200 scroll-smooth selection:bg-[#E25E20] selection:text-white">
+<body>
 
-    <!-- NAVIGATION BAR -->
-    <nav class="bg-[#0F172A]/70 backdrop-blur-xl shadow-2xl sticky top-0 z-50 border-b border-slate-800/80 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-20 items-center">
-                <!-- Brand Identity -->
-                <a href="{{ route('landingPage') }}" class="flex items-center space-x-3 group">
-                    <div class="relative flex items-center justify-center">
-                        <div class="absolute inset-0 bg-gradient-to-tr from-[#E25E20] to-orange-500 rounded-xl filter blur-md opacity-20 group-hover:opacity-40 transition duration-300"></div>
-                        <img src="{{ asset('images/logo.png') }}" alt="Logo Futsal Mare" class="h-12 w-auto object-contain transform group-hover:rotate-6 transition duration-300 relative z-10">
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="text-xl font-black text-white tracking-wider leading-none">FUTSAL</span>
-                        <span class="text-[10px] font-black text-[#E25E20] tracking-[0.3em] uppercase mt-0.5">Mare</span>
-                    </div>
-                </a>
-
-                <!-- Centered Navigation Links (Membership Link Integrated) -->
-                <div class="hidden md:flex items-center space-x-8">
-                    <a href="#" class="nav-link text-xs font-black uppercase tracking-wider text-slate-200 hover:text-[#E25E20] transition duration-200">Beranda</a>
-                    <a href="#fitur-unggulan" class="nav-link text-xs font-black uppercase tracking-wider text-slate-400 hover:text-white transition duration-200">Keunggulan</a>
-                    <a href="#program-membership" class="nav-link text-xs font-black uppercase tracking-wider text-[#E25E20] hover:text-orange-400 transition duration-200">⭐ Info Member</a>
-                    <a href="#daftar-lapangan" class="nav-link text-xs font-black uppercase tracking-wider text-slate-400 hover:text-white transition duration-200">Katalog Arena</a>
-                    <a href="#kontak-footer" class="nav-link text-xs font-black uppercase tracking-wider text-slate-400 hover:text-white transition duration-200">Kontak Info</a>
-                </div>
-
-                <!-- User Session Actions -->
-                <div class="flex items-center space-x-4">
-                    <a href="{{ route('admin.login') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-950/80 border border-slate-800 hover:border-slate-700/80 rounded-xl text-[9px] font-black uppercase tracking-wider text-slate-400 hover:text-white transition duration-200 shadow-inner">
-                        🛡️ Portal Admin
-                    </a>
-
-                    @if (Route::has('login'))
-                        @auth
-                            <div class="flex items-center gap-3 border-l border-slate-800/80 pl-4">
-                                <a href="{{ route('dashboard') }}" class="text-xs font-black uppercase tracking-wider text-slate-300 hover:text-[#E25E20] transition duration-200">
-                                    🏟️ Dashboard Member
-                                </a>
-                                <form method="POST" action="{{ route('logout') }}" class="inline">
-                                    @csrf
-                                    <button type="submit" class="text-[10px] font-black uppercase tracking-wider text-red-400 bg-red-950/20 border border-red-950/40 px-2.5 py-1.5 rounded-xl hover:bg-red-900/30 transition duration-200">
-                                        Keluar
-                                    </button>
-                                </form>
-                            </div>
-                        @else
-                            <a href="{{ route('login') }}" class="text-xs font-black uppercase tracking-wider text-slate-300 hover:text-[#E25E20] transition duration-200">Masuk</a>
-                            @if (Route::has('register'))
-                                <a href="{{ route('register') }}" class="relative inline-flex items-center justify-center px-5 py-2.5 bg-gradient-to-r from-[#E25E20] to-orange-600 hover:from-[#cb5119] hover:to-orange-700 text-white rounded-xl text-xs font-black shadow-lg shadow-orange-950/40 transform hover:-translate-y-0.5 transition duration-200 uppercase tracking-wider">
-                                    Daftar
-                                </a>
-                            @endif
-                        @endauth
-                    @endif
-                </div>
-            </div>
-        </div>
+<header>
+  <div class="nav wrap">
+    <div class="logo"><span class="dot"></span>FUTSAL<span style="color:var(--muted-2); font-family:var(--body); font-weight:400; font-size:12px; margin-left:4px;">MARE</span></div>
+    <nav class="nav-links">
+      <a href="#" class="nav-link">Beranda</a>
+      <a href="#lapangan" class="nav-link">Arena</a>
+      <a href="#membership" class="nav-link">Membership</a>
+      <a href="#cara-booking" class="nav-link">Alur Prosedur</a>
     </nav>
+    <div class="nav-actions">
+        <!-- 🛡️ PORTAL ACCESS PORT -->
+        <a href="{{ route('admin.login') }}" style="color:var(--muted-2); font-family:var(--mono); font-size:10px; font-weight:700; text-transform:uppercase; margin-right:8px;">🛡️ Admin</a>
 
-    <!-- HERO SECTION -->
-    <header class="relative bg-gradient-to-b from-[#0F172A]/40 via-[#0B131F] to-[#0E1726] text-white overflow-hidden py-24 lg:py-36 border-b border-slate-900/60">
-        <div class="absolute inset-0 pointer-events-none opacity-[0.02] bg-[radial-gradient(#ffffff_1px,transparent_1px)] bg-[size:32px_32px]"></div>
-        <div class="absolute -top-40 -right-40 w-96 h-96 bg-[#E25E20] rounded-full filter blur-[150px] opacity-10 pointer-events-none"></div>
-        <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-600 rounded-full filter blur-[150px] opacity-5 pointer-events-none"></div>
+        @if (Route::has('login'))
+            @auth
+                <a href="{{ route('dashboard') }}" class="btn-ui btn-ui-primary btn-ui-sm">MEMBER DASHBOARD</a>
+            @else
+                <a href="{{ route('login') }}" class="btn-ui btn-ui-ghost btn-ui-sm">MASUK</a>
+                @if (Route::has('register'))
+                    <a href="{{ route('register') }}" class="btn-ui btn-ui-primary btn-ui-sm">DAFTAR</a>
+                @endif
+            @endauth
+        @endif
+    </div>
+  </div>
+</header>
 
-        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow">Sistem Informasi Reservasi Digital Kota Baubau</div>
+      <h1>MAIN FUTSAL<br>TANPA <span>RIBET</span> ANTRI</h1>
+      <p class="lead">Cek ketersediaan slot kosong secara real-time, amankan waktu bertanding tim kelompokmu, dan lakukan penyelesaian pembayaran instan dalam hitungan detik.</p>
+      <div class="hero-cta">
+        <a href="#lapangan" class="btn-ui btn-ui-primary">Booking Arena Sekarang</a>
+        <a href="#membership" class="btn-ui btn-ui-ghost">Pelajari Benefit Member</a>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><b>3</b><span>Lapangan Premium</span></div>
+        <div class="stat"><b>06–24</b><span>Jam Operasional</span></div>
+        <div class="stat"><b>WITA</b><span>Zona Waktu Lokal</span></div>
+      </div>
+    </div>
+
+    <!-- Live Board Overview Component Widget -->
+    <div class="board-card">
+      <div class="board-head">
+        <h3>REAL-TIME DASHBOARD ARENA</h3>
+        <div class="live"><span class="pip"></span>LIVE MONITORING</div>
+      </div>
+      <div style="font-size:13px; color:var(--muted); font-weight:600; line-height:1.7;">
+        Selamat datang di gerbang utama Futsal Mare. Silakan telusuri katalog di bawah ini untuk melihat jadwal operasional, ketersediaan rumput sintetis, serta detail tarif sewa per jam secara transparan.
+      </div>
+      <div style="margin-top:24px; padding-top:16px; border-top:1px dashed rgba(238,241,234,0.1); font-family:var(--mono); font-size:11px; color:var(--muted-2);">
+        * Silakan login ke akun member untuk melakukan booking interaktif.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CATALOG MODUL ARENA SECTION -->
+<section id="lapangan">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Fasilitas Kompleks</div>
+      <h2>Pilihan Arena Terbaik Baubau</h2>
+      <p>Setiap arena memiliki kualifikasi standardisasi tinggi demi menjaga keamanan serta kenyamanan bertanding tim Anda.</p>
+    </div>
+    <div class="courts-grid">
+      @forelse ($lapangans as $lapangan)
+          <div class="court-card">
+            <div>
+                <div class="court-media">
+                    @if($lapangan->foto_lapangan && file_exists(public_path('images/lapangan/' . $lapangan->foto_lapangan)))
+                        <img src="{{ asset('images/lapangan/' . $lapangan->foto_lapangan) }}" alt="{{ $lapangan->nama_lapangan }}">
+                    @elseif($lapangan->foto_lapangan)
+                        <img src="{{ asset('images/' . $lapangan->foto_lapangan) }}" alt="{{ $lapangan->nama_lapangan }}">
+                    @else
+                        <div style="height:100%; display:flex; align-items:center; justify-content:center; color:var(--muted-2); font-family:var(--mono); font-size:11px; text-transform:uppercase;">No Image Asset</div>
+                    @endif
+                    <span class="price-tag">Rp {{ number_format($lapangan->harga_per_jam, 0, ',', '.') }} / Jam</span>
+                </div>
+                <div class="court-body">
+                  <h3>{{ $lapangan->nama_lapangan }}</h3>
+                  <div class="court-meta"><span>🌱 {{ strtoupper($lapangan->jenis_rumput) }}</span><span>·</span><span>LED LIGHT SYSTEM</span></div>
+                  <p class="court-desc">Dilengkapi dengan scoring board digital, ruang ganti eksklusif, serta pencahayaan lampu LED murni untuk match malam hari.</p>
+                </div>
+            </div>
+            <div style="padding: 0 24px 24px 24px;">
+                <a href="{{ route('reservasi.create', $lapangan->id) }}" class="btn-ui btn-ui-primary btn-ui-sm" style="width:100%;">Amankan Slot Waktu</a>
+            </div>
+          </div>
+      @empty
+          <div style="grid-column: span 3; text-align:center; padding:48px; background:var(--surface); border-radius:var(--radius); color:var(--muted); font-size:14px; font-weight:600;">
+              ⚽ Saat ini belum ada data katalog lapangan yang terdaftar dalam sistem data master.
+          </div>
+      @endforelse
+    </div>
+  </div>
+</section>
+
+<!-- MEMBERSHIP TIER SYSTEM BENTO -->
+<section id="membership">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Loyalty Program</div>
+        <h2>Sistem Kasta Loyalitas Member</h2>
+        <p>Setiap transaksi pemesanan lapangan sukses bernilai akumulasi murni <span style="color:white; font-family:var(--mono); font-weight:700;">+10 Poin</span>. Tingkatkan kasta akun kelompok Anda!</p>
+      </div>
+      <div class="tier-grid">
+          <div class="tier-card">
+              <h3>🥉 Tier Bronze</h3>
+              <span class="tier-points">0 Poin (Default)</span>
+              <ul>
+                  <li class="active">✔ Akumulasi Poin Aktif</li>
+                  <li>❌ Tanpa Potongan Diskon Harga</li>
+                  <li>❌ Tanpa Hak Akses Prioritas</li>
+              </ul>
+          </div>
+          <div class="tier-card">
+              <h3>🥈 Tier Silver</h3>
+              <span class="tier-points">100 Loyalty Points</span>
+              <ul>
+                  <li class="active">✔ Akumulasi Poin Aktif</li>
+                  <li class="active" style="color:#2f9e58;">✔ Diskon Otomatis 5% / Match</li>
+                  <li>❌ Tanpa Hak Akses Prioritas</li>
+              </ul>
+          </div>
+          <div class="tier-card" style="border-color: var(--turf);">
+              <h3>🏆 Tier Gold</h3>
+              <span class="tier-points" style="color:var(--floodlight)">300 Loyalty Points</span>
+              <ul>
+                  <li class="active">✔ Akumulasi Poin Aktif</li>
+                  <li class="active" style="color:#2f9e58;">✔ Diskon Otomatis 10% / Match</li>
+                  <li class="active" style="color:var(--floodlight);">⚡ Akses Sistem Prioritas Booking 24/7</li>
+              </ul>
+          </div>
+      </div>
+    </div>
+</section>
+
+<!-- STEPS PROCEDURE -->
+<section id="cara-booking">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Alur Prosedur</div>
+      <h2>Pemesanan Selesai Dalam 3 Langkah</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <h3>Registrasi & Pilih Lapangan</h3>
+        <p>Daftarkan akun tim Anda, kemudian pilih salah satu arena lapangan premium dari papan katalog data master kami.</p>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <h3>Isi Data & Transaksi</h3>
+        <p>Tentukan tanggal pertandingan, tentukan jam main, lalu selesaikan tagihan melalui integrasi Midtrans Payment Gateway.</p>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <h3>Terima Tiket & Main</h3>
+        <p>Sistem akan menerbitkan e-tiket transaksi secara real-time. Tunjukkan barcode/ID tiket kepada petugas administrasi di lapangan.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ACTION PROMPT BAND -->
+<section style="border-bottom:none;">
+  <div class="wrap">
+    <div class="cta-band">
+      <h2>Amankan Slot Jadwal Tim Anda</h2>
+      <p>Slot waktu malam hari sangat terbatas. Daftarkan grup kelompokmu sekarang sebelum kehabisan.</p>
+      <a href="#lapangan" class="btn-ui btn-ui-primary">Booking Sekarang</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER CONTEXT -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="logo" style="margin-bottom:14px;"><span class="dot"></span>FUTSAL MARE</div>
+        <p style="color:var(--muted); font-size:13px; max-width:260px; font-weight:500;">Sistem Informasi Layanan Reservasi Penyewaan Lapangan Futsal Digital Terintegrasi Kota Baubau.</p>
+      </div>
+      <ul>
+        <h4>Navigasi Internal</h4>
+        <li><a href="#lapangan">Katalog Arena</a></li>
+        <li><a href="#membership">Sistem Membership</a></li>
+        <li><a href="#cara-booking">Alur Prosedur</a></li>
+      </ul>
+      <ul>
+        <h4>Pranala Bantuan</h4>
+        <li><a href="#">Syarat & Ketentuan</a></li>
+        <li><a href="#">Kebijakan Privasi</a></li>
+        <li><a href="#">Pusat Pengaduan</a></li>
+      </ul>
+      <ul>
+        <h4>Informasi Kontak</h4>
+        <li>Kota Baubau, Sulawesi Tenggara</li>
+        <li>+62 812-3456-7890</li>
+        <li>support@futsalmare.id</li>
+      </ul>
+    </div>
+    <div class="foot-bottom">
+      <span>&copy; {{ date('Y') }} Futsal Mare. Seluruh Hak Cipta Dilindungi Undang-Undang.</span>
+      <span>Dikembangkan Sebagai Proyek Tugas Mata Kuliah Web Programming.</span>
+    </div>
+  </div>
+</footer>
+
+<!-- SMOOTH SCROLL COMPENSATED ENGINE -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll('.nav-link, a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const targetId = this.getAttribute('href');
                 
-                <div class="lg:col-span-7 text-center lg:text-left space-y-6">
-                    <span class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-[10px] font-black bg-[#152238]/60 text-[#E25E20] tracking-widest uppercase border border-slate-800 backdrop-blur-sm shadow-inner shadow-black/40">
-                        <span class="w-2 h-2 rounded-full bg-[#E25E20] animate-pulse"></span>
-                        Sistem Informasi Reservasi Digital Kota Baubau
-                    </span>
-                    <h1 class="text-4xl font-black tracking-tight text-white sm:text-5xl xl:text-6xl leading-[1.15] uppercase">
-                        Main Futsal Gak Pake <br>
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#E25E20] via-orange-400 to-yellow-500">Ribet & Mengantre</span>!
-                    </h1>
-                    <p class="text-sm sm:text-base text-slate-400 max-w-xl mx-auto lg:mx-0 font-medium leading-relaxed">
-                        Pilih arena terbaik kelompokmu, dapatkan kepastian jadwal bertanding secara real-time, dan amankan slot bermain Anda dalam hitungan detik terintegrasi payment gateway.
-                    </p>
-                    <div class="pt-4 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                        <a href="#daftar-lapangan" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-4 bg-gradient-to-r from-[#E25E20] to-orange-600 hover:from-[#cb5119] hover:to-orange-700 text-white font-black text-xs rounded-xl shadow-xl shadow-orange-950/50 uppercase tracking-widest transition duration-200 transform hover:-translate-y-0.5">
-                            Lihat Jadwal Arena &darr;
-                        </a>
-                        <a href="#program-membership" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-4 bg-[#152238] hover:bg-slate-800 border border-slate-800 rounded-xl text-xs font-black text-slate-300 transition duration-200 uppercase tracking-widest">
-                            Pelajari Benefit Member
-                        </a>
-                    </div>
-                </div>
+                if (targetId === '#') {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
+                }
 
-                <div class="lg:col-span-5 relative flex justify-center">
-                    <div class="relative w-full max-w-md lg:max-w-none aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border border-slate-800/80 transform lg:rotate-2 hover:rotate-0 transition duration-500 group bg-[#152238]">
-                        <div class="absolute inset-0 bg-gradient-to-t from-[#0B131F] via-transparent to-transparent z-10 opacity-60"></div>
-                        @if(file_exists(public_path('images/hero-futsal.png')))
-                            <img src="{{ asset('images/hero-futsal.png') }}" alt="Aksi Futsal Profesional" class="w-full h-full object-cover transform group-hover:scale-105 transition duration-700 filter brightness-90">
-                        @else
-                            <div class="w-full h-full flex flex-col items-center justify-center text-slate-700 border-2 border-dashed border-slate-800 p-8 text-center uppercase tracking-widest text-xs font-black">
-                                ⚽ Asset Placeholder<br><span class="text-[9px] font-mono lowercase text-slate-500 mt-2">images/hero-futsal.png</span>
-                            </div>
-                        @endif
-                        <div class="absolute bottom-5 left-5 right-5 z-20 bg-[#0F172A]/90 backdrop-blur-md text-white px-4 py-3 rounded-2xl text-[10px] font-black shadow-2xl border border-slate-800 flex items-center justify-between uppercase tracking-wider">
-                            <span class="flex items-center gap-1.5">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                Arena Standar FIFA & Nasional
-                            </span>
-                            <span class="text-slate-500 font-mono">Kota Baubau</span>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </header>
-
-    <!-- METRICS/HIGHLIGHTS SECTION -->
-    <section id="fitur-unggulan" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 relative z-10">
-        <div class="bg-[#152238]/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-800/80 p-6 sm:p-8 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center divide-y sm:divide-y-0 sm:divide-x divide-slate-800">
-            <div class="py-3 sm:py-0 space-y-1">
-                <div class="text-xs text-[#E25E20] font-black tracking-widest uppercase">Fasilitas Inti</div>
-                <div class="text-base font-black text-white uppercase tracking-wider">Standardisasi FIFA</div>
-                <div class="text-[10px] font-bold text-slate-400 uppercase">Kualitas Lapangan Rumput Terbaik</div>
-            </div>
-            <div class="py-4 sm:py-0 space-y-1">
-                <div class="text-xs text-emerald-400 font-black tracking-widest uppercase">Manajemen Waktu</div>
-                <div class="text-base font-black text-white uppercase tracking-wider">100% Fleksibel</div>
-                <div class="text-[10px] font-bold text-slate-400 uppercase">Atur Jam Main Sesuai Kebutuhan Tim</div>
-            </div>
-            <div class="py-3 sm:py-0 space-y-1">
-                <div class="text-xs text-blue-400 font-black tracking-widest uppercase">Operasional</div>
-                <div class="text-base font-black text-white uppercase tracking-wider">Lampu LED Terang</div>
-                <div class="text-[10px] font-bold text-slate-400 uppercase">Pencahayaan Optimal untuk Main Malam</div>
-            </div>
-        </div>
-    </section>
-
-    <!-- NEW CONTENT: INTERACTIVE MEMBERSHIP HIGHLIGHT SECTION -->
-    <section id="program-membership" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20">
-        <div class="text-center max-w-2xl mx-auto mb-12 space-y-2">
-            <span class="text-[10px] font-black text-[#E25E20] tracking-[0.2em] uppercase bg-orange-950/40 border border-orange-900/30 px-3 py-1 rounded-xl">Sistem Kasta Loyalitas</span>
-            <h2 class="text-3xl font-black text-white uppercase tracking-tight">Makin Sering Main, Makin Untung!</h2>
-            <p class="text-xs text-slate-400 font-medium">Setiap sewa lapangan menyumbang <span class="text-white font-bold font-mono">+10 Poin</span>. Tingkatkan kasta tim Anda untuk potongan harga langsung.</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Tier Bronze Card -->
-            <div class="bg-[#152238] rounded-2xl p-6 border border-slate-800 relative overflow-hidden group hover:border-amber-800/60 transition duration-300">
-                <div class="absolute -right-6 -bottom-6 text-6xl opacity-5 group-hover:opacity-10 transition">🥉</div>
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
-                    <span class="text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-800 to-amber-700 px-2.5 py-1 rounded-lg">🥉 Tier Bronze</span>
-                    <span class="text-xs font-mono font-bold text-slate-500">Mulai Awal</span>
-                </div>
-                <ul class="space-y-2.5 text-xs font-semibold text-slate-400">
-                    <li class="flex items-center gap-2">✔ Akumulasi Poin Aktif</li>
-                    <li class="flex items-center gap-2 text-slate-600">❌ Tanpa Potongan Diskon</li>
-                    <li class="flex items-center gap-2 text-slate-600">❌ Tanpa Akses Prioritas</li>
-                </ul>
-            </div>
-
-            <!-- Tier Silver Card -->
-            <div class="bg-[#152238] rounded-2xl p-6 border border-slate-800 relative overflow-hidden group hover:border-slate-500/40 transition duration-300">
-                <div class="absolute -right-6 -bottom-6 text-6xl opacity-5 group-hover:opacity-10 transition">🥈</div>
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
-                    <span class="text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-slate-500 to-slate-400 px-2.5 py-1 rounded-lg">🥈 Tier Silver</span>
-                    <span class="text-xs font-mono font-black text-slate-300">100 Poin</span>
-                </div>
-                <ul class="space-y-2.5 text-xs font-semibold text-slate-300">
-                    <li class="flex items-center gap-2">✔ Seluruh Benefit Bronze</li>
-                    <li class="flex items-center gap-2 text-emerald-400">✔ Diskon Otomatis 5% / Sewa</li>
-                    <li class="flex items-center gap-2 text-slate-600">❌ Tanpa Akses Prioritas</li>
-                </ul>
-            </div>
-
-            <!-- Tier Gold Card -->
-            <div class="bg-gradient-to-br from-[#152238] to-[#1c3050] rounded-2xl p-6 border border-slate-800 relative overflow-hidden group hover:border-amber-500/40 transition duration-300 shadow-xl">
-                <div class="absolute inset-0 bg-amber-500/5 filter blur-xl opacity-0 group-hover:opacity-100 transition duration-500"></div>
-                <div class="absolute -right-6 -bottom-6 text-6xl opacity-10 group-hover:opacity-15 transition">🏆</div>
-                <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4">
-                    <span class="text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 px-2.5 py-1 rounded-lg font-bold shadow-md">🏆 Tier Gold</span>
-                    <span class="text-xs font-mono font-black text-amber-400">300 Poin</span>
-                </div>
-                <ul class="space-y-2.5 text-xs font-bold text-slate-200">
-                    <li class="flex items-center gap-2">✔ Seluruh Benefit Silver</li>
-                    <li class="flex items-center gap-2 text-emerald-400">✔ Diskon Otomatis 10% / Sewa</li>
-                    <li class="flex items-center gap-2 text-amber-500 animate-pulse">⚡ Akses Sistem Prioritas 24/7</li>
-                </ul>
-            </div>
-        </div>
-    </section>
-
-    <!-- ARENA CATALOG SECTION -->
-    <section id="daftar-lapangan" class="bg-[#0E1726] border-t border-b border-slate-900/60 py-24 mt-20 relative">
-        <div class="absolute inset-0 pointer-events-none opacity-[0.01] bg-[radial-gradient(#ffffff_1px,transparent_1px)] bg-[size:40px_40px]"></div>
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            
-            <div class="flex flex-col md:flex-row md:items-end justify-between mb-16 border-b border-slate-800/60 pb-6 text-center md:text-left">
-                <div>
-                    <h2 class="text-3xl font-black text-white tracking-tight sm:text-4xl uppercase">Pilihan Arena Terbaik di Baubau</h2>
-                    <p class="text-slate-400 mt-2 text-xs font-bold uppercase tracking-wider">Investasikan kenyamanan bermain tim Anda dengan fasilitas lapangan berkelas nasional.</p>
-                </div>
-                <div class="mt-4 md:mt-0">
-                    <span class="inline-flex h-1.5 w-24 bg-gradient-to-r from-[#E25E20] to-orange-500 rounded-full"></span>
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                @forelse ($lapangans as $lapangan)
-                    <div class="group bg-[#152238] rounded-3xl shadow-xl border border-slate-800 overflow-hidden hover:shadow-2xl hover:shadow-orange-950/20 hover:border-slate-700/80 transform hover:-translate-y-2 transition-all duration-300 flex flex-col justify-between">
-                        <div>
-                            <div class="relative h-56 bg-[#0B131F] overflow-hidden">
-                                @if($lapangan->foto_lapangan)
-                                    @if(file_exists(public_path('images/lapangan/' . $lapangan->foto_lapangan)))
-                                        <img src="{{ asset('images/lapangan/' . $lapangan->foto_lapangan) }}" alt="{{ $lapangan->nama_lapangan }}" class="w-full h-full object-cover transform group-hover:scale-105 transition duration-500 opacity-90 group-hover:opacity-100 filter brightness-95">
-                                    @else
-                                        <img src="{{ asset('images/' . $lapangan->foto_lapangan) }}" alt="{{ $lapangan->nama_lapangan }}" class="w-full h-full object-cover transform group-hover:scale-105 transition duration-500 opacity-90 group-hover:opacity-100 filter brightness-95">
-                                    @endif
-                                @else
-                                    <div class="w-full h-full flex items-center justify-center text-slate-700 bg-[#0B131F] text-xs font-black uppercase tracking-widest border border-slate-800/40">No Image Found</div>
-                                @endif
-
-                                <span class="absolute top-4 right-4 px-3 py-1.5 bg-[#E25E20] text-white text-[9px] font-black rounded-xl shadow-md tracking-widest uppercase z-20 shadow-orange-950/60">
-                                    🌱 {{ $lapangan->jenis_rumput }}
-                                </span>
-                            </div>
-
-                            <div class="p-6">
-                                <h3 class="text-lg font-black text-white group-hover:text-[#E25E20] transition duration-200 mb-4 uppercase tracking-tight">
-                                    {{ $lapangan->nama_lapangan }}
-                                </h3>
-
-                                <div class="flex flex-wrap gap-1.5 items-center text-[9px] font-black uppercase text-slate-400 mb-6">
-                                    <span class="bg-[#0B131F] border border-slate-800 px-2.5 py-1 rounded-md">Papan Skor</span>
-                                    <span class="bg-[#0B131F] border border-slate-800 px-2.5 py-1 rounded-md">LED System</span>
-                                    <span class="bg-[#0B131F] border border-slate-800 px-2.5 py-1 rounded-md">Kota Baubau</span>
-                                </div>
-
-                                <div class="pt-4 border-t border-slate-800/80 flex items-baseline">
-                                    <span class="text-2xl font-black text-[#E25E20] tracking-tight font-mono">Rp {{ number_format($lapangan->harga_per_jam, 0, ',', '.') }}</span>
-                                    <span class="text-slate-500 font-bold text-[10px] uppercase ml-1.5 tracking-wider">/ Jam</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="px-6 pb-6">
-                            <a href="{{ route('reservasi.create', $lapangan->id) }}" class="relative block w-full text-center py-4 bg-[#0B131F] border border-slate-800 hover:border-transparent hover:bg-gradient-to-r hover:from-[#E25E20] hover:to-orange-600 text-white font-black text-[11px] rounded-xl transition-all duration-300 tracking-widest uppercase shadow-md shadow-black/30">
-                                Booking Arena Sekarang
-                            </a>
-                        </div>
-                    </div>
-                @empty
-                    <div class="col-span-1 md:col-span-2 lg:col-span-3 py-16 text-center bg-[#152238] rounded-3xl border border-slate-800 text-slate-500 font-bold uppercase tracking-wider text-xs">
-                        ⚽ Belum ada data katalog arena lapangan futsal yang terdaftar saat ini.
-                    </div>
-                @endforelse
-            </div>
-        </main>
-    </section>
-
-    <!-- FOOTER SECTION -->
-    <footer id="kontak-footer" class="bg-[#070C14] text-slate-500 pt-16 pb-12 border-t-4 border-[#E25E20]">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col items-center justify-center text-center">
-                <div class="flex items-center space-x-2 mb-4">
-                    <span class="text-white text-lg font-black tracking-wider uppercase">Futsal Mare HQ</span>
-                    <span class="text-[#E25E20] font-black">•</span>
-                    <span class="text-[10px] font-black text-slate-600 tracking-widest uppercase">Sistem Reservasi Digital</span>
-                </div>
-                <p class="text-xs text-slate-500 max-w-md mx-auto mb-8 leading-relaxed font-medium">
-                    Sistem penyewaan lapangan futsal terintegrasi di Kota Baubau. Amankan jadwal tanding tim Anda kapan saja dan di mana saja secara praktis.
-                </p>
-                <div class="w-full border-t border-slate-900 my-6"></div>
-                <p class="text-[9px] font-mono font-bold text-slate-700 tracking-wider uppercase">
-                    &copy; {{ date('Y') }} Futsal Mare. Dikembangkan untuk Proyek Mata Kuliah Web Programming. Seluruh Hak Cipta Dilindungi.
-                </p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- INTERACTIVE SMOOTH SCROLL WITH COMPENSATED HEADER OFFSET -->
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            document.querySelectorAll('.nav-link, a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    e.preventDefault();
+                    const navbarHeight = 80; // Mengimbangi sticky header
+                    const elementPosition = targetElement.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - navbarHeight;
                     
-                    if (targetId === '#') {
-                        e.preventDefault();
-                        window.scrollTo({
-                            top: 0,
-                            behavior: 'smooth'
-                        });
-                        return;
-                    }
-
-                    const targetElement = document.querySelector(targetId);
-                    if (targetElement) {
-                        e.preventDefault();
-                        
-                        const navbarHeight = 80; // Sesuai dengan tinggi h-20 di Tailwind
-                        const elementPosition = targetElement.getBoundingClientRect().top;
-                        const offsetPosition = elementPosition + window.pageYOffset - navbarHeight;
-                        
-                        window.scrollTo({
-                            top: offsetPosition,
-                            behavior: 'smooth'
-                        });
-                    }
-                });
+                    window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                }
             });
         });
-    </script>
+    });
+</script>
 </body>
 </html>

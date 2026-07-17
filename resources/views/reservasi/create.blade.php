@@ -4,92 +4,130 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Booking {{ $lapangan->nama_lapangan }} - Futsal Mare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
     <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
-</head>
-<body class="bg-[#0B131F] font-sans antialiased text-slate-200 scroll-smooth">
+    <style>
+        :root {
+            --ink: #0a0f14;
+            --surface: #121a23;
+            --surface-3: #212d3c;
+            --turf: #e25e20;
+            --turf-dark: #cb5119;
+            --floodlight: #f5c518;
+            --floodlight-dim: rgba(245, 197, 24, 0.15);
+            --line: #eef1ea;
+            --muted: #8b97a6;
+            --muted-2: #5c6979;
+            --radius: 14px;
+            --display: 'Anton', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+        }
+        body { background: var(--ink); color: var(--line); font-family: 'Work Sans', sans-serif; }
+        h1, h2, h3 { font-family: var(--display); text-transform: uppercase; }
+        input[type="date"], select {
+            width: 100%; background: var(--surface-3); border: 1px solid rgba(238, 241, 234, 0.12); color: var(--line);
+            padding: 14px; border-radius: 8px; font-size: 14px; font-weight: 600;
+        }
+        input[type="date"]:focus, select:focus { border-color: var(--turf); outline: none; }
+        .label-title { font-size: 11px; color: var(--muted); display: block; margin-bottom: 8px; font-family: var(--mono); text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+        
+        .btn-ui {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 14px 26px; border-radius: 8px; font-weight: 700; font-size: 14px;
+            cursor: pointer; border: 1px solid transparent; text-transform: uppercase; letter-spacing: .05em; width: 100%; transition: all 0.15s ease;
+        }
+        .btn-ui-primary { background: var(--turf); color: white; }
+        .btn-ui-primary:hover { background: var(--turf-dark); }
+        .btn-ui-primary:disabled { background: var(--surface-3); color: var(--muted-2); cursor: not-allowed; }
 
-    <nav class="bg-[#0F172A]/80 backdrop-blur-md shadow-lg sticky top-0 z-50 border-b border-slate-800 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
-            <a href="{{ route('landingPage') }}" class="flex items-center space-x-3 group">
-                <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-14 w-auto object-contain transform group-hover:rotate-6 transition duration-300">
-                <div class="flex flex-col">
-                    <span class="text-xl font-black text-white tracking-wider leading-none">FUTSAL</span>
-                    <span class="text-[10px] font-bold text-[#E25E20] tracking-widest uppercase mt-0.5">Mare</span>
-                </div>
+        .hero-brutal-media {
+            height: 200px; border-radius: 8px; position: relative; overflow: hidden;
+            background: repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(238,241,234,.05) 40px, rgba(238,241,234,.05) 42px), linear-gradient(160deg, var(--turf-dark), #0f3320);
+            border: 1px solid rgba(238,241,234,0.08); margin: 16px 0;
+        }
+        .hero-brutal-media img { width: 100%; height: 100%; object-fit: cover; }
+        .hero-brutal-media::after { content: ""; position: absolute; inset: 10px; border: 2px solid rgba(238,241,234,.25); border-radius: 4px; pointer-events: none; }
+    </style>
+</head>
+<body class="antialiased min-h-screen">
+
+    <!-- HEADER NAVIGATION -->
+    <header style="background: rgba(10, 15, 20, 0.85); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(238,241,234,0.08); position: sticky; top: 0; z-index: 50;">
+        <div style="max-width: 1180px; margin: 0 auto; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;">
+            <a href="{{ route('landingPage') }}" style="display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 22px; color: white;">
+                <span style="width: 10px; height: 10px; background: var(--turf); border-radius: 2px; transform: rotate(45deg);"></span>FUTSAL MARE
             </a>
-            <a href="{{ route('landingPage') }}" class="text-xs font-black text-slate-400 hover:text-white uppercase tracking-wider flex items-center gap-1 transition">
-                &larr; Kembali ke Beranda
+            <a href="{{ route('landingPage') }}" style="font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 700;">
+                &larr; Kembali
             </a>
         </div>
-    </nav>
+    </header>
 
-    <main class="max-w-6xl mx-auto px-4 py-12">
-        <div class="bg-[#152238] rounded-3xl shadow-2xl border border-slate-800 overflow-hidden grid grid-cols-1 lg:grid-cols-12">
+    <!-- CORE PANEL CONTAINER -->
+    <main style="max-width: 1180px; margin: 0 auto; padding: 40px 24px;">
+        <div style="background: var(--surface); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: var(--radius); overflow: hidden; display: grid; grid-template-columns: 1fr 1.3fr;" class="grid-cols-1 md:grid-cols-2">
             
-            <div class="lg:col-span-5 bg-gradient-to-br from-[#0F172A] via-[#111C2C] to-[#080D16] text-white p-8 flex flex-col justify-between relative overflow-hidden min-h-[400px] lg:min-h-none border-b lg:border-b-0 lg:border-r border-slate-800">
-                <div class="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:2rem_2rem]"></div>
-                
-                <div class="relative z-10 space-y-6">
-                    <div>
-                        <span class="px-3 py-1.5 bg-[#E25E20] text-white text-[9px] font-black rounded-xl shadow-md tracking-widest uppercase">
-                            Tipe: {{ $lapangan->jenis_rumput ?? 'Sintetis' }}
-                        </span>
-                        <h2 class="text-3xl font-black mt-4 tracking-tight leading-tight uppercase">{{ $lapangan->nama_lapangan }}</h2>
-                        <p class="text-slate-400 text-xs font-medium mt-2 leading-relaxed">
-                            Dilengkapi papan skor digital, sistem pencahayaan lampu LED malam hari yang terang, serta sirkulasi udara optimal standar turnamen fiksasi.
-                        </p>
-                    </div>
+            <!-- LEFT PANEL: INFORMATION & BRAND SUMMARY -->
+            <div style="padding: 32px; border-right: 1px solid rgba(238, 241, 234, 0.08); display: flex; flex-direction: column; justify-content: space-between;" class="border-b md:border-b-0">
+                <div style="margin-bottom: 24px;">
+                    <span style="font-family: var(--mono); font-size: 11px; color: var(--turf); font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 8px;">
+                        Permukaan: {{ $lapangan->jenis_rumput ?? 'Sintetis' }}
+                    </span>
+                    <h2 style="font-size: 32px; color: white; line-height: 1;">{{ $lapangan->nama_lapangan }}</h2>
+                    <p style="color: var(--muted); font-size: 13px; font-weight: 500; margin-top: 12px; line-height: 1.6;">
+                        Sistem manajemen jadwal murni fiksasi. Dilengkapi dengan papan skor digital premium serta fiksasi pencahayaan lampu sorot LED terarah bebas silau malam hari.
+                    </p>
 
-                    <div class="rounded-2xl overflow-hidden aspect-[16/10] bg-[#0B131F] border border-slate-800 shadow-xl relative">
+                    <div class="hero-brutal-media">
                         @if($lapangan->foto_lapangan)
                             @if(file_exists(public_path('images/lapangan/' . $lapangan->foto_lapangan)))
-                                <img src="{{ asset('images/lapangan/' . $lapangan->foto_lapangan) }}" alt="{{ $lapangan->nama_lapangan }}" class="w-full h-full object-cover opacity-95">
+                                <img src="{{ asset('images/lapangan/' . $lapangan->foto_lapangan) }}" alt="{{ $lapangan->nama_lapangan }}">
                             @else
-                                <img src="{{ asset('images/' . $lapangan->foto_lapangan) }}" alt="{{ $lapangan->nama_lapangan }}" class="w-full h-full object-cover opacity-95">
+                                <img src="{{ asset('images/' . $lapangan->foto_lapangan) }}" alt="{{ $lapangan->nama_lapangan }}">
                             @endif
-                        @else
-                            <div class="w-full h-full flex items-center justify-center text-slate-600 text-xs font-black uppercase tracking-widest">No Image</div>
                         @endif
                     </div>
 
-                    <div class="bg-[#0B131F] rounded-xl p-4 border border-slate-800/80 space-y-2 text-[11px] text-slate-400">
-                        <p class="font-black text-[#E25E20] uppercase tracking-wider">💡 Info Tarif Fleksibel (Dynamic Pricing):</p>
-                        <p class="flex justify-between border-b border-slate-800/50 pb-1"><span>• Jam Sibuk (16:00 - 21:00)</span> <span class="text-slate-300 font-bold">+Rp 50.000 / Jam</span></p>
-                        <p class="flex justify-between"><span>• Akhir Pekan (Sabtu & Minggu)</span> <span class="text-slate-300 font-bold">+Rp 20.000 / Jam</span></p>
+                    <div style="background: var(--ink); border: 1px solid rgba(238,241,234,0.06); border-radius: 8px; padding: 16px; margin-top: 16px; font-size: 12px; color: var(--muted); font-weight: 500;">
+                        <span style="color: var(--turf); font-family: var(--mono); font-weight: 700; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.02em;">💡 INFO TARIF FLEKSIBEL:</span>
+                        <div style="display: flex; justify-content: space-between; padding-bottom: 4px; margin-bottom: 4px; border-bottom: 1px dashed rgba(238,241,234,0.08);">
+                            <span>Peak Hour (16:00 - 22:00)</span><b>+Rp 50.000 / Jam</b>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Akhir Pekan (Sabtu & Minggu)</span><b>+Rp 20.000 / Jam</b>
+                        </div>
                     </div>
                 </div>
 
-                <div class="pt-6 border-t border-slate-800 mt-8 relative z-10 flex justify-between items-end">
+                <div style="padding-top: 20px; border-top: 1px dashed rgba(238,241,234,0.1); display: flex; justify-content: space-between; align-items: flex-end;">
                     <div>
-                        <p class="text-[9px] text-slate-500 font-black uppercase tracking-wider">Tarif Sewa Base</p>
-                        <p class="text-3xl font-black text-[#E25E20] mt-0.5">
-                            Rp {{ number_format($lapangan->harga_per_jam, 0, ',', '.') }}<span class="text-xs text-slate-500 font-normal"> / Jam</span>
-                        </p>
+                        <span style="font-family: var(--mono); font-size: 11px; color: var(--muted-2); text-transform: uppercase;">Tarif Base</span>
+                        <div style="font-family: var(--mono); font-size: 24px; color: var(--floodlight); font-weight: 700; line-height: 1; margin-top: 4px;">
+                            Rp {{ number_format($lapangan->harga_per_jam, 0, ',', '.') }}<span style="font-size: 12px; color: var(--muted); font-family: 'Work Sans'; font-weight: 500;">/jam</span>
+                        </div>
                     </div>
-                    <div class="text-right">
-                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-black bg-emerald-950/60 text-emerald-400 border border-emerald-900/40 uppercase tracking-wider">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Arena Aktif
-                        </span>
-                    </div>
+                    <span style="font-family: var(--mono); font-size: 11px; background: rgba(47,158,88,.15); color: #2f9e58; padding: 4px 10px; border-radius: 20px; font-weight: 700;">● STADIUM ACTIVE</span>
                 </div>
             </div>
 
-            <form id="form_reservasi" action="{{ route('reservasi.store') }}" method="POST" class="lg:col-span-7 p-8 sm:p-10 space-y-6 relative max-h-[85vh] overflow-y-auto custom-scrollbar bg-[#152238]">
+            <!-- RIGHT PANEL: FORM RESERVASI -->
+            <form id="form_reservasi" action="{{ route('reservasi.store') }}" method="POST" style="padding: 32px; display: flex; flex-direction: column; gap: 24px;">
                 @csrf
                 <input type="hidden" name="lapangan_id" value="{{ $lapangan->id }}">
 
+                <!-- step 1: tanggal main -->
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">1. Tentukan Tanggal Main</label>
-                    <input type="date" id="input_tanggal" name="tanggal_main" value="{{ $tanggal_pilihan }}" min="{{ date('Y-m-d') }}"
-                        class="w-full rounded-xl bg-[#0B131F] border-slate-800 text-white text-sm font-semibold focus:border-[#E25E20] focus:ring-[#E25E20] transition p-3.5 shadow-inner"
-                        onchange="gantiTanggal(this.value)">
+                    <label class="label-title">1. Tentukan Tanggal Pertandingan</label>
+                    <input type="date" id="input_tanggal" name="tanggal_main" value="{{ $tanggal_pilihan }}" min="{{ date('Y-m-d') }}" onchange="gantiTanggal(this.value)">
                 </div>
 
+                <!-- step 2: slot jam tanding (Sempurna dengan Peer-Checked Oranye) -->
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">2. Pilih Jam Mulai Tanding</label>
-                    <div class="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+                    <label class="label-title">2. Pilih Jam Mulai Tanding (Slot Waktu WITA)</label>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px;">
                         @php $hasChecked = false; @endphp
                         @for ($jam = 8; $jam <= 21; $jam++)
                             @php
@@ -98,15 +136,16 @@
                                 $shouldCheck = (!$isBooked && !$hasChecked);
                                 if ($shouldCheck) { $hasChecked = true; }
                             @endphp
-                            <label class="relative">
-                                <input type="radio" name="jam_mulai" value="{{ $jam }}" class="peer sr-only" 
-                                    {{ $isBooked ? 'disabled' : '' }} 
-                                    onchange="hitungTotal()" 
-                                    {{ $shouldCheck ? 'checked' : '' }}>
-                                <div class="w-full text-center py-3.5 rounded-xl border text-xs font-black tracking-wide transition cursor-pointer select-none
-                                    {{ $isBooked 
-                                        ? 'bg-[#0B131F]/40 border-slate-800 text-slate-600 cursor-not-allowed line-through' 
-                                        : 'bg-[#0B131F] border-slate-800 text-slate-300 hover:border-slate-600 peer-checked:bg-[#E25E20] peer-checked:text-white peer-checked:border-transparent peer-checked:shadow-lg peer-checked:shadow-orange-950/50' }}">
+                            <label style="position: relative; cursor: pointer;">
+                                <!-- Menggunakan class sr-only Tailwind agar input bawaan hilang dan peer-checked berfungsi presisi -->
+                                <input type="radio" name="jam_mulai" value="{{ $jam }}" class="peer sr-only"
+                                    {{ $isBooked ? 'disabled' : '' }} onchange="hitungTotal()" {{ $shouldCheck ? 'checked' : '' }}>
+                                
+                                <!-- Div komponen visual utama, akan otomatis berubah oranye saat radio di-check oleh user -->
+                                <div class="w-full text-center py-3 rounded-md font-mono text-xs font-bold border transition-all duration-150 select-none
+                                    peer-disabled:bg-[#0B131F]/30 peer-disabled:border-slate-800 peer-disabled:text-slate-600 peer-disabled:cursor-not-allowed peer-disabled:line-through
+                                    peer-checked:bg-[#e25e20] peer-checked:text-white peer-checked:border-transparent peer-checked:scale-105 peer-checked:shadow-lg
+                                    bg-[#212d3c] border-transparent text-slate-300 hover:border-slate-600">
                                     {{ $jam_format }}
                                 </div>
                             </label>
@@ -114,48 +153,42 @@
                     </div>
                 </div>
 
+                <!-- step 3: durasi -->
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">3. Durasi Bermain</label>
-                    <select name="durasi" id="input_durasi" onchange="hitungTotal()"
-                        class="w-full rounded-xl bg-[#0B131F] border-slate-800 text-white text-sm font-semibold focus:border-[#E25E20] focus:ring-[#E25E20] transition p-3.5 shadow-inner">
-                        <option value="1">1 Jam Sewa</option>
-                        <option value="2" selected>2 Jam Main (Sangat Direkomendasikan)</option>
-                        <option value="3">3 Jam Sewa</option>
+                    <label class="label-title">3. Durasi Pemakaian Lapangan</label>
+                    <select name="durasi" id="input_durasi" onchange="hitungTotal()">
+                        <option value="1">1 Jam Sewa Match</option>
+                        <option value="2" selected>2 Jam Sewa Match (Sangat Direkomendasikan)</option>
+                        <option value="3">3 Jam Sewa Match</option>
                     </select>
                 </div>
 
-                <div class="bg-blue-950/40 border border-blue-900/40 rounded-2xl p-4 flex items-start gap-3">
-                    <span class="text-blue-400 mt-0.5">🔒</span>
-                    <div class="text-[11px] text-blue-400 leading-relaxed font-medium">
-                        <p class="font-black uppercase tracking-wider mb-0.5">Payment Gateway Aktif</p>
-                        Pembayaran aman via Midtrans. Mendukung otomatisasi QRIS (Gopay/Dana/OVO), Virtual Account Bank, dan Paylater tanpa perlu konfirmasi manual.
+                <!-- midtrans gateway banner -->
+                <div style="background: rgba(245, 197, 24, 0.05); border: 1px solid rgba(245, 197, 24, 0.15); border-radius: 8px; padding: 14px; display: flex; gap: 12px; align-items: flex-start; font-size: 12px; color: var(--floodlight); font-weight: 500;">
+                    <span style="font-size: 14px; line-height: 1;">🔒</span>
+                    <div>
+                        <b style="text-transform: uppercase; font-family: var(--mono); letter-spacing: 0.05em; display: block; margin-bottom: 2px;">Automated Gateway Active</b>
+                        Penyelesaian transaksi fiksasi aman terenkripsi via Midtrans. Mendukung QRIS instan, Virtual Account Bank otomatis, tanpa verifikasi slip manual.
                     </div>
                 </div>
 
-                <div class="bg-[#0B131F] rounded-2xl border border-slate-800 p-5 space-y-2.5">
-                    <div class="flex justify-between items-center text-xs font-bold text-slate-500">
-                        <span>Harga Lapangan / Jam (Base)</span>
-                        <span class="text-slate-300">Rp {{ number_format($lapangan->harga_per_jam, 0, ',', '.') }}</span>
+                <!-- total price checkout widget -->
+                <div style="background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.06); border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                    <div>
+                        <span style="font-size: 12px; color: var(--muted); font-weight: 600; display: block;">Estimasi Total Tagihan</span>
+                        <span id="rincian_surcharge" style="font-family: var(--mono); font-size: 10px; color: var(--muted-2); display: block; margin-top: 2px; font-weight: 700; text-transform: uppercase;"></span>
                     </div>
-                    <div class="w-full h-px bg-slate-800 my-1"></div>
-                    <div class="flex justify-between items-center">
-                        <div class="flex flex-col">
-                            <span class="text-xs font-black text-white uppercase tracking-wider">Estimasi Total Bayar</span>
-                            <span class="text-[9px] text-slate-500 font-bold font-mono tracking-wide" id="rincian_surcharge"></span>
-                        </div>
-                        <span class="text-xl font-black text-[#22C55E]" id="live_total_harga">Rp 0</span>
-                    </div>
+                    <span id="live_total_harga" style="font-family: var(--mono); font-size: 26px; color: var(--floodlight); font-weight: 700;">Rp 0</span>
                 </div>
 
-                <div class="pt-2">
-                    <button type="submit" id="btn_submit" class="w-full py-4 bg-[#0B131F] border border-slate-800 hover:border-transparent hover:bg-[#E25E20] text-white rounded-xl font-black text-xs tracking-widest uppercase transition-all duration-300 shadow-md">
-                        Kunci Jadwal Arena &rarr;
-                    </button>
-                </div>
+                <button type="submit" id="btn_submit" class="btn-ui btn-ui-primary">
+                    Kunci Jadwal Arena &rarr;
+                </button>
             </form>
         </div>
     </main>
 
+    <!-- CALCULATION & INTERACTIVE INTEGRATION ENGINE SCRIPT -->
     <script>
         const hargaPerJam = {{ $lapangan->harga_per_jam }};
 
@@ -174,7 +207,7 @@
             let infoSurcharge = [];
 
             if (!startHour) {
-                document.getElementById('live_total_harga').innerText = "Pilih jam dahulu";
+                document.getElementById('live_total_harga').innerText = "Slot Kosong";
                 document.getElementById('rincian_surcharge').innerText = "";
                 return;
             }
@@ -196,8 +229,8 @@
                 total += hargaSlot;
             }
 
-            if (isWeekend) infoSurcharge.push("Biaya Weekend (+Rp20k/jam)");
-            if (startHour >= 16 || (startHour + durasi) > 16) infoSurcharge.push("Biaya Peak Hour (+Rp50k/jam)");
+            if (isWeekend) infoSurcharge.push("Weekend Rate");
+            if (startHour >= 16 || (startHour + durasi) > 16) infoSurcharge.push("Peak Rate");
 
             document.getElementById('live_total_harga').innerText = "Rp " + total.toLocaleString('id-ID');
             document.getElementById('rincian_surcharge').innerText = infoSurcharge.join(' | ');
@@ -207,7 +240,7 @@
             hitungTotal();
         });
 
-        // AJAX ASYNC SUBMIT HANDLING
+        // ASYNC FORM SUBMISSION CONTROL INTERPOLATION
         document.getElementById('form_reservasi').addEventListener('submit', function(e) {
             e.preventDefault(); 
             
@@ -219,7 +252,7 @@
             
             const btnSubmit = document.getElementById('btn_submit');
             btnSubmit.disabled = true;
-            btnSubmit.innerText = "MEMPROSES KONTRAK...";
+            btnSubmit.innerText = "MEMPROSES KONTRAK SLOT...";
 
             const formData = new FormData(this);
 
@@ -237,37 +270,31 @@
                 const data = isJson ? await response.json() : null;
 
                 if (!response.ok) {
-                    throw new Error(data?.message || `Terjadi kendala server (Status: ${response.status})`);
+                    throw new Error(data?.message || `Kendala Koneksi Server (Status: ${response.status})`);
                 }
                 return data;
             })
             .then(data => {
                 if (data.success) {
                     window.snap.pay(data.snap_token, {
-                        onSuccess: function(result) {
-                            window.location.href = data.redirect;
-                        },
-                        onPending: function(result) {
-                            window.location.href = data.redirect;
-                        },
+                        onSuccess: function(result) { window.location.href = data.redirect; },
+                        onPending: function(result) { window.location.href = data.redirect; },
                         onError: function(result) {
-                            alert("Proses transaksi dihentikan atau gagal dikirim.");
+                            alert("Proses transaksi pembayaran dihentikan sistem.");
                             btnSubmit.disabled = false;
-                            btnSubmit.innerHTML = "Kunci Jadwal Arena &rarr;";
+                            btnSubmit.innerText = "Kunci Jadwal Arena &rarr;";
                         },
-                        onClose: function() {
-                            window.location.href = data.redirect;
-                        }
+                        onClose: function() { window.location.href = data.redirect; }
                     });
                 } else {
-                    alert("Gagal mengamankan slot: " + data.message);
+                    alert("Gagal mengamankan alokasi slot: " + data.message);
                     btnSubmit.disabled = false;
-                    btnSubmit.innerHTML = "Kunci Jadwal Arena &rarr;";
+                    btnSubmit.innerText = "Kunci Jadwal Arena &rarr;";
                 }
             })
             .catch(error => {
                 btnSubmit.disabled = false;
-                btnSubmit.innerHTML = "Kunci Jadwal Arena &rarr;";
+                btnSubmit.innerText = "Kunci Jadwal Arena &rarr;";
                 alert(error.message);
             });
         });
