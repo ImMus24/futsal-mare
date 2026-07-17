@@ -3,298 +3,300 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Booking {{ $lapangan->nama_lapangan }} - Futsal Mare</title>
+    <title>Tambah Lapangan - Futsal Mare Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
-    <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
     <style>
         :root {
             --ink: #0a0f14;
             --surface: #121a23;
+            --surface-2: #1a2431;
             --surface-3: #212d3c;
             --turf: #e25e20;
             --turf-dark: #cb5119;
+            --turf-glow: rgba(226, 94, 32, 0.25);
             --floodlight: #f5c518;
-            --floodlight-dim: rgba(245, 197, 24, 0.15);
             --line: #eef1ea;
             --muted: #8b97a6;
             --muted-2: #5c6979;
+            --danger: #e2574c;
+            --success: #2f9e58;
             --radius: 14px;
             --display: 'Anton', sans-serif;
+            --body: 'Work Sans', sans-serif;
             --mono: 'JetBrains Mono', monospace;
         }
-        body { background: var(--ink); color: var(--line); font-family: 'Work Sans', sans-serif; }
-        h1, h2, h3 { font-family: var(--display); text-transform: uppercase; }
-        input[type="date"], select {
-            width: 100%; background: var(--surface-3); border: 1px solid rgba(238, 241, 234, 0.12); color: var(--line);
-            padding: 14px; border-radius: 8px; font-size: 14px; font-weight: 600;
+
+        * { box-sizing: border-box; }
+
+        body {
+            background: var(--ink);
+            color: var(--line);
+            font-family: var(--body);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
         }
-        input[type="date"]:focus, select:focus { border-color: var(--turf); outline: none; }
-        .label-title { font-size: 11px; color: var(--muted); display: block; margin-bottom: 8px; font-family: var(--mono); text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
-        
+
+        h1, h2, h3 {
+            font-family: var(--display);
+            font-weight: 400;
+            letter-spacing: .01em;
+            text-transform: uppercase;
+        }
+
+        a { color: inherit; }
+        :focus-visible { outline: 2px solid var(--floodlight); outline-offset: 2px; }
+
+        .eyebrow {
+            font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+            color: var(--turf); display: flex; align-items: center; gap: 8px; font-weight: 600;
+        }
+        .eyebrow::before { content: ""; width: 14px; height: 2px; background: var(--turf); display: inline-block; }
+
+        .breadcrumb { font-family: var(--mono); font-size: 12px; color: var(--muted-2); margin-bottom: 20px; }
+        .breadcrumb a:hover { color: var(--line); }
+
+        .field-group { margin-bottom: 22px; }
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 640px) { .field-row { grid-template-columns: 1fr; } }
+
+        .label-brutal {
+            font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 4px;
+            margin-bottom: 8px; font-family: var(--mono); text-transform: uppercase; letter-spacing: .05em; font-weight: 700;
+        }
+        .label-brutal .req { color: var(--danger); }
+        .label-hint { font-size: 11px; color: var(--muted-2); margin-top: 6px; font-family: var(--body); font-weight: 400; }
+
+        .input-brutal, .textarea-brutal, select.input-brutal {
+            width: 100%; background: var(--surface-3); border: 1px solid rgba(238, 241, 234, 0.12); color: var(--line);
+            padding: 13px 14px; border-radius: 8px; font-family: var(--body); font-size: 14px; font-weight: 600;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+        .input-brutal::placeholder, .textarea-brutal::placeholder { color: var(--muted-2); font-weight: 400; }
+        .input-brutal:focus, .textarea-brutal:focus { border-color: var(--turf); outline: none; box-shadow: 0 0 0 3px var(--turf-glow); }
+        .input-brutal.input-error, .textarea-brutal.input-error { border-color: var(--danger); }
+        .textarea-brutal { resize: vertical; min-height: 100px; }
+
+        .price-wrap { position: relative; }
+        .price-wrap .prefix {
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            font-family: var(--mono); font-size: 13px; color: var(--muted); pointer-events: none;
+        }
+        .price-wrap input { padding-left: 40px; }
+
+        .field-error {
+            font-size: 11px; color: var(--danger); margin-top: 6px; font-family: var(--mono);
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        .section-divider {
+            border: none; border-top: 1px solid rgba(238, 241, 234, 0.08); margin: 28px 0;
+        }
+        .section-label { font-family: var(--mono); font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 16px; }
+
+        .upload-box {
+            border: 2px dashed rgba(238, 241, 234, .18); border-radius: 10px; padding: 20px; text-align: center;
+            cursor: pointer; transition: border-color .15s ease; position: relative;
+        }
+        .upload-box:hover, .upload-box.drag { border-color: var(--turf); }
+        .upload-box input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+        .upload-box .ic { font-size: 20px; color: var(--turf); margin-bottom: 6px; }
+        .upload-box .txt { font-size: 13px; color: var(--muted); }
+        .upload-box .txt b { color: var(--line); }
+        .upload-box .hint { font-size: 11px; color: var(--muted-2); margin-top: 4px; }
+        #preview-wrap { display: none; margin-top: 14px; align-items: center; gap: 14px; }
+        #preview-wrap.show { display: flex; }
+        #preview-img {
+            width: 88px; height: 88px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(238, 241, 234, .12);
+        }
+        #preview-name { font-size: 12px; color: var(--muted); word-break: break-all; }
+        #preview-remove { font-size: 11px; color: var(--danger); font-family: var(--mono); cursor: pointer; margin-top: 6px; display: inline-block; }
+
+        .counter { font-size: 11px; color: var(--muted-2); font-family: var(--mono); text-align: right; margin-top: 6px; }
+
+        .alert { padding: 16px; border-radius: 10px; font-size: 13px; font-weight: 500; margin-bottom: 20px; }
+        .alert-danger { background: rgba(226, 87, 76, 0.12); border: 1px solid rgba(226, 87, 76, 0.3); color: var(--danger); }
+        .alert-success { background: rgba(47, 158, 88, 0.12); border: 1px solid rgba(47, 158, 88, 0.3); color: var(--success); }
+        .alert-title { font-family: var(--mono); text-transform: uppercase; letter-spacing: .05em; font-weight: 700; font-size: 11px; margin-bottom: 8px; }
+        .alert ul { margin: 0; padding-left: 18px; opacity: .9; }
+        .alert li { margin-bottom: 2px; }
+
         .btn-ui {
             display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-            padding: 14px 26px; border-radius: 8px; font-weight: 700; font-size: 14px;
-            cursor: pointer; border: 1px solid transparent; text-transform: uppercase; letter-spacing: .05em; width: 100%; transition: all 0.15s ease;
+            padding: 13px 24px; border-radius: 8px; font-weight: 700; font-size: 13px;
+            cursor: pointer; border: 1px solid transparent; text-transform: uppercase;
+            letter-spacing: .05em; transition: background .15s ease, border-color .15s ease, transform .15s ease;
+            font-family: var(--body);
         }
+        .btn-ui:active { transform: scale(.97); }
         .btn-ui-primary { background: var(--turf); color: white; }
         .btn-ui-primary:hover { background: var(--turf-dark); }
-        .btn-ui-primary:disabled { background: var(--surface-3); color: var(--muted-2); cursor: not-allowed; }
+        .btn-ui-ghost { background: transparent; border-color: rgba(238, 241, 234, 0.2); color: var(--line); font-family: var(--mono); font-size: 11px; padding: 10px 16px; }
+        .btn-ui-ghost:hover { border-color: var(--line); background: var(--surface-3); }
 
-        .hero-brutal-media {
-            height: 200px; border-radius: 8px; position: relative; overflow: hidden;
-            background: repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(238,241,234,.05) 40px, rgba(238,241,234,.05) 42px), linear-gradient(160deg, var(--turf-dark), #0f3320);
-            border: 1px solid rgba(238,241,234,0.08); margin: 16px 0;
-        }
-        .hero-brutal-media img { width: 100%; height: 100%; object-fit: cover; }
-        .hero-brutal-media::after { content: ""; position: absolute; inset: 10px; border: 2px solid rgba(238,241,234,.25); border-radius: 4px; pointer-events: none; }
+        .form-footer { display: flex; justify-content: flex-end; gap: 12px; padding-top: 8px; }
+        @media (max-width: 480px) { .form-footer { flex-direction: column-reverse; } .form-footer .btn-ui { width: 100%; } }
+
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
     </style>
 </head>
-<body class="antialiased min-h-screen">
+<body class="antialiased">
 
-    <!-- HEADER NAVIGATION -->
-    <header style="background: rgba(10, 15, 20, 0.85); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(238,241,234,0.08); position: sticky; top: 0; z-index: 50;">
-        <div style="max-width: 1180px; margin: 0 auto; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;">
-            <a href="{{ route('landingPage') }}" style="display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 22px; color: white;">
-                <span style="width: 10px; height: 10px; background: var(--turf); border-radius: 2px; transform: rotate(45deg);"></span>FUTSAL MARE
-            </a>
-            <a href="{{ route('landingPage') }}" style="font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 700;">
-                &larr; Kembali
-            </a>
+    <main class="max-w-2xl mx-auto px-4 py-12">
+
+        <div class="breadcrumb">
+            <a href="{{ route('admin.lapangan.index') }}">Dashboard</a> /
+            <a href="{{ route('admin.lapangan.index') }}">Lapangan</a> /
+            <span style="color: var(--line);">Tambah Lapangan</span>
         </div>
-    </header>
 
-    <!-- CORE PANEL CONTAINER -->
-    <main style="max-width: 1180px; margin: 0 auto; padding: 40px 24px;">
-        <div style="background: var(--surface); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: var(--radius); overflow: hidden; display: grid; grid-template-columns: 1fr 1.3fr;" class="grid-cols-1 md:grid-cols-2">
-            
-            <!-- LEFT PANEL: INFORMATION & BRAND SUMMARY -->
-            <div style="padding: 32px; border-right: 1px solid rgba(238, 241, 234, 0.08); display: flex; flex-direction: column; justify-content: space-between;" class="border-b md:border-b-0">
-                <div style="margin-bottom: 24px;">
-                    <span style="font-family: var(--mono); font-size: 11px; color: var(--turf); font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 8px;">
-                        Permukaan: {{ $lapangan->jenis_rumput ?? 'Sintetis' }}
-                    </span>
-                    <h2 style="font-size: 32px; color: white; line-height: 1;">{{ $lapangan->nama_lapangan }}</h2>
-                    <p style="color: var(--muted); font-size: 13px; font-weight: 500; margin-top: 12px; line-height: 1.6;">
-                        Sistem manajemen jadwal murni fiksasi. Dilengkapi dengan papan skor digital premium serta fiksasi pencahayaan lampu sorot LED terarah bebas silau malam hari.
-                    </p>
+        <div style="background: var(--surface); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: var(--radius); overflow: hidden; box-shadow: 0 20px 60px -20px rgba(0,0,0,0.6);">
 
-                    <!-- Graphic Asset Canvas Frame -->
-                    <div class="hero-brutal-media">
-                        @if($lapangan->foto_lapangan)
-                            @if(file_exists(public_path('images/lapangan/' . $lapangan->foto_lapangan)))
-                                <img src="{{ asset('images/lapangan/' . $lapangan->foto_lapangan) }}" alt="{{ $lapangan->nama_lapangan }}">
-                            @else
-                                <img src="{{ asset('images/' . $lapangan->foto_lapangan) }}" alt="{{ $lapangan->nama_lapangan }}">
-                            @endif
-                        @endif
-                    </div>
-
-                    <!-- Dynamic Pricing Blueprint Info Box -->
-                    <div style="background: var(--ink); border: 1px solid rgba(238,241,234,0.06); border-radius: 8px; padding: 16px; margin-top: 16px; font-size: 12px; color: var(--muted); font-weight: 500;">
-                        <span style="color: var(--turf); font-family: var(--mono); font-weight: 700; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.02em;">💡 INFO TARIF FLEKSIBEL:</span>
-                        <div style="display: flex; justify-content: space-between; padding-bottom: 4px; margin-bottom: 4px; border-bottom: 1px dashed rgba(238,241,234,0.08);">
-                            <span>Peak Hour (16:00 - 22:00)</span><b>+Rp 50.000 / Jam</b>
-                        </div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>Akhir Pekan (Sabtu & Minggu)</span><b>+Rp 20.000 / Jam</b>
-                        </div>
-                    </div>
+            <!-- HEADER -->
+            <div style="padding: 22px 24px; border-bottom: 1px solid rgba(238, 241, 234, 0.08); background: rgba(15, 23, 42, 0.2); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <div>
+                    <div class="eyebrow">Data Lapangan</div>
+                    <h2 style="font-size: 18px; color: white; letter-spacing: 0.03em; margin-top: 6px;">Daftarkan Lapangan Baru</h2>
                 </div>
-
-                <div style="padding-top: 20px; border-top: 1px dashed rgba(238,241,234,0.1); display: flex; justify-content: space-between; align-items: flex-end;">
-                    <div>
-                        <span style="font-family: var(--mono); font-size: 11px; color: var(--muted-2); text-transform: uppercase;">Tarif Base</span>
-                        <div style="font-family: var(--mono); font-size: 24px; color: var(--floodlight); font-weight: 700; line-height: 1; margin-top: 4px;">
-                            Rp {{ number_format($lapangan->harga_per_jam, 0, ',', '.') }}<span style="font-size: 12px; color: var(--muted); font-family: 'Work Sans'; font-weight: 500;">/jam</span>
-                        </div>
-                    </div>
-                    <span style="font-family: var(--mono); font-size: 11px; background: rgba(47,158,88,.15); color: #2f9e58; padding: 4px 10px; border-radius: 20px; font-weight: 700;">● STADIUM ACTIVE</span>
-                </div>
+                <a href="{{ route('admin.lapangan.index') }}" class="btn-ui btn-ui-ghost">&larr; Kembali</a>
             </div>
 
-            <!-- RIGHT PANEL: INTERACTIVE CONFIGURATOR ENGINE FORM -->
-            <form id="form_reservasi" action="{{ route('reservasi.store') }}" method="POST" style="padding: 32px; display: flex; flex-direction: column; gap: 24px;">
+            <div style="padding: 24px 24px 0;">
+                @if (session('success'))
+                    <div class="alert alert-success">{{ session('success') }}</div>
+                @endif
+
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <p class="alert-title">Gagal Menyimpan Data</p>
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+            </div>
+
+            <!-- FORM -->
+            <form action="{{ route('admin.lapangan.store') }}" method="POST" enctype="multipart/form-data" style="padding: 24px;" novalidate>
                 @csrf
-                <input type="hidden" name="lapangan_id" value="{{ $lapangan->id }}">
 
-                <!-- step 1: date selection element -->
-                <div>
-                    <label class="label-title">1. Tentukan Tanggal Pertandingan</label>
-                    <input type="date" id="input_tanggal" name="tanggal_main" value="{{ $tanggal_pilihan }}" min="{{ date('Y-m-d') }}" onchange="gantiTanggal(this.value)">
-                </div>
-
-                <!-- step 2: grid radio schedule slots element -->
-                <div>
-                    <label class="label-title">2. Pilih Jam Mulai Tanding (Slot Waktu WITA)</label>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px;">
-                        @php $hasChecked = false; @endphp
-                        @for ($jam = 8; $jam <= 21; $jam++)
-                            @php
-                                $isBooked = in_array($jam, $jam_terpesan);
-                                $jam_format = sprintf('%02d:00', $jam);
-                                $shouldCheck = (!$isBooked && !$hasChecked);
-                                if ($shouldCheck) { $hasChecked = true; }
-                            @endphp
-                            <label style="position: relative; cursor: pointer;">
-                                <input type="radio" name="jam_mulai" value="{{ $jam }}" class="peer" style="position: absolute; opacity: 0; width: 0; height: 0;"
-                                    {{ $isBooked ? 'disabled' : '' }} onchange="hitungTotal()" {{ $shouldCheck ? 'checked' : '' }}>
-                                <div style="padding: 10px 0; text-align: center; border-radius: 6px; background: var(--surface-3); font-family: var(--mono); font-size: 12px; color: var(--muted); font-weight: 700; border: 1px solid transparent; transition: all 0.15s ease;"
-                                    class="peer-disabled:opacity-25 peer-disabled:cursor-not-allowed peer-disabled:line-through peer-checked:bg-[var(--turf)] peer-checked:color-white peer-checked:font-bold hover:border-slate-600">
-                                    {{ $jam_format }}
-                                </div>
-                            </label>
-                        @endfor
-                    </div>
-                </div>
-
-                <!-- step 3: duration configurator element -->
-                <div>
-                    <label class="label-title">3. Durasi Pemakaian Lapangan</label>
-                    <select name="durasi" id="input_durasi" onchange="hitungTotal()">
-                        <option value="1">1 Jam Sewa Match</option>
-                        <option value="2" selected>2 Jam Sewa Match (Sangat Direkomendasikan)</option>
-                        <option value="3">3 Jam Sewa Match</option>
-                    </select>
-                </div>
-
-                <!-- notice secure shield framework banner -->
-                <div style="background: rgba(245, 197, 24, 0.05); border: 1px solid rgba(245, 197, 24, 0.15); border-radius: 8px; padding: 14px; display: flex; gap: 12px; align-items: flex-start; font-size: 12px; color: var(--floodlight); font-weight: 500;">
-                    <span style="font-size: 14px; line-height: 1;">🔒</span>
+                <div class="section-label">Informasi Dasar</div>
+                <div class="field-row field-group">
                     <div>
-                        <b style="text-transform: uppercase; font-family: var(--mono); letter-spacing: 0.05em; display: block; margin-bottom: 2px;">Automated Gateway Active</b>
-                        Penyelesaian transaksi fiksasi aman terenkripsi via Midtrans. Mendukung QRIS instan, Virtual Account Bank otomatis, tanpa verifikasi slip manual.
+                        <label for="nama_lapangan" class="label-brutal">Nama Lapangan <span class="req">*</span></label>
+                        <input id="nama_lapangan" type="text" name="nama_lapangan" value="{{ old('nama_lapangan') }}"
+                               required maxlength="60" placeholder="Contoh: Lapangan Wembley"
+                               class="input-brutal @error('nama_lapangan') input-error @enderror">
+                        @error('nama_lapangan')<p class="field-error">⚠ {{ $message }}</p>@enderror
                     </div>
-                </div>
-
-                <!-- price calculator checkout deck widget -->
-                <div style="background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.06); border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
                     <div>
-                        <span style="font-size: 12px; color: var(--muted); font-weight: 600; display: block;">Estimasi Total Tagihan</span>
-                        <span id="rincian_surcharge" style="font-family: var(--mono); font-size: 10px; color: var(--muted-2); display: block; margin-top: 2px; font-weight: 700; text-transform: uppercase;"></span>
+                        <label for="jenis_rumput" class="label-brutal">Jenis Rumput <span class="req">*</span></label>
+                        <input id="jenis_rumput" type="text" name="jenis_rumput" value="{{ old('jenis_rumput') }}"
+                               required list="jenis-rumput-list" placeholder="Contoh: Sintetis Monofilament"
+                               class="input-brutal @error('jenis_rumput') input-error @enderror">
+                        <datalist id="jenis-rumput-list">
+                            <option value="Sintetis Monofilament">
+                            <option value="Vinyl">
+                            <option value="Interlock">
+                            <option value="Rumput Alami">
+                        </datalist>
+                        @error('jenis_rumput')<p class="field-error">⚠ {{ $message }}</p>@enderror
                     </div>
-                    <span id="live_total_harga" style="font-family: var(--mono); font-size: 26px; color: var(--floodlight); font-weight: 700;">Rp 0</span>
                 </div>
 
-                <button type="submit" id="btn_submit" class="btn-ui btn-ui-primary">
-                    Kunci Jadwal Arena &rarr;
-                </button>
+                <hr class="section-divider">
+
+                <div class="section-label">Harga & Foto</div>
+                <div class="field-group">
+                    <label for="harga_per_jam" class="label-brutal">Harga Per Jam <span class="req">*</span></label>
+                    <div class="price-wrap">
+                        <span class="prefix">Rp</span>
+                        <input id="harga_per_jam" type="number" name="harga_per_jam" value="{{ old('harga_per_jam') }}"
+                               required min="0" step="1000" placeholder="150000"
+                               class="input-brutal @error('harga_per_jam') input-error @enderror">
+                    </div>
+                    <p class="label-hint">Masukkan angka tanpa titik atau simbol, contoh: 150000 untuk Rp150.000.</p>
+                    @error('harga_per_jam')<p class="field-error">⚠ {{ $message }}</p>@enderror
+                </div>
+
+                <div class="field-group">
+                    <label class="label-brutal">Foto Utama Arena <span class="req">*</span></label>
+                    <div class="upload-box" id="upload-box">
+                        <input id="foto" type="file" name="foto" accept="image/png, image/jpeg, image/webp" required>
+                        <div class="ic">⬆</div>
+                        <div class="txt"><b>Klik untuk unggah</b> atau tarik & lepas foto di sini</div>
+                        <div class="hint">JPG, PNG, atau WEBP · maks. 5MB</div>
+                    </div>
+                    <div id="preview-wrap">
+                        <img id="preview-img" src="" alt="Pratinjau foto lapangan">
+                        <div>
+                            <div id="preview-name"></div>
+                            <span id="preview-remove">Hapus foto</span>
+                        </div>
+                    </div>
+                    @error('foto')<p class="field-error">⚠ {{ $message }}</p>@enderror
+                </div>
+
+                <hr class="section-divider">
+
+                <div class="section-label">Deskripsi</div>
+                <div class="field-group" style="margin-bottom: 8px;">
+                    <label for="deskripsi" class="label-brutal">Deskripsi & Fasilitas Lapangan</label>
+                    <textarea id="deskripsi" name="deskripsi" rows="4" maxlength="500"
+                              placeholder="Tuliskan detail kelebihan lapangan atau kelengkapan fasilitas di sini..."
+                              class="textarea-brutal @error('deskripsi') input-error @enderror">{{ old('deskripsi') }}</textarea>
+                    <div class="counter"><span id="desk-count">0</span>/500</div>
+                    @error('deskripsi')<p class="field-error">⚠ {{ $message }}</p>@enderror
+                </div>
+
+                <div class="form-footer">
+                    <a href="{{ route('admin.lapangan.index') }}" class="btn-ui btn-ui-ghost" style="padding: 13px 24px; font-size: 13px;">Batal</a>
+                    <button type="submit" class="btn-ui btn-ui-primary">Simpan Data Lapangan</button>
+                </div>
             </form>
         </div>
     </main>
 
-    <!-- CALCULATION & INTERACTIVE INTEGRATION ENGINE SCRIPT -->
     <script>
-        const hargaPerJam = {{ $lapangan->harga_per_jam }};
+        // Preview foto sebelum upload
+        const fileInput = document.getElementById('foto');
+        const previewWrap = document.getElementById('preview-wrap');
+        const previewImg = document.getElementById('preview-img');
+        const previewName = document.getElementById('preview-name');
+        const previewRemove = document.getElementById('preview-remove');
+        const uploadBox = document.getElementById('upload-box');
 
-        function gantiTanggal(tanggal) {
-            window.location.href = "?tanggal_main=" + tanggal;
-        }
-
-        function hitungTotal() {
-            const inputTanggal = document.getElementById('input_tanggal').value;
-            const selectDurasi = document.getElementById('input_durasi').value;
-            const radioJam = document.querySelector('input[name="jam_mulai"]:checked');
-            
-            let startHour = radioJam ? parseInt(radioJam.value) : null;
-            let durasi = parseInt(selectDurasi);
-            let total = 0;
-            let infoSurcharge = [];
-
-            if (!startHour) {
-                document.getElementById('live_total_harga').innerText = "Slot Kosong";
-                document.getElementById('rincian_surcharge').innerText = "";
-                return;
-            }
-
-            const parts = inputTanggal.split('-');
-            const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
-            const isWeekend = (dateObj.getDay() === 0 || dateObj.getDay() === 6);
-
-            for (let i = 0; i < durasi; i++) {
-                let currentHour = startHour + i;
-                let hargaSlot = hargaPerJam;
-
-                if (currentHour >= 16 && currentHour < 22) {
-                    hargaSlot += 50000;
-                }
-                if (isWeekend) {
-                    hargaSlot += 20000;
-                }
-                total += hargaSlot;
-            }
-
-            if (isWeekend) infoSurcharge.push("Weekend Rate");
-            if (startHour >= 16 || (startHour + durasi) > 16) infoSurcharge.push("Peak Rate");
-
-            document.getElementById('live_total_harga').innerText = "Rp " + total.toLocaleString('id-ID');
-            document.getElementById('rincian_surcharge').innerText = infoSurcharge.join(' | ');
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            hitungTotal();
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+            const url = URL.createObjectURL(file);
+            previewImg.src = url;
+            previewName.textContent = file.name;
+            previewWrap.classList.add('show');
         });
 
-        // ASYNC FORM SUBMISSION CONTROL INTERPOLATION
-        document.getElementById('form_reservasi').addEventListener('submit', function(e) {
-            e.preventDefault(); 
-            
-            const radioJam = document.querySelector('input[name="jam_mulai"]:checked');
-            if (!radioJam) {
-                alert("Silakan tentukan pilihan slot jam main Anda terlebih dahulu!");
-                return;
-            }
-            
-            const btnSubmit = document.getElementById('btn_submit');
-            btnSubmit.disabled = true;
-            btnSubmit.innerText = "MEMPROSES KONTRAK SLOT...";
-
-            const formData = new FormData(this);
-
-            fetch(this.action, {
-                method: "POST",
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
-                }
-            })
-            .then(async response => {
-                const isJson = response.headers.get('content-type')?.includes('application/json');
-                const data = isJson ? await response.json() : null;
-
-                if (!response.ok) {
-                    throw new Error(data?.message || `Kendala Koneksi Server (Status: ${response.status})`);
-                }
-                return data;
-            })
-            .then(data => {
-                if (data.success) {
-                    window.snap.pay(data.snap_token, {
-                        onSuccess: function(result) { window.location.href = data.redirect; },
-                        onPending: function(result) { window.location.href = data.redirect; },
-                        onError: function(result) {
-                            alert("Proses transaksi pembayaran dihentikan sistem.");
-                            btnSubmit.disabled = false;
-                            btnSubmit.innerText = "Kunci Jadwal Arena &rarr;";
-                        },
-                        onClose: function() { window.location.href = data.redirect; }
-                    });
-                } else {
-                    alert("Gagal mengamankan alokasi slot: " + data.message);
-                    btnSubmit.disabled = false;
-                    btnSubmit.innerText = "Kunci Jadwal Arena &rarr;";
-                }
-            })
-            .catch(error => {
-                btnSubmit.disabled = false;
-                btnSubmit.innerText = "Kunci Jadwal Arena &rarr;";
-                alert(error.message);
-            });
+        previewRemove.addEventListener('click', () => {
+            fileInput.value = '';
+            previewWrap.classList.remove('show');
         });
+
+        ['dragenter', 'dragover'].forEach(evt =>
+            uploadBox.addEventListener(evt, (e) => { e.preventDefault(); uploadBox.classList.add('drag'); })
+        );
+        ['dragleave', 'drop'].forEach(evt =>
+            uploadBox.addEventListener(evt, (e) => { e.preventDefault(); uploadBox.classList.remove('drag'); })
+        );
+
+        // Counter deskripsi
+        const desk = document.getElementById('deskripsi');
+        const deskCount = document.getElementById('desk-count');
+        const updateCount = () => deskCount.textContent = desk.value.length;
+        desk.addEventListener('input', updateCount);
+        updateCount();
     </script>
+
 </body>
 </html>
