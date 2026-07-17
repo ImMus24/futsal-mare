@@ -22,6 +22,33 @@ class ReservasiController extends Controller
         return view('welcome', compact('lapangans'));
     }
 
+    /**
+     * 🏟️ NEW METHOD: DETAIL INTERAKTIF LAPANGAN (GOLA BLUEPRINT)
+     * Mengelola parameter data master, kalkulasi kalender, dan isolasi slot waktu terpesan.
+     */
+    public function showLapangan(Request $request, $id)
+    {
+        // 1. Ambil data atau return fiksasi error 404 jika token ID manipulatif
+        $lapangan = Lapangan::findOrFail($id);
+        
+        // 2. Tentukan penanggalan dinamis (default hari ini)
+        $tanggal_pilihan = $request->get('tanggal_main', Carbon::today()->toDateString());
+
+        // 3. Ambil data jam operasional yang terpesan pada tanggal tersebut untuk isolasi status 'off'
+        $jam_terpesan = Reservasi::where('lapangan_id', $id)
+            ->where('tanggal_main', $tanggal_pilihan)
+            ->whereIn('status', ['Waiting Payment', 'Confirmed', 'Completed'])
+            ->get(['jam_mulai', 'jam_selesai'])
+            ->map(function ($booking) {
+                $mulai = (int) substr($booking->jam_mulai, 0, 2);
+                $selesai = (int) substr($booking->jam_selesai, 0, 2);
+                return range($mulai, $selesai - 1);
+            })->flatten()->toArray();
+
+        // 4. Kirim data ke view detail dengan data ringkas kompensasi
+        return view('admin.lapangan.detail', compact('lapangan', 'tanggal_pilihan', 'jam_terpesan'));
+    }
+
     // Menampilkan Form Booking & Cek Ketersediaan Slot Jam
     public function create(Request $request, $id)
     {
@@ -218,22 +245,17 @@ class ReservasiController extends Controller
         return view('dashboard', compact('reservasis'));
     }
 
-    /**
-     * ❌ PERBAIKAN TOTAL: PEMBATALAN INSTAN DENGAN TOLERANSI KASUS STATUS
-     */
+    // PEMBATALAN INSTAN DENGAN TOLERANSI KASUS STATUS
     public function batalkanReservasi($id)
     {
-        // Gunakan pencarian fleksibel untuk menghindari error 404 tanpa penjelasan
         $reservasi = Reservasi::where('id', $id)
             ->where('user_id', Auth::id())
             ->first();
 
-        // Validasi 1: Pastikan data ada
         if (!$reservasi) {
             return redirect()->route('dashboard')->with('error', 'Data reservasi tidak ditemukan.');
         }
 
-        // Validasi 2: Cek status secara Case-Insensitive (mengantisipasi 'waiting payment' atau 'Waiting Payment')
         if (strtolower($reservasi->status) !== 'waiting payment') {
             return redirect()->route('dashboard')->with('error', 'Reservasi tidak dapat dibatalkan karena statusnya sudah: ' . $reservasi->status);
         }
@@ -242,7 +264,6 @@ class ReservasiController extends Controller
             $serverKey = config('services.midtrans.server_key');
             $base64Auth = base64_encode($serverKey . ':');
 
-            // Kirim sinyal pembatalan ke API Midtrans
             Http::withHeaders([
                 'Authorization' => 'Basic ' . $base64Auth,
             ])->post("https://api.sandbox.midtrans.com/v2/{$reservasi->nomor_reservasi}/cancel");
@@ -251,13 +272,13 @@ class ReservasiController extends Controller
             Log::warning('Sinyal pembatalan ke Midtrans gagal/terbaca hangus: ' . $e->getMessage());
         }
 
-        // Eksekusi mutasi perubahan status database secara instan
         $reservasi->update([
             'status' => 'Cancelled'
         ]);
         
         return redirect()->route('dashboard')->with('success', 'Jadwal reservasi match Anda telah berhasil dibatalkan.');
     }
+
     // Menghapus riwayat transaksi dari sisi pandang member secara aman
     public function destroy($id)
     {
@@ -290,13 +311,9 @@ class ReservasiController extends Controller
         return redirect()->route('dashboard')->with('success', 'Seluruh riwayat transaksi terpilih berhasil dibersihkan.');
     }
 
-    /**
-     * 🎟️ MENCETAK E-TIKET QR CODE (SVG)
-     * Membuka halaman tiket dan menggenerasi QR Code secara instan.
-     */
+    // MENCETAK E-TIKET QR CODE (SVG)
     public function cetakTiket($id)
     {
-        // Pastikan tiket yang dicetak hanya milik user yang login dan berstatus lunas
         $reservasi = Reservasi::where('id', $id)
             ->where('user_id', Auth::id())
             ->whereIn('status', ['Confirmed', 'Completed'])
@@ -307,7 +324,6 @@ class ReservasiController extends Controller
             mkdir($folder_path, 0755, true);
         }
 
-        // Menggunakan format SVG untuk bypass dependensi ekstensi Imagick PHP yang sering error
         $nama_file = 'qr_' . $reservasi->nomor_reservasi . '.svg';
         $file_path = $folder_path . '/' . $nama_file;
 
@@ -322,5 +338,71 @@ class ReservasiController extends Controller
         }
 
         return view('reservasi.tiket', compact('reservasi'));
+    }
+
+    /**
+     * 📷 REAL-TIME TERMINAL GATE SCANNER CHECK-IN
+     * Memproses verifikasi QR Code E-Tiket dari sisi Staff/Pengawas Lapangan via AJAX.
+     */
+    public function processStaffCheckIn(Request $request)
+    {
+        $request->validate([
+            'nomor_reservasi' => 'required|string',
+        ]);
+
+        try {
+            $reservasi = Reservasi::where('nomor_reservasi', $request->nomor_reservasi)->first();
+
+            if (!$reservasi) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kode QR tidak valid / data reservasi tidak ditemukan!'
+                ], 404);
+            }
+
+            if ($reservasi->status === 'Cancelled') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tiket ditolak! Jadwal match ini telah dibatalkan.'
+                ], 422);
+            }
+
+            if ($reservasi->status === 'Waiting Payment') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tiket ditolak! Tim belum menyelesaikan tagihan transaksi di Midtrans.'
+                ], 422);
+            }
+
+            if ($reservasi->status === 'Completed') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Peringatan! Tiket ini sudah pernah digunakan untuk check-in.'
+                ], 422);
+            }
+
+            if ($reservasi->status === 'Confirmed') {
+                $reservasi->update([
+                    'status' => 'Completed'
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Verifikasi berhasil! Selamat bertanding untuk tim ' . ($reservasi->user->name ?? 'Pelanggan') . '.'
+                ], 200);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi anomali status data: ' . $reservasi->status
+            ], 400);
+
+        } catch (\Exception $e) {
+            Log::error('Gagal memproses Gate Check-In: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kegagalan sistem internal server hq.'
+            ], 500);
+        }
     }
 }
