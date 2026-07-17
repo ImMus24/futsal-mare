@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\Route;
 
 // Landing Page Utama Futsal Mare
 Route::get('/', [ReservasiController::class, 'landingPage'])->name('landingPage');
-
+// 🏟️ Rute Publik Detail Lapangan
+Route::get('/lapangan/{id}', [ReservasiController::class, 'showLapangan'])->name('lapangan.detail');
 
 // ==========================================
 // 🛡️ 1b. PORTAL AUTHENTICATION ADMIN GATEWAY

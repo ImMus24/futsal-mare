@@ -3,22 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tambah Lapangan - Futsal Mare</title>
+    <title>Tambah Lapangan - Futsal Mare Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        :root {
+            --ink: #0a0f14;
+            --surface: #121a23;
+            --surface-2: #1a2431;
+            --surface-3: #212d3c;
+            --turf: #e25e20;
+            --turf-dark: #cb5119;
+            --floodlight: #f5c518;
+            --line: #eef1ea;
+            --muted: #8b97a6;
+            --muted-2: #5c6979;
+            --radius: 14px;
+            --display: 'Anton', sans-serif;
+            --body: 'Work Sans', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+        }
+
+        body {
+            background: var(--ink);
+            color: var(--line);
+            font-family: var(--body);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3 {
+            font-family: var(--display);
+            letter-spacing: .01em;
+            text-transform: uppercase;
+        }
+
+        .input-brutal, .textarea-brutal {
+            width: 100%; background: var(--surface-3); border: 1px solid rgba(238, 241, 234, 0.12); color: var(--line);
+            padding: 14px; border-radius: 8px; font-family: var(--body); font-size: 14px; font-weight: 600; transition: border-color 0.15s ease;
+        }
+        .input-brutal:focus, .textarea-brutal:focus { border-color: var(--turf); outline: none; }
+        
+        .label-brutal {
+            font-size: 11px; color: var(--muted); display: block; margin-bottom: 8px; font-family: var(--mono); text-transform: uppercase; letter-spacing: .05em; font-weight: 700;
+        }
+
+        .btn-ui {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 14px 26px; border-radius: 8px; font-weight: 700; font-size: 14px;
+            cursor: pointer; border: 1px solid transparent; text-transform: uppercase; 
+            letter-spacing: .05em; width: 100%; transition: all 0.15s ease; font-family: var(--body);
+        }
+        .btn-ui-primary { background: var(--turf); color: white; }
+        .btn-ui-primary:hover { background: var(--turf-dark); }
+        .btn-ui-ghost { background: transparent; border-color: rgba(238, 241, 234, 0.2); color: var(--line); width: auto; padding: 8px 14px; font-family: var(--mono); font-size: 11px; }
+        .btn-ui-ghost:hover { border-color: var(--line); background: var(--surface-3); }
+    </style>
 </head>
-<body class="bg-[#0B131F] text-slate-200 font-sans antialiased">
+<body class="antialiased">
+
     <main class="max-w-2xl mx-auto px-4 py-12">
-        <div class="bg-[#152238] rounded-3xl border border-slate-800 shadow-2xl overflow-hidden">
-            <div class="p-6 border-b border-slate-800 bg-[#0F172A]/40 flex justify-between items-center">
-                <h2 class="text-sm font-black uppercase text-white tracking-wider">✨ Daftarkan Lapangan Baru</h2>
-                <a href="{{ route('admin.lapangan.index') }}" class="text-xs text-slate-400 hover:text-white font-bold transition">← Kembali</a>
+        <div style="background: var(--surface); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: var(--radius); overflow: hidden; box-shadow: 0 20px 60px -20px rgba(0,0,0,0.6);">
+            
+            <!-- HEADER CONTAINER BAR -->
+            <div style="padding: 24px; border-bottom: 1px solid rgba(238, 241, 234, 0.08); background: rgba(15, 23, 42, 0.2); display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="font-size: 16px; color: white; letter-spacing: 0.05em;">✨ Daftarkan Lapangan Baru</h2>
+                <a href="{{ route('admin.lapangan.index') }}" class="btn-ui btn-ui-ghost">
+                    &larr; Kembali
+                </a>
             </div>
 
-            <div class="p-6 pb-0">
+            <!-- EXPLICIT ERROR VALIDATION LOG -->
+            <div style="padding: 24px; padding-bottom: 0;">
                 @if ($errors->any())
-                    <div class="p-4 bg-red-950/40 border border-red-900/40 text-red-400 rounded-2xl text-xs font-bold space-y-1 shadow-md animate-fade-in">
-                        <p class="font-black uppercase tracking-wider text-red-300">⚠️ Gagal Menyimpan:</p>
-                        <ul class="list-disc list-inside space-y-0.5 font-medium">
+                    <div style="padding: 16px; background: rgba(226, 87, 76, 0.15); border: 1px solid rgba(226, 87, 76, 0.3); color: #e2574c; border-radius: 12px; font-size: 13px; font-weight: 600;" class="space-y-1">
+                        <p style="font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">⚠️ Gagal Menyimpan Data:</p>
+                        <ul class="list-disc list-inside font-medium" style="opacity: 0.85;">
                             @foreach ($errors->all() as $error)
                                 <li>{{ $error }}</li>
                             @endforeach
@@ -27,40 +88,44 @@
                 @endif
             </div>
 
-            <form action="{{ route('admin.lapangan.store') }}" method="POST" enctype="multipart/form-data" class="p-6 pt-2 space-y-5">
+            <!-- CORE INVENTORY CREATION FORM -->
+            <form action="{{ route('admin.lapangan.store') }}" method="POST" enctype="multipart/form-data" style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
                 @csrf
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div class="space-y-1.5">
-                        <label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Nama Lapangan</label>
-                        <input type="text" name="nama_lapangan" value="{{ old('nama_lapangan') }}" required placeholder="Contoh: Lapangan Wembley" class="w-full bg-[#0B131F] border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#E25E20] transition">
+                    <div>
+                        <label class="label-brutal">Nama Lapangan</label>
+                        <input type="text" name="nama_lapangan" value="{{ old('nama_lapangan') }}" required placeholder="Contoh: Lapangan Wembley" class="input-brutal">
                     </div>
-                    <div class="space-y-1.5">
-                        <label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Jenis Rumput</label>
-                        <input type="text" name="jenis_rumput" value="{{ old('jenis_rumput') }}" required placeholder="Contoh: Sintetis Monofilament" class="w-full bg-[#0B131F] border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#E25E20] transition">
+                    <div>
+                        <label class="label-brutal">Jenis Rumput</label>
+                        <input type="text" name="jenis_rumput" value="{{ old('jenis_rumput') }}" required placeholder="Contoh: Sintetis Monofilament" class="input-brutal">
                     </div>
                 </div>
 
-                <div class="space-y-1.5">
-                    <label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Harga Per Jam (Rp)</label>
-                    <input type="number" name="harga_per_jam" value="{{ old('harga_per_jam') }}" required placeholder="Contoh: 150000" class="w-full bg-[#0B131F] border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#E25E20] transition">
+                <div>
+                    <label class="label-brutal">Harga Per Jam (Rp)</label>
+                    <input type="number" name="harga_per_jam" value="{{ old('harga_per_jam') }}" required placeholder="Contoh: 150000" class="input-brutal">
                 </div>
 
-                <div class="space-y-1.5">
-                    <label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Unggah Foto Utama Arena</label>
-                    <input type="file" name="foto" class="w-full bg-[#0B131F] border border-slate-800 rounded-xl px-4 py-3 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer">
+                <div>
+                    <label class="label-brutal">Unggah Foto Utama Arena</label>
+                    <input type="file" name="foto" required class="input-brutal file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer" style="padding: 10px 14px;">
                 </div>
 
-                <div class="space-y-1.5">
-                    <label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Deskripsi & Fasilitas Lapangan</label>
-                    <textarea name="deskripsi" rows="4" placeholder="Tuliskan detail kelebihan lapangan atau kelengkapan fasilitas disini..." class="w-full bg-[#0B131F] border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#E25E20] transition">{{ old('deskripsi') }}</textarea>
+                <div>
+                    <label class="label-brutal">Deskripsi & Fasilitas Lapangan</label>
+                    <textarea name="deskripsi" rows="4" placeholder="Tuliskan detail kelebihan lapangan atau kelengkapan fasilitas disini..." class="textarea-brutal">{{ old('deskripsi') }}</textarea>
                 </div>
 
-                <button type="submit" class="w-full py-4 bg-[#E25E20] hover:bg-[#cb5119] text-white font-black text-xs rounded-xl tracking-widest uppercase shadow-lg transition">
-                    🚀 Simpan Data Lapangan
-                </button>
+                <div style="padding-top: 8px;">
+                    <button type="submit" class="btn-ui btn-ui-primary">
+                        🚀 Simpan Data Lapangan
+                    </button>
+                </div>
             </form>
         </div>
     </main>
+
 </body>
 </html>
