@@ -3,198 +3,533 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Futsal Mare - Reservasi Lapangan Mudah & Terpercaya Kota Baubau</title>
+    <title>Futsal Mare — Reservasi Lapangan Premium Kota Baubau</title>
+    <meta name="description" content="Sistem reservasi digital lapangan futsal premium di Kota Baubau. Cek slot kosong, booking, dan bayar dalam hitungan detik.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        :root {
+            --ink: #0a0e13;
+            --surface: #131a22;
+            --surface-2: #1a222c;
+            --surface-3: #212a35;
+            --turf: #e2601f;
+            --turf-dark: #b8481a;
+            --turf-glow: rgba(226, 96, 31, 0.22);
+            --floodlight: #f5c518;
+            --floodlight-glow: rgba(245, 197, 24, 0.16);
+            --chalk: #eef1ea;
+            --muted: #8b97a6;
+            --muted-2: #5c6979;
+            --line-soft: rgba(238, 241, 234, 0.08);
+            --line-soft-2: rgba(238, 241, 234, 0.14);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --display: 'Anton', sans-serif;
+            --body: 'Work Sans', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --ease: cubic-bezier(.22,1,.36,1);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+        }
+        body {
+            background: var(--ink);
+            color: var(--chalk);
+            font-family: var(--body);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+        img { display: block; max-width: 100%; }
+        .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+        a { color: inherit; text-decoration: none; }
+
+        ::selection { background: var(--turf); color: var(--ink); }
+
+        :focus-visible {
+            outline: 2px solid var(--floodlight);
+            outline-offset: 3px;
+            border-radius: 4px;
+        }
+
+        .eyebrow {
+            font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+            color: var(--turf); display: flex; align-items: center; gap: 8px; font-weight: 500;
+        }
+        .eyebrow::before { content: ""; width: 16px; height: 2px; background: var(--turf); display: inline-block; }
+        h1, h2, h3 { font-family: var(--display); font-weight: 400; letter-spacing: .01em; text-transform: uppercase; }
+
+        .btn-ui {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 15px 28px; border-radius: 8px; font-weight: 700; font-size: 14px;
+            cursor: pointer; border: 1px solid transparent; transition: transform .18s var(--ease), background .18s ease, border-color .18s ease, box-shadow .18s ease;
+            font-family: var(--body); text-transform: uppercase; letter-spacing: .05em; white-space: nowrap;
+        }
+        .btn-ui:active { transform: scale(.96); }
+        .btn-ui-primary { background: var(--turf); color: white; box-shadow: 0 8px 24px -8px var(--turf-glow); }
+        .btn-ui-primary:hover { background: var(--turf-dark); transform: translateY(-1px); }
+        .btn-ui-ghost { background: transparent; border-color: var(--line-soft-2); color: var(--chalk); }
+        .btn-ui-ghost:hover { border-color: var(--chalk); background: rgba(238,241,234,0.04); }
+        .btn-ui-sm { padding: 10px 18px; font-size: 12px; border-radius: 6px; }
+        .btn-ui-block { width: 100%; }
+
+        /* ---------- HEADER ---------- */
+        header {
+            position: sticky; top: 0; z-index: 50;
+            background: rgba(10, 14, 19, 0.82); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--line-soft);
+        }
+        .nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; }
+        .logo { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 22px; letter-spacing: .03em; color: white; }
+        .logo .dot { width: 10px; height: 10px; background: var(--turf); border-radius: 2px; transform: rotate(45deg); flex-shrink: 0; }
+        .logo .sub { color: var(--muted-2); font-family: var(--body); font-weight: 700; font-size: 11px; margin-left: 2px; letter-spacing: .08em; }
+        .nav-links { display: flex; gap: 30px; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+        .nav-links a { transition: color .15s ease; }
+        .nav-links a:hover { color: var(--chalk); }
+        .nav-actions { display: flex; align-items: center; gap: 10px; }
+        .admin-port { color: var(--muted-2); font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; transition: color .15s ease; }
+        .admin-port:hover { color: var(--floodlight); }
+        @media (max-width: 860px) { .nav-links { display: none; } }
+
+        /* ---------- HERO ---------- */
+        .hero {
+            position: relative; overflow: hidden;
+            background:
+                radial-gradient(ellipse 900px 480px at 88% -8%, var(--turf-glow), transparent 62%),
+                radial-gradient(ellipse 620px 420px at 6% 105%, var(--floodlight-glow), transparent 60%),
+                var(--ink);
+            padding: 76px 0 64px;
+            border-bottom: 1px solid var(--line-soft);
+        }
+        .pitch-lines {
+            position: absolute; inset: 0; z-index: 0; opacity: .5; pointer-events: none;
+        }
+        .hero-grid { position: relative; z-index: 1; display: grid; grid-template-columns: 1.05fr .95fr; gap: 56px; align-items: center; }
+        @media (max-width: 920px) { .hero-grid { grid-template-columns: 1fr; } }
+
+        .hero h1 { font-size: clamp(38px, 5.4vw, 62px); line-height: .96; margin: 18px 0 20px; }
+        .hero h1 span { color: var(--turf); }
+        .hero p.lead { color: var(--muted); font-size: 16px; max-width: 500px; margin-bottom: 32px; font-weight: 500; }
+        .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 44px; }
+        .stat-row { display: flex; gap: 34px; flex-wrap: wrap; }
+        .stat b { display: block; font-family: var(--mono); font-size: 25px; color: var(--floodlight); }
+        .stat span { font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+
+        /* Hero E-Ticket signature widget */
+        .ticket {
+            position: relative; background: var(--surface);
+            border-radius: var(--radius); box-shadow: 0 30px 70px -24px rgba(0,0,0,0.65);
+            border: 1px solid var(--line-soft-2);
+        }
+        .ticket-top { padding: 26px 26px 20px; }
+        .ticket-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+        .ticket-head span.tag { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; }
+        .ticket-head .live { font-family: var(--mono); font-size: 11px; color: var(--turf); display: flex; align-items: center; gap: 6px; font-weight: 700; }
+        .live .pip { width: 7px; height: 7px; border-radius: 50%; background: var(--turf); animation: pulse 1.6s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+
+        .ticket-title { font-family: var(--display); font-size: 26px; color: white; margin-bottom: 4px; }
+        .ticket-sub { font-size: 13px; color: var(--muted); font-weight: 500; margin-bottom: 22px; }
+
+        .ticket-rows { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 4px; }
+        .ticket-rows .cell span.k { display: block; font-family: var(--mono); font-size: 10px; color: var(--muted-2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 5px; }
+        .ticket-rows .cell span.v { font-size: 14px; font-weight: 700; color: var(--chalk); }
+
+        .ticket-perf {
+            position: relative; height: 0; border-top: 1.5px dashed var(--line-soft-2); margin: 22px 0 0;
+        }
+        .ticket-perf::before, .ticket-perf::after {
+            content: ""; position: absolute; top: -10px; width: 20px; height: 20px; background: var(--ink); border-radius: 50%;
+        }
+        .ticket-perf::before { left: -30px; }
+        .ticket-perf::after { right: -30px; }
+
+        .ticket-bottom { padding: 18px 26px 24px; display: flex; justify-content: space-between; align-items: center; }
+        .ticket-barcode { display: flex; gap: 3px; align-items: flex-end; height: 26px; }
+        .ticket-barcode i { display: block; width: 3px; background: var(--muted-2); border-radius: 1px; opacity: .8; }
+        .ticket-id { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .05em; }
+
+        /* ---------- SECTIONS ---------- */
+        section { padding: 92px 0; border-bottom: 1px solid var(--line-soft); }
+        .sec-head { max-width: 600px; margin-bottom: 48px; }
+        .sec-head h2 { font-size: clamp(28px, 3.8vw, 42px); margin-top: 14px; }
+        .sec-head p { color: var(--muted); margin-top: 12px; font-size: 15px; font-weight: 500; }
+
+        .reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s var(--ease), transform .6s var(--ease); }
+        .reveal.is-visible { opacity: 1; transform: translateY(0); }
+
+        /* ---------- COURT CATALOG ---------- */
+        .courts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        @media (max-width: 900px) { .courts-grid { grid-template-columns: 1fr; } }
+
+        .court-card {
+            background: var(--surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line-soft);
+            transition: border-color .25s ease, transform .25s var(--ease), box-shadow .25s ease;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .court-card:hover { border-color: var(--turf); transform: translateY(-5px); box-shadow: 0 18px 40px -20px var(--turf-glow); }
+        .court-media { height: 180px; position: relative; background: #0b131c; overflow: hidden; }
+        .court-media img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s var(--ease); }
+        .court-card:hover .court-media img { transform: scale(1.05); }
+        .court-media .price-tag {
+            position: absolute; bottom: 12px; right: 12px; background: rgba(10,14,19,.9); border: 1px solid var(--turf);
+            color: var(--turf); font-family: var(--mono); font-size: 13px; padding: 5px 12px; border-radius: 6px; font-weight: 700;
+        }
+        .court-media .empty-state {
+            height: 100%; display: flex; align-items: center; justify-content: center; color: var(--muted-2);
+            font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+        }
+        .court-body { padding: 24px; }
+        .court-body h3 { font-family: var(--body); font-weight: 700; font-size: 18px; text-transform: none; margin-bottom: 6px; color: white; }
+        .court-meta { display: flex; gap: 14px; font-size: 11px; color: var(--muted); margin-bottom: 14px; font-family: var(--mono); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+        .court-desc { color: var(--muted); font-size: 13px; margin-bottom: 4px; font-weight: 500; }
+        .court-cta { padding: 0 24px 24px; }
+
+        .empty-catalog {
+            grid-column: 1 / -1; text-align: center; padding: 56px 24px; background: var(--surface);
+            border-radius: var(--radius); color: var(--muted); font-size: 14px; font-weight: 600; border: 1px dashed var(--line-soft-2);
+        }
+        .empty-catalog .glyph { font-size: 28px; margin-bottom: 12px; }
+
+        /* ---------- MEMBERSHIP TIER BENTO ---------- */
+        .tier-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        @media (max-width: 820px) { .tier-grid { grid-template-columns: 1fr; } }
+        .tier-card {
+            background: var(--surface); border-radius: var(--radius); padding: 28px;
+            border: 1px solid var(--line-soft); position: relative; overflow: hidden; transition: border-color .25s ease, transform .25s var(--ease);
+        }
+        .tier-card:hover { transform: translateY(-4px); }
+        .tier-card.is-featured { border-color: var(--turf); }
+        .tier-card.is-featured::before {
+            content: "PALING DIMINATI"; position: absolute; top: 14px; right: -34px; transform: rotate(38deg);
+            background: var(--turf); color: white; font-family: var(--mono); font-size: 9px; font-weight: 700;
+            letter-spacing: .08em; padding: 4px 40px;
+        }
+        .tier-card h3 { font-size: 17px; margin-bottom: 8px; font-family: var(--body); font-weight: 800; text-transform: none; color: white; }
+        .tier-points { font-family: var(--mono); font-size: 12px; color: var(--turf); margin-bottom: 20px; display: block; font-weight: 700; }
+        .tier-card ul { display: flex; flex-direction: column; gap: 12px; }
+        .tier-card li { font-size: 13px; color: var(--muted-2); display: flex; align-items: center; gap: 10px; font-weight: 500; }
+        .tier-card li.active { color: var(--chalk); font-weight: 600; }
+        .tier-card li .mk { flex-shrink: 0; width: 16px; text-align: center; }
+
+        /* ---------- STEPS ---------- */
+        .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; position: relative; }
+        @media (max-width: 820px) { .steps { grid-template-columns: 1fr; } }
+        .step { position: relative; padding-top: 8px; }
+        .step .num {
+            font-family: var(--mono); font-size: 13px; color: var(--floodlight); border: 1px solid var(--floodlight);
+            width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            margin-bottom: 18px; font-weight: 700; background: var(--floodlight-glow);
+        }
+        .step h3 { font-family: var(--body); font-weight: 700; text-transform: none; font-size: 18px; margin-bottom: 8px; color: white; }
+        .step p { color: var(--muted); font-size: 13px; font-weight: 500; }
+
+        /* ---------- CTA BAND ---------- */
+        .cta-band {
+            position: relative; overflow: hidden;
+            background: linear-gradient(120deg, var(--turf-dark), var(--turf));
+            border-radius: var(--radius); padding: 60px 40px; text-align: center;
+        }
+        .cta-band h2 { color: var(--ink); font-size: clamp(26px, 4vw, 40px); position: relative; z-index: 1; }
+        .cta-band p { color: rgba(10,14,19,0.78); margin: 14px 0 28px; font-size: 15px; font-weight: 600; position: relative; z-index: 1; }
+        .cta-band .btn-ui-primary { background: var(--ink); color: white; box-shadow: none; position: relative; z-index: 1; }
+        .cta-band .btn-ui-primary:hover { background: #17232f; }
+
+        /* ---------- FOOTER ---------- */
+        footer { padding: 76px 0 36px; background: #070a0f; }
+        .foot-grid { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 40px; margin-bottom: 48px; }
+        @media (max-width: 820px) { .foot-grid { grid-template-columns: 1fr 1fr; } }
+        .foot-grid h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted-2); margin-bottom: 16px; font-weight: 700; }
+        .foot-grid ul { list-style: none; }
+        .foot-grid li { margin-bottom: 10px; font-size: 13px; color: var(--muted); font-weight: 500; }
+        .foot-grid li a { transition: color .15s ease; }
+        .foot-grid li a:hover { color: var(--chalk); }
+        .foot-bottom { display: flex; justify-content: space-between; padding-top: 24px; border-top: 1px solid var(--line-soft); font-size: 12px; color: var(--muted-2); flex-wrap: wrap; gap: 12px; font-weight: 500; }
+    </style>
 </head>
-<body class="bg-[#0B131F] font-sans antialiased text-slate-200 scroll-smooth">
+<body>
 
-    <!-- NAVIGATION BAR -->
-    <nav class="bg-[#0F172A]/80 backdrop-blur-md shadow-lg sticky top-0 z-50 border-b border-slate-800 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-20 items-center">
-                <a href="{{ route('landingPage') }}" class="flex items-center space-x-3 group">
-                    <div class="relative flex items-center justify-center">
-                        <img src="{{ asset('images/logo.png') }}" alt="Logo Futsal Mare" class="h-14 w-auto object-contain transform group-hover:rotate-6 transition duration-300">
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="text-2xl font-black text-white tracking-wider leading-none group-hover:text-[#E25E20] transition duration-200">FUTSAL</span>
-                        <span class="text-xs font-bold text-[#E25E20] tracking-[0.25em] uppercase mt-0.5">Mare</span>
-                    </div>
-                </a>
-
-                <div class="flex items-center space-x-6">
-                    <!-- 🛡️ PORTAL LOGIN ADMIN (MODERN & PROFESIONAL) -->
-                    <a href="{{ route('admin.login') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl text-[10px] font-black uppercase tracking-wider text-slate-400 hover:text-white transition duration-200 shadow-sm">
-                        🛡️ Portal Admin
-                    </a>
-
-                    @if (Route::has('login'))
-                        @auth
-                            <a href="{{ route('dashboard') }}" class="text-xs font-black uppercase tracking-wider text-slate-300 hover:text-[#E25E20] transition duration-200">
-                                🏟️ Dashboard Member
-                            </a>
-                            <form method="POST" action="{{ route('logout') }}" class="inline">
-                                @csrf
-                                <button type="submit" class="text-xs font-black uppercase tracking-wider text-red-400 hover:text-red-500 transition duration-200">
-                                    Keluar
-                                </button>
-                            </form>
-                        @else
-                            <a href="{{ route('login') }}" class="text-xs font-black uppercase tracking-wider text-slate-300 hover:text-[#E25E20] transition duration-200">Masuk</a>
-                            @if (Route::has('register'))
-                                <a href="{{ route('register') }}" class="relative inline-flex items-center justify-center px-5 py-2.5 bg-[#E25E20] hover:bg-[#cb5119] text-white rounded-xl text-xs font-black shadow-md shadow-orange-950/50 transform hover:-translate-y-0.5 transition duration-200 uppercase tracking-wider">
-                                    Daftar Sekarang
-                                </a>
-                            @endif
-                        @endauth
-                    @endif
-                </div>
-            </div>
-        </div>
+<header>
+  <div class="nav wrap">
+    <div class="logo"><span class="dot"></span>FUTSAL<span class="sub">MARE</span></div>
+    <nav class="nav-links">
+      <a href="#" class="nav-link">Beranda</a>
+      <a href="#lapangan" class="nav-link">Arena</a>
+      <a href="#membership" class="nav-link">Membership</a>
+      <a href="#cara-booking" class="nav-link">Alur Prosedur</a>
     </nav>
+    <div class="nav-actions">
+        <a href="{{ route('admin.login') }}" class="admin-port">🛡️ Admin</a>
 
-    <!-- HERO SECTION -->
-    <header class="relative bg-gradient-to-br from-[#0B131F] via-[#111C2C] to-[#080D16] text-white overflow-hidden py-24 lg:py-32 border-b border-slate-900">
-        <div class="absolute inset-0 pointer-events-none opacity-[0.03] bg-[radial-gradient(#ffffff_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-        <div class="absolute -top-40 -right-40 w-96 h-96 bg-[#E25E20] rounded-full filter blur-[150px] opacity-15 pointer-events-none"></div>
+        @if (Route::has('login'))
+            @auth
+                <a href="{{ route('dashboard') }}" class="btn-ui btn-ui-primary btn-ui-sm">Dashboard Member</a>
+            @else
+                <a href="{{ route('login') }}" class="btn-ui btn-ui-ghost btn-ui-sm">Masuk</a>
+                @if (Route::has('register'))
+                    <a href="{{ route('register') }}" class="btn-ui btn-ui-primary btn-ui-sm">Daftar</a>
+                @endif
+            @endauth
+        @endif
+    </div>
+  </div>
+</header>
 
-        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-                
-                <div class="lg:col-span-7 text-center lg:text-left space-y-6">
-                    <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] font-black bg-slate-800/60 text-[#E25E20] tracking-widest uppercase border border-slate-700/50 backdrop-blur-sm">
-                        <span class="w-2 h-2 rounded-full bg-[#E25E20] animate-pulse"></span>
-                        Sistem Informasi Reservasi Digital Kota Baubau
-                    </span>
-                    <h1 class="text-4xl font-black tracking-tight text-white sm:text-5xl xl:text-6xl leading-[1.15]">
-                        Main Futsal Gak Pake <br>
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#E25E20] to-orange-400">Ribet & Mengantre</span>!
-                    </h1>
-                    <p class="text-base sm:text-lg text-slate-400 max-w-xl mx-auto lg:mx-0 font-medium leading-relaxed">
-                        Pilih arena terbaik kelompokmu, dapatkan kepastian jadwal bertanding secara real-time, dan amankan slot bermain Anda dalam hitungan detik.
-                    </p>
-                    <div class="pt-4">
-                        <a href="#daftar-lapangan" class="inline-flex items-center justify-center px-6 py-4 bg-[#E25E20] hover:bg-[#cb5119] text-white font-black text-xs rounded-xl shadow-lg shadow-orange-950/50 uppercase tracking-widest transition duration-200 transform hover:-translate-y-0.5">
-                            Lihat Jadwal Arena &darr;
-                        </a>
-                    </div>
-                </div>
+<section class="hero">
+  <svg class="pitch-lines" viewBox="0 0 1180 520" preserveAspectRatio="none" aria-hidden="true">
+    <rect x="700" y="40" width="440" height="440" rx="4" fill="none" stroke="#eef1ea" stroke-opacity="0.06" stroke-width="2"/>
+    <circle cx="920" cy="260" r="70" fill="none" stroke="#eef1ea" stroke-opacity="0.06" stroke-width="2"/>
+    <line x1="920" y1="40" x2="920" y2="480" stroke="#eef1ea" stroke-opacity="0.06" stroke-width="2"/>
+    <rect x="700" y="170" width="60" height="180" fill="none" stroke="#eef1ea" stroke-opacity="0.06" stroke-width="2"/>
+    <rect x="1080" y="170" width="60" height="180" fill="none" stroke="#eef1ea" stroke-opacity="0.06" stroke-width="2"/>
+  </svg>
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow">Sistem Informasi Reservasi Digital Kota Baubau</div>
+      <h1>MAIN FUTSAL<br>TANPA <span>RIBET</span> ANTRI</h1>
+      <p class="lead">Cek ketersediaan slot kosong secara real-time, amankan waktu bertanding tim kelompokmu, dan selesaikan pembayaran instan dalam hitungan detik.</p>
+      <div class="hero-cta">
+        <a href="#lapangan" class="btn-ui btn-ui-primary">Booking Arena Sekarang</a>
+        <a href="#membership" class="btn-ui btn-ui-ghost">Pelajari Benefit Member</a>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><b>3</b><span>Lapangan Premium</span></div>
+        <div class="stat"><b>06–24</b><span>Jam Operasional</span></div>
+        <div class="stat"><b>WITA</b><span>Zona Waktu Lokal</span></div>
+      </div>
+    </div>
 
-                <div class="lg:col-span-5 relative flex justify-center">
-                    <div class="relative w-full max-w-md lg:max-w-none aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-800 transform lg:rotate-2 hover:rotate-0 transition duration-500 group">
-                        <div class="absolute inset-0 bg-gradient-to-t from-[#0B131F]/80 via-transparent to-transparent z-10"></div>
-                        <img src="{{ asset('images/hero-futsal.png') }}" alt="Aksi Futsal Profesional" class="w-full h-full object-cover transform group-hover:scale-105 transition duration-700">
-                        <div class="absolute bottom-5 left-5 z-20 bg-[#0F172A]/90 backdrop-blur-sm text-white px-4 py-2 rounded-xl text-[10px] font-black shadow-lg border border-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
-                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                            Arena Berstandar Nasional
-                        </div>
-                    </div>
-                </div>
-
-            </div>
+    <!-- Signature widget: digital e-ticket stub -->
+    <div class="ticket">
+      <div class="ticket-top">
+        <div class="ticket-head">
+          <span class="tag">E-Tiket Pratinjau</span>
+          <div class="live"><span class="pip"></span>Live Monitoring</div>
         </div>
-    </header>
-
-    <!-- METRICS/HIGHLIGHTS SECTION -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 relative z-10">
-        <div class="bg-[#111C2C]/90 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-800 p-6 sm:p-8 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center divide-y sm:divide-y-0 sm:divide-x divide-slate-800">
-            <div class="py-3 sm:py-0">
-                <div class="text-lg font-black text-white uppercase tracking-wider">Standardisasi FIFA</div>
-                <div class="text-xs font-bold text-slate-500 mt-1 uppercase">Kualitas Lapangan Internasional</div>
-            </div>
-            <div class="py-4 sm:py-0">
-                <div class="text-lg font-black text-[#E25E20] uppercase tracking-wider">100% Fleksibel</div>
-                <div class="text-xs font-bold text-slate-500 mt-1 uppercase">Atur Jam Main Sesuai Kebutuhan Tim</div>
-            </div>
-            <div class="py-3 sm:py-0">
-                <div class="text-lg font-black text-white uppercase tracking-wider">Lampu LED Terang</div>
-                <div class="text-xs font-bold text-slate-500 mt-1 uppercase">Pencahayaan Sempurna untuk Main Malam</div>
-            </div>
+        <div class="ticket-title">Malam Ini, Arena Siap.</div>
+        <div class="ticket-sub">Login ke akun member untuk melihat slot kosong &amp; booking langsung.</div>
+        <div class="ticket-rows">
+          <div class="cell"><span class="k">Lapangan</span><span class="v">Rumput Sintetis</span></div>
+          <div class="cell"><span class="k">Pencahayaan</span><span class="v">Full LED Night</span></div>
+          <div class="cell"><span class="k">Durasi</span><span class="v">Per 60 Menit</span></div>
+          <div class="cell"><span class="k">Pembayaran</span><span class="v">Midtrans Gateway</span></div>
         </div>
-    </section>
-
-    <!-- ARENA CATALOG SECTION -->
-    <section class="bg-[#0E1726] border-t border-b border-slate-900 mt-20">
-        <main id="daftar-lapangan" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-            
-            <div class="flex flex-col md:flex-row md:items-end justify-between mb-16 text-center md:text-left">
-                <div>
-                    <h2 class="text-3xl font-black text-white tracking-tight sm:text-4xl uppercase">Pilihan Arena Terbaik di Baubau</h2>
-                    <p class="text-slate-500 mt-2 text-xs font-bold uppercase tracking-wider">Investasikan kenyamanan bermain tim Anda dengan fasilitas lapangan berkelas.</p>
-                </div>
-                <div class="mt-4 md:mt-0">
-                    <span class="inline-flex h-1.5 w-24 bg-gradient-to-r from-[#E25E20] to-orange-400 rounded-full"></span>
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                @foreach ($lapangans as $lapangan)
-                    <div class="group bg-[#152238] rounded-3xl shadow-lg border border-slate-800 overflow-hidden hover:shadow-2xl hover:shadow-orange-950/20 hover:border-slate-700 transform hover:-translate-y-2 transition-all duration-300 flex flex-col justify-between">
-                        <div>
-                            <div class="relative h-56 bg-[#0B131F] overflow-hidden">
-                                @if($lapangan->foto_lapangan)
-                                    @if(file_exists(public_path('images/lapangan/' . $lapangan->foto_lapangan)))
-                                        <img src="{{ asset('images/lapangan/' . $lapangan->foto_lapangan) }}" alt="{{ $lapangan->nama_lapangan }}" class="w-full h-full object-cover transform group-hover:scale-105 transition duration-500 opacity-90 group-hover:opacity-100">
-                                    @else
-                                        <img src="{{ asset('images/' . $lapangan->foto_lapangan) }}" alt="{{ $lapangan->nama_lapangan }}" class="w-full h-full object-cover transform group-hover:scale-105 transition duration-500 opacity-90 group-hover:opacity-100">
-                                    @endif
-                                @else
-                                    <div class="w-full h-full flex items-center justify-center text-slate-600 text-xs font-black uppercase tracking-widest">No Image</div>
-                                @endif
-
-                                <span class="absolute top-4 right-4 px-3 py-1.5 bg-[#E25E20] text-white text-[9px] font-black rounded-xl shadow-md tracking-widest uppercase z-20">
-                                    {{ $lapangan->jenis_rumput }}
-                                </span>
-                            </div>
-
-                            <div class="p-6">
-                                <h3 class="text-lg font-black text-white group-hover:text-[#E25E20] transition duration-200 mb-4 uppercase tracking-tight">
-                                    {{ $lapangan->nama_lapangan }}
-                                </h3>
-
-                                <div class="flex flex-wrap gap-1.5 items-center text-[9px] font-black uppercase text-slate-400 mb-6">
-                                    <span class="bg-[#0B131F] border border-slate-800 px-2.5 py-1 rounded-md">Papan Skor</span>
-                                    <span class="bg-[#0B131F] border border-slate-800 px-2.5 py-1 rounded-md">LED System</span>
-                                    <span class="bg-[#0B131F] border border-slate-800 px-2.5 py-1 rounded-md">Kota Baubau</span>
-                                </div>
-
-                                <div class="pt-4 border-t border-slate-800 flex items-baseline">
-                                    <span class="text-2xl font-black text-[#E25E20] tracking-tight">Rp {{ number_format($lapangan->harga_per_jam, 0, ',', '.') }}</span>
-                                    <span class="text-slate-500 font-bold text-[10px] uppercase ml-1.5 tracking-wider">/ Jam</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="px-6 pb-6">
-                            <a href="{{ route('reservasi.create', $lapangan->id) }}" class="relative block w-full text-center py-4 bg-[#0B131F] border border-slate-800 hover:border-transparent hover:bg-[#E25E20] text-white font-black text-[11px] rounded-xl transition-all duration-300 tracking-widest uppercase shadow-md">
-                                Booking Arena Sekarang
-                            </a>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        </main>
-    </section>
-
-    <!-- FOOTER SECTION -->
-    <footer class="bg-[#070C14] text-slate-500 pt-16 pb-12 border-t-4 border-[#E25E20]">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col items-center justify-center text-center">
-                <div class="flex items-center space-x-2 mb-4">
-                    <span class="text-white text-lg font-black tracking-wider">FUTSAL MARE</span>
-                    <span class="text-[#E25E20] font-black">•</span>
-                    <span class="text-[10px] font-black text-slate-600 tracking-widest uppercase">Sistem Reservasi Digital</span>
-                </div>
-                <p class="text-xs text-slate-500 max-w-md mx-auto mb-8 leading-relaxed font-medium">
-                    Sistem penyewaan lapangan futsal terintegrasi di Kota Baubau. Amankan jadwal tanding tim Anda kapan saja dan di mana saja.
-                </p>
-                <div class="w-full border-t border-slate-900 my-6"></div>
-                <p class="text-[10px] font-mono font-bold text-slate-700 tracking-wider">
-                    &copy; {{ date('Y') }} Futsal Mare. Dikembangkan untuk Proyek Mata Kuliah Web Programming. Seluruh Hak Cipta Dilindungi.
-                </p>
-            </div>
+      </div>
+      <div class="ticket-perf"></div>
+      <div class="ticket-bottom">
+        <div class="ticket-barcode" aria-hidden="true">
+          <i style="height:70%"></i><i style="height:100%"></i><i style="height:50%"></i><i style="height:85%"></i>
+          <i style="height:60%"></i><i style="height:95%"></i><i style="height:40%"></i><i style="height:75%"></i>
+          <i style="height:55%"></i><i style="height:90%"></i><i style="height:65%"></i><i style="height:100%"></i>
         </div>
-    </footer>
+        <span class="ticket-id">FM · BAUBAU</span>
+      </div>
+    </div>
+  </div>
+</section>
 
+<!-- CATALOG ARENA -->
+<section id="lapangan">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Fasilitas Kompleks</div>
+      <h2>Pilihan Arena Terbaik Baubau</h2>
+      <p>Setiap arena memiliki kualifikasi standardisasi tinggi demi menjaga keamanan serta kenyamanan bertanding tim Anda.</p>
+    </div>
+    <div class="courts-grid">
+      @forelse ($lapangans as $lapangan)
+          <div class="court-card reveal">
+            <div>
+                <div class="court-media">
+                    @if($lapangan->foto_lapangan && file_exists(public_path('images/lapangan/' . $lapangan->foto_lapangan)))
+                        <img src="{{ asset('images/lapangan/' . $lapangan->foto_lapangan) }}" alt="{{ $lapangan->nama_lapangan }}">
+                    @elseif($lapangan->foto_lapangan)
+                        <img src="{{ asset('images/' . $lapangan->foto_lapangan) }}" alt="{{ $lapangan->nama_lapangan }}">
+                    @else
+                        <div class="empty-state">Foto Belum Tersedia</div>
+                    @endif
+                    <span class="price-tag">Rp {{ number_format($lapangan->harga_per_jam, 0, ',', '.') }} / Jam</span>
+                </div>
+                <div class="court-body">
+                  <h3>{{ $lapangan->nama_lapangan }}</h3>
+                  <div class="court-meta"><span>🌱 {{ strtoupper($lapangan->jenis_rumput) }}</span><span>·</span><span>LED Light System</span></div>
+                  <p class="court-desc">Dilengkapi scoring board digital, ruang ganti eksklusif, serta pencahayaan LED murni untuk match malam hari.</p>
+                </div>
+            </div>
+            <div class="court-cta">
+                <a href="{{ route('reservasi.create', $lapangan->id) }}" class="btn-ui btn-ui-primary btn-ui-sm btn-ui-block">Amankan Slot Waktu</a>
+            </div>
+          </div>
+      @empty
+          <div class="empty-catalog reveal">
+              <div class="glyph">⚽</div>
+              Saat ini belum ada data katalog lapangan yang terdaftar dalam sistem data master.
+          </div>
+      @endforelse
+    </div>
+  </div>
+</section>
+
+<!-- MEMBERSHIP TIER SYSTEM -->
+<section id="membership">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="eyebrow">Loyalty Program</div>
+        <h2>Sistem Kasta Loyalitas Member</h2>
+        <p>Setiap transaksi pemesanan lapangan sukses bernilai akumulasi murni <span style="color:white; font-family:var(--mono); font-weight:700;">+10 Poin</span>. Tingkatkan kasta akun kelompok Anda!</p>
+      </div>
+      <div class="tier-grid">
+          <div class="tier-card reveal">
+              <h3>🥉 Tier Bronze</h3>
+              <span class="tier-points">0 Poin (Default)</span>
+              <ul>
+                  <li class="active"><span class="mk">✔</span> Akumulasi Poin Aktif</li>
+                  <li><span class="mk">✕</span> Tanpa Potongan Diskon Harga</li>
+                  <li><span class="mk">✕</span> Tanpa Hak Akses Prioritas</li>
+              </ul>
+          </div>
+          <div class="tier-card reveal">
+              <h3>🥈 Tier Silver</h3>
+              <span class="tier-points">100 Loyalty Points</span>
+              <ul>
+                  <li class="active"><span class="mk">✔</span> Akumulasi Poin Aktif</li>
+                  <li class="active" style="color:#2f9e58;"><span class="mk">✔</span> Diskon Otomatis 5% / Match</li>
+                  <li><span class="mk">✕</span> Tanpa Hak Akses Prioritas</li>
+              </ul>
+          </div>
+          <div class="tier-card is-featured reveal">
+              <h3>🏆 Tier Gold</h3>
+              <span class="tier-points" style="color:var(--floodlight)">300 Loyalty Points</span>
+              <ul>
+                  <li class="active"><span class="mk">✔</span> Akumulasi Poin Aktif</li>
+                  <li class="active" style="color:#2f9e58;"><span class="mk">✔</span> Diskon Otomatis 10% / Match</li>
+                  <li class="active" style="color:var(--floodlight);"><span class="mk">⚡</span> Akses Sistem Prioritas Booking 24/7</li>
+              </ul>
+          </div>
+      </div>
+    </div>
+</section>
+
+<!-- ALUR PROSEDUR -->
+<section id="cara-booking">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Alur Prosedur</div>
+      <h2>Pemesanan Selesai Dalam 3 Langkah</h2>
+    </div>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="num">1</div>
+        <h3>Registrasi &amp; Pilih Lapangan</h3>
+        <p>Daftarkan akun tim Anda, kemudian pilih salah satu arena lapangan premium dari papan katalog data master kami.</p>
+      </div>
+      <div class="step reveal">
+        <div class="num">2</div>
+        <h3>Isi Data &amp; Transaksi</h3>
+        <p>Tentukan tanggal pertandingan, tentukan jam main, lalu selesaikan tagihan melalui integrasi Midtrans Payment Gateway.</p>
+      </div>
+      <div class="step reveal">
+        <div class="num">3</div>
+        <h3>Terima Tiket &amp; Main</h3>
+        <p>Sistem akan menerbitkan e-tiket transaksi secara real-time. Tunjukkan barcode/ID tiket kepada petugas administrasi di lapangan.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ACTION PROMPT BAND -->
+<section style="border-bottom:none;">
+  <div class="wrap">
+    <div class="cta-band reveal">
+      <h2>Amankan Slot Jadwal Tim Anda</h2>
+      <p>Slot waktu malam hari sangat terbatas. Daftarkan grup kelompokmu sekarang sebelum kehabisan.</p>
+      <a href="#lapangan" class="btn-ui btn-ui-primary">Booking Sekarang</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="logo" style="margin-bottom:14px;"><span class="dot"></span>FUTSAL<span class="sub">MARE</span></div>
+        <p style="color:var(--muted); font-size:13px; max-width:260px; font-weight:500;">Sistem informasi layanan reservasi penyewaan lapangan futsal digital terintegrasi Kota Baubau.</p>
+      </div>
+      <ul>
+        <h4>Navigasi Internal</h4>
+        <li><a href="#lapangan">Katalog Arena</a></li>
+        <li><a href="#membership">Sistem Membership</a></li>
+        <li><a href="#cara-booking">Alur Prosedur</a></li>
+      </ul>
+      <ul>
+        <h4>Pranala Bantuan</h4>
+        <li><a href="#">Syarat &amp; Ketentuan</a></li>
+        <li><a href="#">Kebijakan Privasi</a></li>
+        <li><a href="#">Pusat Pengaduan</a></li>
+      </ul>
+      <ul>
+        <h4>Informasi Kontak</h4>
+        <li>Kota Baubau, Sulawesi Tenggara</li>
+        <li>+62 812-3456-7890</li>
+        <li>support@futsalmare.id</li>
+      </ul>
+    </div>
+    <div class="foot-bottom">
+      <span>&copy; {{ date('Y') }} Futsal Mare. Seluruh hak cipta dilindungi undang-undang.</span>
+      <span>Dikembangkan sebagai proyek tugas mata kuliah Web Programming.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Smooth scroll compensated for sticky header
+        document.querySelectorAll('.nav-link, a[href^="#"]').forEach(function (anchor) {
+            anchor.addEventListener('click', function (e) {
+                const targetId = this.getAttribute('href');
+
+                if (targetId === '#') {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
+                }
+
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    e.preventDefault();
+                    const navbarHeight = 80;
+                    const elementPosition = targetElement.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - navbarHeight;
+
+                    window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Scroll-reveal for sections, cards, and steps
+        const revealEls = document.querySelectorAll('.reveal');
+        if ('IntersectionObserver' in window && revealEls.length) {
+            const io = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        io.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+            revealEls.forEach(function (el) { io.observe(el); });
+        } else {
+            revealEls.forEach(function (el) { el.classList.add('is-visible'); });
+        }
+    });
+</script>
 </body>
 </html>
