@@ -185,11 +185,9 @@ class AdminDashboardController extends Controller
      * 'admin.member.edit' sudah menunjuk ke sini sejak awal — pola bug
      * yang sama dengan updateStatus() dan deleteReservasi() sebelumnya.
      */
-    public function editMember($id)
+    public function role(Request $request)
     {
-        $member = User::with('membership')->findOrFail($id);
-        return view('admin.member.edit', compact('member'));
-    }
+        $query = User::query();
 
     /**
      * FIX: method ini belum pernah dibuat sebelumnya, padahal route

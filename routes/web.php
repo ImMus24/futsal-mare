@@ -37,12 +37,18 @@ Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCa
 // ==========================================
 Route::middleware(['auth', 'verified'])->group(function () {
 
+<<<<<<< HEAD
     // 🔴 PEMBATALAN INSTAN saat user menutup popup Midtrans (onClose di create.blade.php).
     // PENTING: nama route ini HARUS 'reservasi.cancelInstant' — itu yang dipanggil oleh
     // route('reservasi.cancelInstant', ['nomor_reservasi' => ...]) di create.blade.php.
     Route::post('/reservasi/{nomor_reservasi}/batal-instan', [ReservasiController::class, 'cancelPendingInstant'])
         ->name('reservasi.cancelInstant');
 
+=======
+// 🔴 RUTE TAMBAHAN: Untuk membatalkan reservasi instan saat user menutup popup Midtrans
+Route::post('/reservasi/{nomor_reservasi}/batal-instan', [ReservasiController::class, 'cancelPendingInstant'])
+    ->name('reservasi.batal-instan');
+>>>>>>> main
     // Dashboard Member & Riwayat Reservasi
     Route::get('/dashboard', [ReservasiController::class, 'dashboard'])->name('dashboard');
 
@@ -86,6 +92,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/reservasi', [AdminDashboardController::class, 'reservasi'])->name('reservasi.index');
     Route::patch('/reservasi/{id}/update-status', [AdminDashboardController::class, 'updateStatus'])->name('reservasi.updateStatus');
     Route::delete('/reservasi/{id}/delete', [AdminDashboardController::class, 'deleteReservasi'])->name('reservasi.delete');
+<<<<<<< HEAD
 Route::delete('/reservasi/delete-massal', [AdminDashboardController::class, 'deleteReservasiMassal'])
     ->name('reservasi.deleteMassal');
     
@@ -97,6 +104,8 @@ Route::delete('/reservasi/delete-massal', [AdminDashboardController::class, 'del
     //
     // Route::post('/reservasi/cancel-instant/{nomor_reservasi}', [App\Http\Controllers\ReservasiController::class, 'cancelInstant'])
     //     ->name('reservasi.cancelInstant');
+=======
+>>>>>>> main
 
     // 🏟️ Kelola Lapangan
     Route::resource('kelola-lapangan', LapanganController::class)->names([

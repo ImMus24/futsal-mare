@@ -477,6 +477,7 @@ class ReservasiController extends Controller
             ->whereIn('status', ['Confirmed', 'Completed'])
             ->first();
 
+<<<<<<< HEAD
         // Ganti firstOrFail() -> pengecekan manual: kalau reservasi belum lunas
         // atau bukan milik user ini, arahkan kembali ke dashboard dengan pesan
         // yang jelas, bukan halaman 404 polos.
@@ -484,6 +485,8 @@ class ReservasiController extends Controller
             return redirect()->route('dashboard')->with('error', 'Tiket tidak dapat dibuka. Pastikan reservasi sudah lunas sebelum mengunduh e-tiket.');
         }
 
+=======
+>>>>>>> main
         $nama_file = 'qr_' . $reservasi->nomor_reservasi . '.svg';
         $relative_path = 'qrcodes/' . $nama_file;
 
