@@ -334,15 +334,45 @@ class ReservasiController extends Controller
         return response()->json(['message' => 'Callback diproses sukses']);
     }
 
-    // Menampilkan Halaman Dashboard Riwayat Reservasi Member
+    /**
+     * Menampilkan Halaman Dashboard Riwayat Reservasi Member.
+     *
+     * PERBAIKAN: sebelumnya hanya mengirim $reservasis ke view, padahal
+     * dashboard.blade.php butuh $membership, $totalBooking, $lunasBooking,
+     * dan $totalPengeluaran juga — itu yang menyebabkan error
+     * "Undefined variable $membership".
+     */
     public function dashboard()
     {
-        $reservasis = Reservasi::where('user_id', Auth::id())
-            ->with(['lapangan', 'user.membership'])
+        $user = Auth::user();
+
+        $reservasis = Reservasi::where('user_id', $user->id)
+            ->with('lapangan')
             ->latest()
             ->get();
 
-        return view('dashboard', compact('reservasis'));
+        // Data membership diambil langsung dari relasi user yang sedang login,
+        // dengan fallback Bronze/0 poin untuk akun yang belum pernah bertransaksi
+        // (baris membership baru dibuat otomatis di handleNotification() saat
+        // pembayaran pertama sukses).
+        $membership = $user->membership ?? (object) [
+            'membership_type' => 'Bronze',
+            'points' => 0,
+        ];
+
+        // Metrik dihitung dari koleksi yang sama dengan tabel riwayat di bawahnya,
+        // supaya angka ringkasan selalu konsisten dengan data yang ditampilkan.
+        $totalBooking = $reservasis->count();
+        $lunasBooking = $reservasis->whereIn('status', ['Confirmed', 'Completed'])->count();
+        $totalPengeluaran = $reservasis->whereIn('status', ['Confirmed', 'Completed'])->sum('total_harga');
+
+        return view('dashboard', compact(
+            'reservasis',
+            'membership',
+            'totalBooking',
+            'lunasBooking',
+            'totalPengeluaran'
+        ));
     }
 
     /**
@@ -402,7 +432,14 @@ class ReservasiController extends Controller
         $reservasi = Reservasi::where('id', $id)
             ->where('user_id', Auth::id())
             ->whereIn('status', ['Confirmed', 'Completed', 'Cancelled'])
-            ->firstOrFail();
+            ->first();
+
+        // Ganti firstOrFail() -> pengecekan manual, supaya ID yang salah/bukan
+        // milik user/masih Waiting Payment memberi notifikasi yang jelas,
+        // bukan halaman 404 polos yang membingungkan pengguna.
+        if (!$reservasi) {
+            return redirect()->route('dashboard')->with('error', 'Riwayat transaksi tidak ditemukan, atau belum bisa dihapus karena masih menunggu pembayaran.');
+        }
 
         $reservasi->delete();
         return redirect()->route('dashboard')->with('success', 'Riwayat transaksi berhasil dihapus.');
@@ -438,8 +475,18 @@ class ReservasiController extends Controller
         $reservasi = Reservasi::where('id', $id)
             ->where('user_id', Auth::id())
             ->whereIn('status', ['Confirmed', 'Completed'])
-            ->firstOrFail();
+            ->first();
 
+<<<<<<< HEAD
+        // Ganti firstOrFail() -> pengecekan manual: kalau reservasi belum lunas
+        // atau bukan milik user ini, arahkan kembali ke dashboard dengan pesan
+        // yang jelas, bukan halaman 404 polos.
+        if (!$reservasi) {
+            return redirect()->route('dashboard')->with('error', 'Tiket tidak dapat dibuka. Pastikan reservasi sudah lunas sebelum mengunduh e-tiket.');
+        }
+
+=======
+>>>>>>> main
         $nama_file = 'qr_' . $reservasi->nomor_reservasi . '.svg';
         $relative_path = 'qrcodes/' . $nama_file;
 

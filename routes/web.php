@@ -37,9 +37,12 @@ Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCa
 // ==========================================
 Route::middleware(['auth', 'verified'])->group(function () {
 
-// 🔴 RUTE TAMBAHAN: Untuk membatalkan reservasi instan saat user menutup popup Midtrans
-Route::post('/reservasi/{nomor_reservasi}/batal-instan', [ReservasiController::class, 'cancelPendingInstant'])
-    ->name('reservasi.batal-instan');
+    // 🔴 PEMBATALAN INSTAN saat user menutup popup Midtrans (onClose di create.blade.php).
+    // PENTING: nama route ini HARUS 'reservasi.cancelInstant' — itu yang dipanggil oleh
+    // route('reservasi.cancelInstant', ['nomor_reservasi' => ...]) di create.blade.php.
+    Route::post('/reservasi/{nomor_reservasi}/batal-instan', [ReservasiController::class, 'cancelPendingInstant'])
+        ->name('reservasi.cancelInstant');
+
     // Dashboard Member & Riwayat Reservasi
     Route::get('/dashboard', [ReservasiController::class, 'dashboard'])->name('dashboard');
 
@@ -83,6 +86,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/reservasi', [AdminDashboardController::class, 'reservasi'])->name('reservasi.index');
     Route::patch('/reservasi/{id}/update-status', [AdminDashboardController::class, 'updateStatus'])->name('reservasi.updateStatus');
     Route::delete('/reservasi/{id}/delete', [AdminDashboardController::class, 'deleteReservasi'])->name('reservasi.delete');
+Route::delete('/reservasi/delete-massal', [AdminDashboardController::class, 'deleteReservasiMassal'])
+    ->name('reservasi.deleteMassal');
+    
+    // ❌ DIHAPUS: route ini sebelumnya menabrak nama 'reservasi.cancelInstant' (jadi
+    // 'admin.reservasi.cancelInstant' karena prefix grup ini) dan menunjuk ke method
+    // cancelInstant() yang TIDAK ADA di ReservasiController. Route yang benar untuk
+    // pembatalan instan customer sudah dipindahkan ke grup 'auth' di atas, memakai
+    // nama 'reservasi.cancelInstant' dan method cancelPendingInstant() yang memang ada.
+    //
+    // Route::post('/reservasi/cancel-instant/{nomor_reservasi}', [App\Http\Controllers\ReservasiController::class, 'cancelInstant'])
+    //     ->name('reservasi.cancelInstant');
 
     // 🏟️ Kelola Lapangan
     Route::resource('kelola-lapangan', LapanganController::class)->names([
