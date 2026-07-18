@@ -187,7 +187,7 @@ class AdminDashboardController extends Controller
      */
     public function role(Request $request)
     {
-        $query = User::query();
+        $query = User::query();}
 
     /**
      * FIX: method ini belum pernah dibuat sebelumnya, padahal route
@@ -280,18 +280,7 @@ class AdminDashboardController extends Controller
     /**
      * MODUL 5: MANAJEMEN ROLE (is_admin)
      */
-    public function role(Request $request)
-    {
-        $query = User::query();
 
-        if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
-        }
-
-        $users = $query->paginate(10);
-        return view('admin.role.index', compact('users'));
-    }
 
     public function updateRole(Request $request, $id)
     {
