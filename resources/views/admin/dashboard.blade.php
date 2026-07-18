@@ -1,240 +1,394 @@
-@extends('layouts.admin')
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Member - Futsal Mare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-@section('content')
+    <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('services.midtrans.client_key') }}"></script>
+    <style>
+        :root {
+            --ink: #0a0f14;
+            --surface: #121a23;
+            --surface-2: #1a2431;
+            --surface-3: #212d3c;
+            --turf: #e25e20;
+            --turf-dark: #cb5119;
+            --turf-glow: rgba(226, 94, 32, 0.2);
+            --floodlight: #f5c518;
+            --floodlight-dim: rgba(245, 197, 24, 0.15);
+            --line: #eef1ea;
+            --muted: #8b97a6;
+            --muted-2: #5c6979;
+            --radius: 14px;
+            --display: 'Anton', sans-serif;
+            --body: 'Work Sans', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+        }
+        body {
+            background: var(--ink);
+            color: var(--line);
+            font-family: var(--body);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+        h1, h2, h3, h4 { font-family: var(--display); letter-spacing: .01em; text-transform: uppercase; }
 
-{{-- ============================================================
-     DESIGN SYSTEM — Futsal Mare (selaras dengan landing page publik)
-     Display: Anton · Body: Work Sans · Data: JetBrains Mono
-     ============================================================ --}}
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+        .btn-ui {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 14px 26px; border-radius: 8px; font-weight: 600; font-size: 14px;
+            cursor: pointer; border: 1px solid transparent; transition: transform .15s ease, background .15s ease;
+            font-family: var(--body); text-transform: uppercase; letter-spacing: .05em;
+        }
+        .btn-ui:active { transform: scale(.97); }
+        .btn-ui-primary { background: var(--turf); color: white; }
+        .btn-ui-primary:hover { background: var(--turf-dark); }
+        .btn-ui-ghost { background: transparent; border-color: rgba(238, 241, 234, 0.25); color: var(--line); }
+        .btn-ui-ghost:hover { border-color: var(--line); }
+        .btn-ui-danger { background: rgba(226, 87, 76, 0.15); border-color: rgba(226, 87, 76, 0.3); color: #e2574c; }
+        .btn-ui-danger:hover { background: rgba(226, 87, 76, 0.25); }
+        .btn-ui-sm { padding: 8px 14px; font-size: 12px; border-radius: 6px; }
 
-    .fm-scope {
-        --color-primary:      #e2601f; /* turf orange — CTA & elemen aktif */
-        --color-primary-dark: #b8481a;
-        --color-secondary:    #f5c518; /* floodlight gold — highlight & ikon */
-        --color-bg-main:      #121a23; /* navy-slate — latar utama */
-        --color-bg-card:      #0a0f14; /* charcoal dalam — panel & tabel */
-        --color-bg-raised:    #1a2431;
-        --color-text-main:    #ffffff;
-        --color-text-muted:   #94a3b8;
-        --color-text-meta:    #5c6979;
-        --line:               rgba(238, 241, 234, 0.08);
-        --line-2:             rgba(238, 241, 234, 0.14);
-        --ease: cubic-bezier(.22,1,.36,1);
+        table.brutal-data { width: 100%; border-collapse: collapse; }
+        table.brutal-data th { text-align: left; font-family: var(--mono); font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: .05em; padding: 12px 16px; border-bottom: 1px solid rgba(238, 241, 234, 0.1); background: rgba(15, 23, 42, 0.2); }
+        table.brutal-data td { padding: 16px; border-bottom: 1px solid rgba(238, 241, 234, 0.06); font-size: 13px; font-weight: 500; }
+        table.brutal-data tr:last-child td { border-bottom: none; }
 
-        --success: #22C55E; --success-bg: rgba(34, 197, 94, 0.1);
-        --pending: #F59E0B; --pending-bg: rgba(245, 158, 11, 0.1);
-        --danger:  #EF4444; --danger-bg:  rgba(239, 68, 68, 0.1);
+        .badge-brutal { font-family: var(--mono); font-size: 11px; padding: 4px 10px; border-radius: 6px; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; }
+        .badge-brutal-pending { background: rgba(245, 197, 24, 0.15); color: var(--floodlight); border: 1px solid rgba(245, 197, 24, 0.25); }
+        .badge-brutal-confirmed { background: rgba(47, 158, 88, 0.18); color: #2f9e58; border: 1px solid rgba(47, 158, 88, 0.25); }
+        .badge-brutal-cancelled { background: rgba(226, 87, 76, 0.15); color: #e2574c; border: 1px solid rgba(226, 87, 76, 0.25); }
+    </style>
+</head>
+<body class="scroll-smooth selection:bg-[#E25E20] selection:text-white">
 
-        font-family: 'Work Sans', sans-serif;
-        color: var(--color-text-main);
-    }
-    .fm-scope .f-display { font-family: 'Anton', sans-serif; font-weight: 400; letter-spacing: .01em; }
-    .fm-scope .f-mono { font-family: 'JetBrains Mono', monospace; }
-    .fm-scope .eyebrow {
-        font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
-        color: var(--color-primary); display: inline-flex; align-items: center; gap: 8px; font-weight: 500;
-    }
-    .fm-scope .eyebrow::before { content: ""; width: 14px; height: 2px; background: var(--color-primary); display: inline-block; }
-    .fm-glow {
-        background: radial-gradient(ellipse 700px 320px at 90% -20%, rgba(226,96,31,0.16), transparent 60%), var(--color-bg-main);
-    }
-    .fm-live-pip { animation: fm-pulse 1.6s infinite; }
-    @keyframes fm-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
-    @media (prefers-reduced-motion: reduce) { .fm-live-pip { animation: none; } }
-    .fm-scope a:focus-visible, .fm-scope button:focus-visible {
-        outline: 2px solid var(--color-secondary); outline-offset: 2px;
-    }
-
-    /* Tombol & interaksi — dipindah dari inline JS ke CSS agar konsisten & tanpa handler berulang */
-    .fm-scope .fm-btn-outline {
-        background: var(--color-bg-card); border: 1px solid var(--line); color: var(--color-text-muted);
-        transition: color .18s ease, border-color .18s ease;
-    }
-    .fm-scope .fm-btn-outline:hover { color: #fff; border-color: var(--line-2); }
-
-    .fm-scope .fm-btn-nav {
-        background: var(--color-bg-raised); color: var(--color-text-main);
-        transition: background .18s ease, transform .18s var(--ease);
-    }
-    .fm-scope .fm-btn-nav:hover { background: var(--color-primary); transform: translateY(-1px); }
-
-    .fm-scope .fm-btn-gold {
-        background: rgba(245,197,24,0.1); border: 1px solid rgba(245,197,24,0.35); color: var(--color-secondary);
-        transition: background .18s ease, color .18s ease, transform .18s var(--ease);
-    }
-    .fm-scope .fm-btn-gold:hover { background: var(--color-secondary); color: var(--color-bg-main); transform: translateY(-1px); }
-
-    .fm-scope .fm-btn-danger {
-        background: var(--danger-bg); border: 1px solid rgba(239,68,68,0.3); color: var(--danger);
-        transition: background .18s ease, color .18s ease;
-    }
-    .fm-scope .fm-btn-danger:hover { background: var(--danger); color: #fff; }
-
-    .fm-scope .fm-row:hover { background: rgba(255,255,255,0.025); }
-    .fm-scope .fm-row { transition: background .15s ease; }
-
-    .fm-scope .fm-metric {
-        transition: transform .2s var(--ease), border-color .2s ease;
-    }
-    .fm-scope .fm-metric:hover { transform: translateY(-3px); border-color: var(--line-2); }
-
-    .fm-scope .fm-avatar {
-        width: 28px; height: 28px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;
-        font-size: 11px; font-weight: 700; background: var(--color-bg-raised); color: var(--color-text-muted); flex-shrink: 0;
-    }
-</style>
-
-<div class="fm-scope space-y-8 animate-fade-in">
-
-    {{-- Notifikasi Global --}}
-    @include('partials.toast')
-
-    <!-- ============ TOP BAR ============ -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-5" style="border-color: var(--line);">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center f-display text-lg shadow-lg" style="background: var(--color-primary); color: var(--color-text-main); transform: rotate(-2deg);">M</div>
-            <div>
-                <h2 class="f-display text-base uppercase tracking-wide leading-tight" style="color: var(--color-text-main);">Futsal Mare HQ</h2>
-                <div class="eyebrow mt-1">Workspace Operasional</div>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-3">
-            <span class="f-mono text-[10px] hidden sm:inline-flex items-center gap-1.5" style="color: var(--color-text-meta);">
-                Diperbarui {{ now()->translatedFormat('d M, H:i') }} WITA
-            </span>
-            <a href="/" class="fm-btn-outline inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wide">
-                ⬅️ Beranda
+    <!-- NAVIGATION BAR -->
+    <header style="background: rgba(10, 15, 20, 0.85); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(238, 241, 234, 0.08); position: sticky; top: 0; z-index: 50;">
+        <div class="nav wrap flex items-center justify-between" style="padding: 16px 24px; height: 80px;">
+            <!-- Brand Identity -->
+            <a href="{{ route('landingPage') }}" style="display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 24px; color: white;">
+                <span style="width: 10px; height: 10px; background: var(--turf); border-radius: 2px; transform: rotate(45deg);"></span>FUTSAL MARE
             </a>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="fm-btn-danger px-4 py-2 text-xs font-semibold rounded-lg uppercase tracking-wide">
-                    🚪 Keluar
-                </button>
-            </form>
-        </div>
-    </div>
 
-    <!-- ============ HERO CONSOLE ============ -->
-    <div class="fm-glow relative p-6 sm:p-8 rounded-2xl shadow-2xl overflow-hidden" style="border: 1px solid var(--line);">
-        <div class="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div>
-                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] font-semibold tracking-widest uppercase"
-                      style="background: var(--color-bg-card); border: 1px solid var(--line); color: var(--color-primary);">
-                    <span class="w-1.5 h-1.5 rounded-full fm-live-pip" style="background: var(--color-primary);"></span>
-                    Konsol Kontrol Pusat
-                </span>
-                <h1 class="f-display uppercase tracking-tight mt-3" style="font-size: clamp(26px, 3.4vw, 38px); color: var(--color-text-main);">
-                    Ringkasan Eksekutif
-                </h1>
-                <p class="text-sm mt-1.5 max-w-md font-medium" style="color: var(--color-text-muted);">
-                    Pantau omset, jadwal aktif, dan aliran transaksi terbaru dalam satu layar.
-                </p>
-            </div>
-
-            <div class="flex flex-wrap gap-2 p-2 rounded-xl" style="background: var(--color-bg-card); border: 1px solid var(--line);">
-                <a href="{{ route('admin.reservasi.index') }}" class="fm-btn-nav px-4 py-2.5 font-semibold text-[11px] rounded-lg uppercase tracking-wide">
-                    Log Reservasi
-                </a>
-                <a href="{{ route('admin.lapangan.index') }}" class="fm-btn-nav px-4 py-2.5 font-semibold text-[11px] rounded-lg uppercase tracking-wide">
-                    Kelola Arena
-                </a>
-                @if(auth()->user()->is_admin == 1)
-                    <a href="{{ route('admin.role.index') }}" class="fm-btn-gold px-4 py-2.5 font-semibold text-[11px] rounded-lg uppercase tracking-wide">
-                        Manajemen Akses
-                    </a>
-                @endif
-            </div>
-        </div>
-    </div>
-
-    <!-- ============ METRICS ============ -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-        @foreach([
-            ['label' => 'Omset', 'value' => 'Rp ' . number_format($totalPendapatan, 0, ',', '.'), 'icon' => '🪙', 'accent' => 'var(--color-secondary)'],
-            ['label' => 'Jadwal Aktif', 'value' => $matchTerkonfirmasi, 'icon' => '🎮', 'accent' => 'var(--color-primary)'],
-            ['label' => 'Member', 'value' => $totalMember, 'icon' => '👥', 'accent' => 'var(--success)'],
-        ] as $metric)
-        <div class="fm-metric relative p-6 rounded-xl shadow-xl overflow-hidden" style="background: var(--color-bg-card); border: 1px solid var(--line);">
-            <div class="absolute left-0 right-0 bottom-0 h-[3px]" style="background: linear-gradient(90deg, {{ $metric['accent'] }}, transparent 85%);"></div>
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-[10px] font-semibold uppercase tracking-widest" style="color: var(--color-text-meta);">{{ $metric['label'] }}</p>
-                    <p class="f-mono text-2xl font-bold mt-2" style="color: var(--color-text-main);">{{ $metric['value'] }}</p>
+            <!-- User Account Actions & Quick Logout -->
+            <div class="flex items-center" style="gap: 24px;">
+                <div class="hidden sm:flex flex-col text-right" style="border-right: 1px solid rgba(238, 241, 234, 0.1); padding-right: 16px;">
+                    <span style="font-family: var(--mono); font-size: 10px; color: var(--turf); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Sesi Member Aktif</span>
+                    <span style="font-size: 13px; color: white; font-weight: 700; margin-top: 2px;">{{ Auth::user()->name }}</span>
                 </div>
-                <div class="p-3.5 rounded-xl text-xl" style="background: var(--color-bg-main); border: 1px solid var(--line);">{{ $metric['icon'] }}</div>
+                <form method="POST" action="{{ route('logout') }}" class="inline">
+                    @csrf
+                    <button type="submit" class="btn-ui btn-ui-danger btn-ui-sm">
+                        Keluar Sesi
+                    </button>
+                </form>
             </div>
         </div>
-        @endforeach
-    </div>
+    </header>
 
-    <!-- ============ RECENT TRANSACTIONS ============ -->
-    <div class="rounded-2xl shadow-2xl overflow-hidden" style="background: var(--color-bg-card); border: 1px solid var(--line);">
-        <div class="p-6 flex justify-between items-center" style="border-bottom: 1px solid var(--line);">
-            <div>
-                <h2 class="f-display text-sm uppercase tracking-wider" style="color: var(--color-text-main);">Aliran Transaksi Terakhir</h2>
-                <p class="text-[11px] mt-0.5" style="color: var(--color-text-meta);">Diperbarui otomatis dari sistem reservasi.</p>
+    <!-- MAIN DASHBOARD CONSOLE CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
+
+        <!-- 1. USER PROFILE & LOYALTY TIER OVERVIEW HERO -->
+        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6"
+             style="background: linear-gradient(120deg, var(--surface), #0B131F); border-radius: var(--radius); border: 1px solid rgba(238, 241, 234, 0.08); padding: 32px; position: relative; overflow: hidden;">
+            <div class="absolute -right-16 -top-16 w-32 h-32 bg-[var(--turf)] rounded-full filter blur-[80px] opacity-5"></div>
+
+            <div style="position: relative; z-index: 10;" class="space-y-4">
+                <div>
+                    <h1 style="font-size: 32px; color: white; line-height: 1;">Selamat Datang, {{ explode(' ', Auth::user()->name)[0] }}! 👋</h1>
+                    <p style="color: var(--muted); font-size: 14px; font-weight: 500; margin-top: 6px;">Pantau jadwal tanding tim Anda dan dapatkan keuntungan prioritas booking arena.</p>
+                </div>
+
+                @php
+                    $tierColors = [
+                        'Gold' => 'from-amber-500 to-yellow-400 text-slate-950 border-amber-600',
+                        'Silver' => 'from-slate-500 to-slate-400 text-white border-slate-600',
+                        'Bronze' => 'from-amber-800 to-amber-700 text-white border-amber-900'
+                    ];
+                @endphp
+                <div style="display: inline-flex; align-items: center; gap: 12px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 12px; padding: 10px 16px;">
+                    <span class="bg-gradient-to-r {{ $tierColors[$membership->membership_type] ?? $tierColors['Bronze'] }}" style="font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.05em; border: 1px solid transparent;">
+                        🏆 Tier {{ $membership->membership_type }}
+                    </span>
+                    <span style="font-family: var(--mono); font-size: 12px; color: var(--line); font-weight: 700;">
+                        ⭐ {{ $membership->points }} Loyalty Points
+                    </span>
+                    @if($membership->membership_type === 'Gold')
+                        <span style="font-family: var(--mono); font-size: 10px; color: var(--floodlight); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(245, 197, 24, 0.1); border: 1px solid rgba(245, 197, 24, 0.2); padding: 2px 6px; border-radius: 4px;" class="animate-pulse">• Prioritas Aktif</span>
+                    @endif
+                </div>
             </div>
-            <span class="inline-flex items-center gap-1.5 text-[9px] font-semibold px-2.5 py-1.5 rounded-md uppercase tracking-widest"
-                  style="background: var(--color-bg-main); border: 1px solid var(--line); color: var(--color-text-muted);">
-                <span class="w-1.5 h-1.5 rounded-full fm-live-pip" style="background: var(--color-primary);"></span> LIVE STREAM
-            </span>
+
+            <a href="{{ route('landingPage') }}" class="btn-ui btn-ui-primary w-full lg:w-auto text-center" style="position: relative; z-index: 10;">
+                + Sewa Lapangan Lagi
+            </a>
         </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left whitespace-nowrap">
-                <thead style="background: var(--color-bg-main); border-bottom: 1px solid var(--line);">
-                    <tr class="text-[10px] font-semibold uppercase tracking-wider" style="color: var(--color-text-meta);">
-                        <th class="p-5">Arena</th>
-                        <th class="p-5">Order</th>
-                        <th class="p-5">Pelanggan</th>
-                        <th class="p-5">Jadwal</th>
-                        <th class="p-5">Total</th>
-                        <th class="p-5">Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y" style="border-color: var(--line);">
-                    @forelse($reservasis as $r)
-                        @php
-                            $namaPelanggan = $r->user->name ?? 'Guest';
-                            $statusStyles = [
-                                'Confirmed' => ['bg' => 'var(--success-bg)', 'fg' => 'var(--success)'],
-                                'Cancelled' => ['bg' => 'var(--danger-bg)', 'fg' => 'var(--danger)'],
-                            ];
-                            $status = $statusStyles[$r->status] ?? ['bg' => 'var(--pending-bg)', 'fg' => 'var(--pending)'];
-                        @endphp
-                        <tr class="fm-row">
-                            <td class="p-5 text-sm font-semibold uppercase" style="color: var(--color-text-main);">{{ $r->lapangan->nama_lapangan ?? 'N/A' }}</td>
-                            <td class="p-5 f-mono text-xs" style="color: var(--color-text-muted);">{{ $r->nomor_reservasi }}</td>
-                            <td class="p-5 text-sm" style="color: var(--color-text-main);">
-                                <span class="inline-flex items-center gap-2.5">
-                                    <span class="fm-avatar">{{ strtoupper(substr($namaPelanggan, 0, 1)) }}</span>
-                                    {{ $namaPelanggan }}
-                                </span>
-                            </td>
-                            <td class="p-5 text-sm" style="color: var(--color-text-muted);">{{ \Carbon\Carbon::parse($r->tanggal_main)->format('d M Y') }}</td>
-                            <td class="p-5 f-mono text-sm font-bold" style="color: var(--color-text-main);">Rp {{ number_format($r->total_harga, 0, ',', '.') }}</td>
-                            <td class="p-5">
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-semibold uppercase tracking-wide" style="background: {{ $status['bg'] }}; color: {{ $status['fg'] }};">
-                                    <span class="w-1.5 h-1.5 rounded-full" style="background: {{ $status['fg'] }};"></span> {{ $r->status }}
-                                </span>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="p-14 text-center">
-                                <div class="flex flex-col items-center gap-2">
-                                    <span class="text-2xl">⚽</span>
-                                    <p class="text-sm font-semibold" style="color: var(--color-text-main);">Belum ada transaksi</p>
-                                    <p class="text-xs" style="color: var(--color-text-meta);">Reservasi baru akan tampil di sini begitu masuk.</p>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+
+        <!-- 2. SYSTEM STATUS BANNER NOTIFICATIONS -->
+        @if(session('success'))
+            <div style="padding: 16px; background: rgba(47, 158, 88, 0.15); border: 1px solid rgba(47, 158, 88, 0.3); color: #2f9e58; border-radius: 12px; font-size: 13px; font-weight: 600;" class="animate-pulse">
+                <span>✅</span> {{ session('success') }}
+            </div>
+        @endif
+        @if(session('error'))
+            <div style="padding: 16px; background: rgba(226, 87, 76, 0.15); border: 1px solid rgba(226, 87, 76, 0.3); color: #e2574c; border-radius: 12px; font-size: 13px; font-weight: 600;">
+                <span>⚠️</span> {{ session('error') }}
+            </div>
+        @endif
+
+        <!-- 2b. RINGKASAN ERROR VALIDASI (mis. hapus massal tanpa satupun dicentang) -->
+        @if ($errors->any())
+            <div style="padding: 16px; background: rgba(226, 87, 76, 0.15); border: 1px solid rgba(226, 87, 76, 0.3); color: #e2574c; border-radius: 12px; font-size: 13px; font-weight: 600;">
+                <p style="font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">⚠️ Aksi Gagal Diproses:</p>
+                <ul style="list-style: disc; list-style-position: inside; margin-top: 6px; font-weight: 500; opacity: 0.9;">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <!-- 3. CONTEXTUAL MEMBERSHIP AWARENESS WIDGET FOR NEW USERS -->
+        @if($membership->points == 0 && $membership->membership_type === 'Bronze')
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                 style="background: linear-gradient(90deg, rgba(33, 45, 60, 0.6), var(--surface)); border-radius: var(--radius); border: 1px dashed rgba(238, 241, 234, 0.15); padding: 24px; position: relative; overflow: hidden;">
+                <div class="absolute -right-8 -bottom-8 w-24 h-24 bg-gradient-to-tr from-amber-600 to-yellow-500 rounded-full filter blur-[40px] opacity-5"></div>
+                <div style="display: flex; align-items: flex-start; gap: 16px;">
+                    <div style="padding: 12px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 8px; font-size: 18px;">🎁</div>
+                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                        <h4 style="font-family: var(--body); font-size: 14px; font-weight: 700; color: white; display: flex; align-items: center; gap: 6px;">
+                            Mulai Petualangan Tim Anda! <span style="width: 6px; height: 6px; background: var(--turf); border-radius: 50%;" class="animate-ping"></span>
+                        </h4>
+                        <p style="color: var(--muted); font-size: 13px; font-weight: 500; line-height: 1.6; max-width: 860px;">
+                            Status Anda saat ini adalah <span style="color: var(--turf); font-weight: 700;">Bronze Member</span>. Kumpulkan poin dengan melakukan booking lapangan! Setiap transaksi sukses bernilai <span style="color: white; font-weight: 700; font-family: var(--mono);">+10 Poin</span>, mendekatkan Anda ke tingkatan <span style="color: var(--line); font-weight: 600;">Silver (100 Poin)</span> atau <span style="color: var(--floodlight); font-weight: 700;">Gold (300 Poin)</span> untuk menikmati diskon sewa otomatis hingga 10%.
+                        </p>
+                    </div>
+                </div>
+                <button type="button" onclick="alert('💡 INFO TIER MEMBERSHIP FUTSAL MARE:\n\n🥉 Bronze (Awal): Akumulasi poin aktif.\n🥈 Silver (100 Poin): Diskon otomatis 5% setiap sewa.\n🏆 Gold (300 Poin): Diskon otomatis 10% + Akses sistem prioritas booking 24/7!')" class="btn-ui btn-ui-ghost btn-ui-sm w-full sm:w-auto" style="flex-shrink: 0;">
+                    Pelajari Benefit Tier &rarr;
+                </button>
+            </div>
+        @endif
+
+        <!-- 4. REAL-TIME CORE METRICS INDEX -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div style="background: var(--surface); padding: 24px; border-radius: 12px; border: 1px solid rgba(238, 241, 234, 0.08); display: flex; align-items: center; justify-content: space-between;" class="group hover:border-slate-700 transition duration-300">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <p style="font-family: var(--mono); font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: .06em;">Total Akumulasi Reservasi</p>
+                    <p style="font-family: var(--mono); font-size: 28px; color: white; font-weight: 700; line-height: 1;">{{ $totalBooking }} <span style="font-size: 12px; font-family: 'Work Sans'; color: var(--muted); font-weight: 600; text-transform: uppercase;">Slot</span></p>
+                </div>
+                <div style="padding: 14px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 8px; font-size: 20px;" class="shadow-inner group-hover:scale-110 transition duration-300">📅</div>
+            </div>
+            <div style="background: var(--surface); padding: 24px; border-radius: 12px; border: 1px solid rgba(238, 241, 234, 0.08); display: flex; align-items: center; justify-content: space-between;" class="group hover:border-emerald-500/30 transition duration-300">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <p style="font-family: var(--mono); font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: .06em;">Match Terkonfirmasi</p>
+                    <p style="font-family: var(--mono); font-size: 28px; color: #2f9e58; font-weight: 700; line-height: 1;">{{ $lunasBooking }} <span style="font-size: 12px; font-family: 'Work Sans'; color: var(--muted); font-weight: 600; text-transform: uppercase;">Match</span></p>
+                </div>
+                <div style="padding: 14px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 8px; font-size: 20px;" class="shadow-inner group-hover:scale-110 transition duration-300 group-hover:bg-emerald-950/20">✅</div>
+            </div>
+            <div style="background: var(--surface); padding: 24px; border-radius: 12px; border: 1px solid rgba(238, 241, 234, 0.08); display: flex; align-items: center; justify-content: space-between;" class="group hover:border-blue-500/30 transition duration-300">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <p style="font-family: var(--mono); font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: .06em;">Kontribusi Finansial</p>
+                    <p style="font-family: var(--mono); font-size: 24px; color: var(--floodlight); font-weight: 700; line-height: 1;">Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}</p>
+                </div>
+                <div style="padding: 14px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 8px; font-size: 20px;" class="shadow-inner group-hover:scale-110 transition duration-300 group-hover:bg-blue-950/20">🪙</div>
+            </div>
         </div>
-    </div>
-</div>
-@endsection
+
+        <!-- 5. DATA TABLES CONSOLE BOARD -->
+        <div id="riwayat-tabel" style="background: var(--surface); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: var(--radius); overflow: hidden;">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style="padding: 24px; border-bottom: 1px solid rgba(238, 241, 234, 0.08); background: rgba(15, 23, 42, 0.2);">
+                <h3 style="font-family: var(--body); font-weight: 700; text-transform: none; font-size: 16px; color: white; display: flex; align-items: center; gap: 8px;">
+                    <span style="width: 8px; height: 8px; background: var(--turf); border-radius: 50%;" class="animate-pulse"></span> Aliran Histori Transaksi Anda
+                </h3>
+
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div id="bulk_action_panel" class="hidden items-center gap-2 bg-[#0a0f14] border border-slate-800 px-3 py-1.5 rounded-lg animate-fade-in shadow-inner">
+                        <span id="selected_count" style="font-family: var(--mono); font-size: 11px; font-weight: 700; background: var(--surface-3); color: var(--line); padding: 2px 6px; border-radius: 4px;">0</span>
+                        <span style="font-size: 11px; font-weight: 700; color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.05em;">Terpilih</span>
+                        <button type="submit" form="bulk_delete_form" class="btn-ui btn-ui-primary btn-ui-sm" style="padding: 6px 12px; font-size: 11px; border-radius: 4px; margin-left: 8px;">
+                            🗑️ Hapus Sekaligus
+                        </button>
+                    </div>
+                    <span style="font-family: var(--mono); font-size: 11px; color: var(--muted); background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.1); padding: 4px 10px; border-radius: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em;">Live Sync Ready</span>
+                </div>
+            </div>
+
+            <!-- ACTION FORM GATEWAYS -->
+            <form id="bulk_delete_form" action="{{ route('reservasi.destroyMassal') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus semua riwayat transaksi terpilih sekaligus dari sistem?')">
+                @csrf
+                @method('DELETE')
+            </form>
+
+            @foreach($reservasis as $reservasi)
+                @if(strtolower($reservasi->status) == 'waiting payment')
+                    <form id="form_batal_{{ $reservasi->id }}" action="{{ route('reservasi.batal', $reservasi->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan jadwal reservasi match ini? Status akan otomatis bermutasi menjadi Batal.')">
+                        @csrf
+                    </form>
+                @endif
+            @endforeach
+
+            @if($reservasis->isEmpty())
+                <div style="padding: 64px 24px; text-align: center; color: var(--muted-2); font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;" class="space-y-2">
+                    <div style="font-size: 32px;" class="animate-bounce">📋</div>
+                    <p>Anda belum memiliki riwayat data reservasi aktif dalam database.</p>
+                </div>
+            @elsea
+                <div class="overflow-x-auto">
+                    <table class="brutal-data">
+                        <thead>
+                            <tr>
+                                <th style="width: 48px; text-align: center;"><input type="checkbox" id="check_all_master" style="width: 15px; height: 14px; cursor: pointer;"></th>
+                                <th>Detail Arena</th>
+                                <th>Nomor Order</th>
+                                <th>Tanggal Main</th>
+                                <th>Waktu Slot</th>
+                                <th>Metode Bayar</th>
+                                <th>Total Tagihan</th>
+                                <th>Status Gerbang</th>
+                                <th style="text-align: center;">Konsol Tindakan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($reservasis as $reservasi)
+                                <tr class="data-row" style="transition: background 0.15s ease;">
+                                    <!-- Bulk Selection Row Node -->
+                                    <td style="text-align: center;">
+                                        @if(strtolower($reservasi->status) != 'waiting payment')
+                                            <input type="checkbox" name="ids[]" value="{{ $reservasi->id }}" form="bulk_delete_form" class="row-checkbox" style="width: 15px; height: 14px; cursor: pointer;">
+                                        @else
+                                            <input type="checkbox" disabled style="opacity: 0.25; cursor: not-allowed;" title="Selesaikan tagihan Midtrans Anda terlebih dahulu">
+                                        @endif
+                                    </td>
+
+                                    <!-- Field Arena Detail Info -->
+                                    <td>
+                                        <div style="font-size: 15px; font-weight: 700; color: white;">{{ $reservasi->lapangan->nama_lapangan ?? 'Arena Terhapus' }}</div>
+                                        <div style="font-family: var(--mono); font-size: 10px; color: var(--muted-2); text-transform: uppercase; font-weight: 700; margin-top: 2px;">Rumput {{ $reservasi->lapangan->jenis_rumput ?? 'Sintetis' }}</div>
+                                    </td>
+
+                                    <!-- Field Order Invoice Token -->
+                                    <td style="font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.02em;">
+                                        {{ $reservasi->nomor_reservasi }}
+                                    </td>
+
+                                    <!-- Field Tanggal Pertandingan -->
+                                    <td style="color: var(--line); font-weight: 600;">
+                                        {{ \Carbon\Carbon::parse($reservasi->tanggal_main)->translatedFormat('d M Y') }}
+                                    </td>
+
+                                    <!-- Field Alokasi Slot Jam -->
+                                    <td style="font-family: var(--mono); color: var(--turf); font-weight: 700;">
+                                        ⏱️ {{ substr($reservasi->jam_mulai, 0, 5) }} - {{ substr($reservasi->jam_selesai, 0, 5) }} WITA
+                                    </td>
+
+                                    <!-- Field Metode Pembayaran Node -->
+                                    <td>
+                                        <span style="font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); padding: 4px 8px; border-radius: 4px; color: var(--muted);">
+                                            {{ str_replace('_', ' ', $reservasi->metode_pembayaran ?? 'Midtrans') }}
+                                        </span>
+                                    </td>
+
+                                    <!-- Field Finansial Cost -->
+                                    <td style="font-family: var(--mono); font-size: 14px; font-weight: 700; color: white;">
+                                        Rp {{ number_format($reservasi->total_harga, 0, ',', '.') }}
+                                    </td>
+
+                                    <!-- Field Transaction Status Node -->
+                                    <td>
+                                        @if($reservasi->status == 'Confirmed' || $reservasi->status == 'Completed')
+                                            <span class="badge-brutal badge-brutal-confirmed">
+                                                <span style="width: 6px; height: 6px; background: #2f9e58; border-radius: 50%;"></span> Confirmed
+                                            </span>
+                                        @elseif($reservasi->status == 'Cancelled')
+                                            <span class="badge-brutal badge-brutal-cancelled">
+                                                <span style="width: 6px; height: 6px; background: #e2574c; border-radius: 50%;"></span> Cancelled
+                                            </span>
+                                        @else
+                                            <span class="badge-brutal badge-brutal-pending">
+                                                <span style="width: 6px; height: 6px; background: var(--floodlight); border-radius: 50%;" class="animate-pulse"></span> Pending
+                                            </span>
+                                        @endif
+                                    </td>
+
+                                    <!-- Field Action Interaction Nodes -->
+                                    <td style="text-align: center;">
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                            @if(strtolower($reservasi->status) == 'waiting payment')
+                                                <button type="submit" form="form_batal_{{ $reservasi->id }}" class="btn-ui btn-ui-danger btn-ui-sm" style="padding: 6px 12px; font-size: 11px; border-radius: 6px;">
+                                                    ❌ Batalkan Match
+                                                </button>
+                                            @elseif($reservasi->status == 'Confirmed' || $reservasi->status == 'Completed')
+                                                <a href="{{ route('reservasi.tiket', $reservasi->id) }}" target="_blank" class="btn-ui btn-ui-ghost btn-ui-sm" style="padding: 6px 12px; font-size: 11px; border-radius: 6px; background: var(--surface-3);">
+                                                    🎟️ Unduh Tiket
+                                                </a>
+                                            @else
+                                                <span style="font-family: var(--mono); font-size: 11px; color: var(--muted-2); font-weight: 700; text-transform: uppercase;">No Action</span>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </div>
+    </main>
+
+    <!-- CLIENT OPERATIONAL CONTAINER JAVASCRIPT JS -->
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            const masterCheck = document.getElementById('check_all_master');
+            const rowChecks = document.querySelectorAll('.row-checkbox');
+            const actionPanel = document.getElementById('bulk_action_panel');
+            const selectedCount = document.getElementById('selected_count');
+
+            if (!masterCheck) return;
+
+            masterCheck.addEventListener('change', function () {
+                rowChecks.forEach(checkbox => {
+                    checkbox.checked = masterCheck.checked;
+                    toggleRowStyle(checkbox);
+                });
+                refreshPanelVisibility();
+            });
+
+            rowChecks.forEach(checkbox => {
+                checkbox.addEventListener('change', function () {
+                    toggleRowStyle(checkbox);
+                    if (!checkbox.checked) masterCheck.checked = false;
+                    refreshPanelVisibility();
+                });
+            });
+
+            function toggleRowStyle(checkbox) {
+                const row = checkbox.closest('.data-row');
+                if (checkbox.checked) {
+                    row.style.background = "rgba(238, 241, 234, 0.03)";
+                } else {
+                    row.style.background = "transparent";
+                }
+            }
+
+            function refreshPanelVisibility() {
+                const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
+                selectedCount.innerText = checkedCount;
+
+                if (checkedCount > 0) {
+                    actionPanel.classList.remove('hidden');
+                    actionPanel.classList.add('flex');
+                } else {
+                    actionPanel.classList.remove('flex');
+                    actionPanel.classList.add('hidden');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
