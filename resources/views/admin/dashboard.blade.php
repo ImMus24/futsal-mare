@@ -238,7 +238,7 @@
                     <div style="font-size: 32px;" class="animate-bounce">📋</div>
                     <p>Anda belum memiliki riwayat data reservasi aktif dalam database.</p>
                 </div>
-            @elsea
+            @else
                 <div class="overflow-x-auto">
                     <table class="brutal-data">
                         <thead>
