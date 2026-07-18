@@ -4,226 +4,331 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Member - Futsal Mare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
-    <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
-</head>
-<body class="bg-[#0B131F] font-sans antialiased text-slate-200 scroll-smooth">
 
-    <nav class="bg-[#0F172A]/80 backdrop-blur-md shadow-lg sticky top-0 z-50 border-b border-slate-800 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
-            <a href="{{ route('landingPage') }}" class="flex items-center space-x-3 group">
-                <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-12 w-auto object-contain transform group-hover:rotate-6 transition duration-300">
-                <div class="flex flex-col">
-                    <span class="text-xl font-black text-white tracking-wider leading-none">FUTSAL</span>
-                    <span class="text-[10px] font-bold text-[#E25E20] tracking-widest uppercase mt-0.5">Mare</span>
-                </div>
+    <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('services.midtrans.client_key') }}"></script>
+    <style>
+        :root {
+            --ink: #0a0f14;
+            --surface: #121a23;
+            --surface-2: #1a2431;
+            --surface-3: #212d3c;
+            --turf: #e25e20;
+            --turf-dark: #cb5119;
+            --turf-glow: rgba(226, 94, 32, 0.2);
+            --floodlight: #f5c518;
+            --floodlight-dim: rgba(245, 197, 24, 0.15);
+            --line: #eef1ea;
+            --muted: #8b97a6;
+            --muted-2: #5c6979;
+            --radius: 14px;
+            --display: 'Anton', sans-serif;
+            --body: 'Work Sans', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+        }
+        body {
+            background: var(--ink);
+            color: var(--line);
+            font-family: var(--body);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+        h1, h2, h3, h4 { font-family: var(--display); letter-spacing: .01em; text-transform: uppercase; }
+
+        .btn-ui {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 14px 26px; border-radius: 8px; font-weight: 600; font-size: 14px;
+            cursor: pointer; border: 1px solid transparent; transition: transform .15s ease, background .15s ease;
+            font-family: var(--body); text-transform: uppercase; letter-spacing: .05em;
+        }
+        .btn-ui:active { transform: scale(.97); }
+        .btn-ui-primary { background: var(--turf); color: white; }
+        .btn-ui-primary:hover { background: var(--turf-dark); }
+        .btn-ui-ghost { background: transparent; border-color: rgba(238, 241, 234, 0.25); color: var(--line); }
+        .btn-ui-ghost:hover { border-color: var(--line); }
+        .btn-ui-danger { background: rgba(226, 87, 76, 0.15); border-color: rgba(226, 87, 76, 0.3); color: #e2574c; }
+        .btn-ui-danger:hover { background: rgba(226, 87, 76, 0.25); }
+        .btn-ui-sm { padding: 8px 14px; font-size: 12px; border-radius: 6px; }
+
+        table.brutal-data { width: 100%; border-collapse: collapse; }
+        table.brutal-data th { text-align: left; font-family: var(--mono); font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: .05em; padding: 12px 16px; border-bottom: 1px solid rgba(238, 241, 234, 0.1); background: rgba(15, 23, 42, 0.2); }
+        table.brutal-data td { padding: 16px; border-bottom: 1px solid rgba(238, 241, 234, 0.06); font-size: 13px; font-weight: 500; }
+        table.brutal-data tr:last-child td { border-bottom: none; }
+
+        .badge-brutal { font-family: var(--mono); font-size: 11px; padding: 4px 10px; border-radius: 6px; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; }
+        .badge-brutal-pending { background: rgba(245, 197, 24, 0.15); color: var(--floodlight); border: 1px solid rgba(245, 197, 24, 0.25); }
+        .badge-brutal-confirmed { background: rgba(47, 158, 88, 0.18); color: #2f9e58; border: 1px solid rgba(47, 158, 88, 0.25); }
+        .badge-brutal-cancelled { background: rgba(226, 87, 76, 0.15); color: #e2574c; border: 1px solid rgba(226, 87, 76, 0.25); }
+    </style>
+</head>
+<body class="scroll-smooth selection:bg-[#E25E20] selection:text-white">
+
+    <!-- NAVIGATION BAR -->
+    <header style="background: rgba(10, 15, 20, 0.85); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(238, 241, 234, 0.08); position: sticky; top: 0; z-index: 50;">
+        <div class="nav wrap flex items-center justify-between" style="padding: 16px 24px; height: 80px;">
+            <!-- Brand Identity -->
+            <a href="{{ route('landingPage') }}" style="display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 24px; color: white;">
+                <span style="width: 10px; height: 10px; background: var(--turf); border-radius: 2px; transform: rotate(45deg);"></span>FUTSAL MARE
             </a>
-            <div class="flex items-center space-x-6">
-                <div class="hidden md:flex flex-col text-right">
-                    <span class="text-[10px] font-black uppercase tracking-wider text-[#E25E20]">Member Aktif</span>
-                    <span class="text-xs text-slate-300 font-bold mt-0.5">{{ Auth::user()->name }}</span>
+
+            <!-- User Account Actions & Quick Logout -->
+            <div class="flex items-center" style="gap: 24px;">
+                <div class="hidden sm:flex flex-col text-right" style="border-right: 1px solid rgba(238, 241, 234, 0.1); padding-right: 16px;">
+                    <span style="font-family: var(--mono); font-size: 10px; color: var(--turf); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Sesi Member Aktif</span>
+                    <span style="font-size: 13px; color: white; font-weight: 700; margin-top: 2px;">{{ Auth::user()->name }}</span>
                 </div>
                 <form method="POST" action="{{ route('logout') }}" class="inline">
                     @csrf
-                    <button type="submit" class="px-4 py-2 border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-500 text-xs font-black rounded-xl uppercase tracking-wider transition">
-                        Keluar
+                    <button type="submit" class="btn-ui btn-ui-danger btn-ui-sm">
+                        Keluar Sesi
                     </button>
                 </form>
             </div>
         </div>
-    </nav>
+    </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-        
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 bg-[#152238] p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl relative overflow-hidden">
-            <div class="absolute inset-0 pointer-events-none opacity-[0.02] bg-[radial-gradient(#ffffff_1px,transparent_1px)] bg-[size:16px_16px]"></div>
-            
-            <div class="relative z-10 space-y-3">
+    <!-- MAIN DASHBOARD CONSOLE CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
+
+        <!-- 1. USER PROFILE & LOYALTY TIER OVERVIEW HERO -->
+        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6"
+             style="background: linear-gradient(120deg, var(--surface), #0B131F); border-radius: var(--radius); border: 1px solid rgba(238, 241, 234, 0.08); padding: 32px; position: relative; overflow: hidden;">
+            <div class="absolute -right-16 -top-16 w-32 h-32 bg-[var(--turf)] rounded-full filter blur-[80px] opacity-5"></div>
+
+            <div style="position: relative; z-index: 10;" class="space-y-4">
                 <div>
-                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Selamat Datang, {{ explode(' ', Auth::user()->name)[0] }}! 👋</h1>
-                    <p class="text-slate-400 text-xs sm:text-sm font-medium mt-1">Pantau jadwal tanding tim Anda dan dapatkan keuntungan prioritas booking.</p>
+                    <h1 style="font-size: 32px; color: white; line-height: 1;">Selamat Datang, {{ explode(' ', Auth::user()->name)[0] }}! 👋</h1>
+                    <p style="color: var(--muted); font-size: 14px; font-weight: 500; margin-top: 6px;">Pantau jadwal tanding tim Anda dan dapatkan keuntungan prioritas booking arena.</p>
                 </div>
-                
+
                 @php
-                    $membership = Auth::user()->membership ?? (object)['membership_type' => 'Bronze', 'points' => 0];
                     $tierColors = [
-                        'Gold' => 'bg-amber-500 text-white border-amber-600 shadow-amber-500/20',
-                        'Silver' => 'bg-slate-500 text-white border-slate-600 shadow-slate-500/20',
-                        'Bronze' => 'bg-amber-800 text-white border-amber-900 shadow-amber-800/20'
+                        'Gold' => 'from-amber-500 to-yellow-400 text-slate-950 border-amber-600',
+                        'Silver' => 'from-slate-500 to-slate-400 text-white border-slate-600',
+                        'Bronze' => 'from-amber-800 to-amber-700 text-white border-amber-900'
                     ];
                 @endphp
-                <div class="inline-flex items-center gap-3 bg-[#0B131F] border border-slate-800 rounded-2xl p-2.5 pr-4">
-                    <span class="px-3 py-1 text-[10px] font-black rounded-xl border uppercase tracking-wider shadow-sm {{ $tierColors[$membership->membership_type] ?? $tierColors['Bronze'] }}">
+                <div style="display: inline-flex; align-items: center; gap: 12px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 12px; padding: 10px 16px;">
+                    <span class="bg-gradient-to-r {{ $tierColors[$membership->membership_type] ?? $tierColors['Bronze'] }}" style="font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.05em; border: 1px solid transparent;">
                         🏆 Tier {{ $membership->membership_type }}
                     </span>
-                    <span class="text-xs font-bold text-slate-300">
+                    <span style="font-family: var(--mono); font-size: 12px; color: var(--line); font-weight: 700;">
                         ⭐ {{ $membership->points }} Loyalty Points
                     </span>
                     @if($membership->membership_type === 'Gold')
-                        <span class="text-[10px] font-black text-amber-500 uppercase tracking-widest animate-pulse">• Akses Prioritas Aktif</span>
+                        <span style="font-family: var(--mono); font-size: 10px; color: var(--floodlight); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(245, 197, 24, 0.1); border: 1px solid rgba(245, 197, 24, 0.2); padding: 2px 6px; border-radius: 4px;" class="animate-pulse">• Prioritas Aktif</span>
                     @endif
                 </div>
             </div>
 
-            <a href="{{ route('landingPage') }}" class="inline-flex items-center justify-center px-6 py-4 bg-[#E25E20] hover:bg-[#cb5119] text-white font-black text-xs rounded-xl shadow-lg shadow-orange-950/40 tracking-widest uppercase transition-all duration-200 transform hover:-translate-y-0.5 relative z-10">
+            <a href="{{ route('landingPage') }}" class="btn-ui btn-ui-primary w-full lg:w-auto text-center" style="position: relative; z-index: 10;">
                 + Sewa Lapangan Lagi
             </a>
         </div>
 
+        <!-- 2. SYSTEM STATUS BANNER NOTIFICATIONS -->
         @if(session('success'))
-            <div class="p-4 bg-emerald-950/40 border border-emerald-800/60 text-emerald-400 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-sm animate-fade-in">
-                <span class="text-sm">✅</span> {{ session('success') }}
+            <div style="padding: 16px; background: rgba(47, 158, 88, 0.15); border: 1px solid rgba(47, 158, 88, 0.3); color: #2f9e58; border-radius: 12px; font-size: 13px; font-weight: 600;" class="animate-pulse">
+                <span>✅</span> {{ session('success') }}
             </div>
         @endif
         @if(session('error'))
-            <div class="p-4 bg-red-950/40 border border-red-800/60 text-red-400 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-sm animate-fade-in">
-                <span class="text-sm">⚠️</span> {{ session('error') }}
+            <div style="padding: 16px; background: rgba(226, 87, 76, 0.15); border: 1px solid rgba(226, 87, 76, 0.3); color: #e2574c; border-radius: 12px; font-size: 13px; font-weight: 600;">
+                <span>⚠️</span> {{ session('error') }}
             </div>
         @endif
 
-        @php
-            $totalBooking = $reservasis->count();
-            $lunasBooking = $reservasis->whereIn('status', ['Confirmed', 'Completed'])->count();
-            $totalPengeluaran = $reservasis->whereIn('status', ['Confirmed', 'Completed'])->sum('total_harga');
-        @endphp
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <div class="bg-[#152238] p-6 rounded-2xl border border-slate-800 shadow-lg flex items-center justify-between">
-                <div class="space-y-1">
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-wider">Total Reservasi</p>
-                    <p class="text-3xl font-black text-white">{{ $totalBooking }} <span class="text-xs text-slate-500 font-bold uppercase">Match</span></p>
-                </div>
-                <div class="p-3 bg-[#0B131F] border border-slate-800 rounded-xl text-xl">📅</div>
+        <!-- 2b. RINGKASAN ERROR VALIDASI (mis. hapus massal tanpa satupun dicentang) -->
+        @if ($errors->any())
+            <div style="padding: 16px; background: rgba(226, 87, 76, 0.15); border: 1px solid rgba(226, 87, 76, 0.3); color: #e2574c; border-radius: 12px; font-size: 13px; font-weight: 600;">
+                <p style="font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">⚠️ Aksi Gagal Diproses:</p>
+                <ul style="list-style: disc; list-style-position: inside; margin-top: 6px; font-weight: 500; opacity: 0.9;">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
-            <div class="bg-[#152238] p-6 rounded-2xl border border-slate-800 shadow-lg flex items-center justify-between">
-                <div class="space-y-1">
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-wider">Jadwal Terkonfirmasi</p>
-                    <p class="text-3xl font-black text-emerald-400">{{ $lunasBooking }} <span class="text-xs text-slate-500 font-bold uppercase">Match</span></p>
+        @endif
+
+        <!-- 3. CONTEXTUAL MEMBERSHIP AWARENESS WIDGET FOR NEW USERS -->
+        @if($membership->points == 0 && $membership->membership_type === 'Bronze')
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                 style="background: linear-gradient(90deg, rgba(33, 45, 60, 0.6), var(--surface)); border-radius: var(--radius); border: 1px dashed rgba(238, 241, 234, 0.15); padding: 24px; position: relative; overflow: hidden;">
+                <div class="absolute -right-8 -bottom-8 w-24 h-24 bg-gradient-to-tr from-amber-600 to-yellow-500 rounded-full filter blur-[40px] opacity-5"></div>
+                <div style="display: flex; align-items: flex-start; gap: 16px;">
+                    <div style="padding: 12px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 8px; font-size: 18px;">🎁</div>
+                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                        <h4 style="font-family: var(--body); font-size: 14px; font-weight: 700; color: white; display: flex; align-items: center; gap: 6px;">
+                            Mulai Petualangan Tim Anda! <span style="width: 6px; height: 6px; background: var(--turf); border-radius: 50%;" class="animate-ping"></span>
+                        </h4>
+                        <p style="color: var(--muted); font-size: 13px; font-weight: 500; line-height: 1.6; max-width: 860px;">
+                            Status Anda saat ini adalah <span style="color: var(--turf); font-weight: 700;">Bronze Member</span>. Kumpulkan poin dengan melakukan booking lapangan! Setiap transaksi sukses bernilai <span style="color: white; font-weight: 700; font-family: var(--mono);">+10 Poin</span>, mendekatkan Anda ke tingkatan <span style="color: var(--line); font-weight: 600;">Silver (100 Poin)</span> atau <span style="color: var(--floodlight); font-weight: 700;">Gold (300 Poin)</span> untuk menikmati diskon sewa otomatis hingga 10%.
+                        </p>
+                    </div>
                 </div>
-                <div class="p-3 bg-[#0B131F] border border-slate-800 rounded-xl text-xl">✅</div>
+                <button type="button" onclick="alert('💡 INFO TIER MEMBERSHIP FUTSAL MARE:\n\n🥉 Bronze (Awal): Akumulasi poin aktif.\n🥈 Silver (100 Poin): Diskon otomatis 5% setiap sewa.\n🏆 Gold (300 Poin): Diskon otomatis 10% + Akses sistem prioritas booking 24/7!')" class="btn-ui btn-ui-ghost btn-ui-sm w-full sm:w-auto" style="flex-shrink: 0;">
+                    Pelajari Benefit Tier &rarr;
+                </button>
             </div>
-            <div class="bg-[#152238] p-6 rounded-2xl border border-slate-800 shadow-lg flex items-center justify-between">
-                <div class="space-y-1">
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-wider">Total Kontribusi Sewa</p>
-                    <p class="text-2xl font-black text-[#22C55E]">Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}</p>
+        @endif
+
+        <!-- 4. REAL-TIME CORE METRICS INDEX -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div style="background: var(--surface); padding: 24px; border-radius: 12px; border: 1px solid rgba(238, 241, 234, 0.08); display: flex; align-items: center; justify-content: space-between;" class="group hover:border-slate-700 transition duration-300">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <p style="font-family: var(--mono); font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: .06em;">Total Akumulasi Reservasi</p>
+                    <p style="font-family: var(--mono); font-size: 28px; color: white; font-weight: 700; line-height: 1;">{{ $totalBooking }} <span style="font-size: 12px; font-family: 'Work Sans'; color: var(--muted); font-weight: 600; text-transform: uppercase;">Slot</span></p>
                 </div>
-                <div class="p-3 bg-[#0B131F] border border-slate-800 rounded-xl text-xl">🪙</div>
+                <div style="padding: 14px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 8px; font-size: 20px;" class="shadow-inner group-hover:scale-110 transition duration-300">📅</div>
+            </div>
+            <div style="background: var(--surface); padding: 24px; border-radius: 12px; border: 1px solid rgba(238, 241, 234, 0.08); display: flex; align-items: center; justify-content: space-between;" class="group hover:border-emerald-500/30 transition duration-300">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <p style="font-family: var(--mono); font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: .06em;">Match Terkonfirmasi</p>
+                    <p style="font-family: var(--mono); font-size: 28px; color: #2f9e58; font-weight: 700; line-height: 1;">{{ $lunasBooking }} <span style="font-size: 12px; font-family: 'Work Sans'; color: var(--muted); font-weight: 600; text-transform: uppercase;">Match</span></p>
+                </div>
+                <div style="padding: 14px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 8px; font-size: 20px;" class="shadow-inner group-hover:scale-110 transition duration-300 group-hover:bg-emerald-950/20">✅</div>
+            </div>
+            <div style="background: var(--surface); padding: 24px; border-radius: 12px; border: 1px solid rgba(238, 241, 234, 0.08); display: flex; align-items: center; justify-content: space-between;" class="group hover:border-blue-500/30 transition duration-300">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <p style="font-family: var(--mono); font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: .06em;">Kontribusi Finansial</p>
+                    <p style="font-family: var(--mono); font-size: 24px; color: var(--floodlight); font-weight: 700; line-height: 1;">Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}</p>
+                </div>
+                <div style="padding: 14px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 8px; font-size: 20px;" class="shadow-inner group-hover:scale-110 transition duration-300 group-hover:bg-blue-950/20">🪙</div>
             </div>
         </div>
 
-        <div class="bg-[#152238] rounded-3xl shadow-2xl border border-slate-800 overflow-hidden">
-            <div class="p-6 border-b border-slate-800 bg-[#0F172A]/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <h2 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-[#E25E20]"></span> Riwayat Reservasi Lapangan
-                </h2>
-                
-                <div class="flex items-center gap-3">
-                    <div id="bulk_action_panel" class="hidden items-center gap-2 bg-[#0B131F] border border-slate-800 px-3 py-1.5 rounded-xl animate-fade-in">
-                        <span id="selected_count" class="text-[10px] font-mono font-black bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md">0</span>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Dipilih</span>
-                        <button type="submit" form="bulk_delete_form" class="ml-2 px-3 py-1 bg-red-600 hover:bg-red-700 text-white font-black text-[10px] rounded-lg uppercase tracking-wider shadow transition">
-                            🗑️ Hapus Massal
+        <!-- 5. DATA TABLES CONSOLE BOARD -->
+        <div id="riwayat-tabel" style="background: var(--surface); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: var(--radius); overflow: hidden;">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style="padding: 24px; border-bottom: 1px solid rgba(238, 241, 234, 0.08); background: rgba(15, 23, 42, 0.2);">
+                <h3 style="font-family: var(--body); font-weight: 700; text-transform: none; font-size: 16px; color: white; display: flex; align-items: center; gap: 8px;">
+                    <span style="width: 8px; height: 8px; background: var(--turf); border-radius: 50%;" class="animate-pulse"></span> Aliran Histori Transaksi Anda
+                </h3>
+
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div id="bulk_action_panel" class="hidden items-center gap-2 bg-[#0a0f14] border border-slate-800 px-3 py-1.5 rounded-lg animate-fade-in shadow-inner">
+                        <span id="selected_count" style="font-family: var(--mono); font-size: 11px; font-weight: 700; background: var(--surface-3); color: var(--line); padding: 2px 6px; border-radius: 4px;">0</span>
+                        <span style="font-size: 11px; font-weight: 700; color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.05em;">Terpilih</span>
+                        <button type="submit" form="bulk_delete_form" class="btn-ui btn-ui-primary btn-ui-sm" style="padding: 6px 12px; font-size: 11px; border-radius: 4px; margin-left: 8px;">
+                            🗑️ Hapus Sekaligus
                         </button>
                     </div>
-                    <span class="text-[9px] font-black bg-[#0B131F] text-slate-400 border border-slate-800 px-2.5 py-1 rounded-md uppercase tracking-wider">Real-time Data</span>
+                    <span style="font-family: var(--mono); font-size: 11px; color: var(--muted); background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.1); padding: 4px 10px; border-radius: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em;">Live Sync Ready</span>
                 </div>
             </div>
 
-            <form id="bulk_delete_form" action="{{ route('reservasi.destroyMassal') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus semua riwayat transaksi terpilih sekaligus?')">
+            <!-- ACTION FORM GATEWAYS -->
+            <form id="bulk_delete_form" action="{{ route('reservasi.destroyMassal') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus semua riwayat transaksi terpilih sekaligus dari sistem?')">
                 @csrf
                 @method('DELETE')
             </form>
 
             @foreach($reservasis as $reservasi)
                 @if(strtolower($reservasi->status) == 'waiting payment')
-                    <form id="form_batal_{{ $reservasi->id }}" action="{{ route('reservasi.batal', $reservasi->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan jadwal reservasi match ini? Status akan otomatis berubah menjadi Batal.')">
+                    <form id="form_batal_{{ $reservasi->id }}" action="{{ route('reservasi.batal', $reservasi->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan jadwal reservasi match ini? Status akan otomatis bermutasi menjadi Batal.')">
                         @csrf
                     </form>
                 @endif
             @endforeach
 
             @if($reservasis->isEmpty())
-                <div class="p-16 text-center space-y-2 bg-[#152238]">
-                    <div class="text-3xl">🏃‍♂️</div>
-                    <p class="text-slate-500 font-bold text-sm">Anda belum memiliki riwayat reservasi jadwal apa pun.</p>
+                <div style="padding: 64px 24px; text-align: center; color: var(--muted-2); font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;" class="space-y-2">
+                    <div style="font-size: 32px;" class="animate-bounce">📋</div>
+                    <p>Anda belum memiliki riwayat data reservasi aktif dalam database.</p>
                 </div>
             @else
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse whitespace-nowrap">
+                    <table class="brutal-data">
                         <thead>
-                            <tr class="border-b border-slate-800 text-slate-500 text-[10px] font-black uppercase tracking-wider bg-[#0f172a]/20">
-                                <th class="p-6 w-10">
-                                    <input type="checkbox" id="check_all_master" class="rounded border-slate-800 bg-[#0B131F] text-[#E25E20] focus:ring-[#E25E20] focus:ring-offset-[#152238]">
-                                </th>
-                                <th class="p-6">Detail Lapangan</th>
-                                <th class="p-6">Nomor Reservasi</th>
-                                <th class="p-6">Tanggal Main</th>
-                                <th class="p-6">Waktu Slot</th>
-                                <th class="p-6">Metode Bayar</th>
-                                <th class="p-6">Total Bayar</th>
-                                <th class="p-6">Status Pembayaran</th>
-                                <th class="p-6 text-center">Aksi Administrasi</th>
+                            <tr>
+                                <th style="width: 48px; text-align: center;"><input type="checkbox" id="check_all_master" style="width: 15px; height: 14px; cursor: pointer;"></th>
+                                <th>Detail Arena</th>
+                                <th>Nomor Order</th>
+                                <th>Tanggal Main</th>
+                                <th>Waktu Slot</th>
+                                <th>Metode Bayar</th>
+                                <th>Total Tagihan</th>
+                                <th>Status Gerbang</th>
+                                <th style="text-align: center;">Konsol Tindakan</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-800 text-xs font-bold text-slate-300 bg-[#152238]">
+                        <tbody>
                             @foreach($reservasis as $reservasi)
-                                <tr class="hover:bg-[#0B131F]/30 transition duration-150 data-row">
-                                    <td class="p-6">
+                                <tr class="data-row" style="transition: background 0.15s ease;">
+                                    <!-- Bulk Selection Row Node -->
+                                    <td style="text-align: center;">
                                         @if(strtolower($reservasi->status) != 'waiting payment')
-                                            <input type="checkbox" name="ids[]" value="{{ $reservasi->id }}" form="bulk_delete_form" class="row-checkbox rounded border-slate-800 bg-[#0B131F] text-[#E25E20] focus:ring-[#E25E20] focus:ring-offset-[#152238]">
+                                            <input type="checkbox" name="ids[]" value="{{ $reservasi->id }}" form="bulk_delete_form" class="row-checkbox" style="width: 15px; height: 14px; cursor: pointer;">
                                         @else
-                                            <input type="checkbox" disabled class="rounded border-slate-900 bg-slate-900/40 text-slate-700 cursor-not-allowed opacity-30" title="Selesaikan pembayaran atau proses verifikasi dahulu">
+                                            <input type="checkbox" disabled style="opacity: 0.25; cursor: not-allowed;" title="Selesaikan tagihan Midtrans Anda terlebih dahulu">
                                         @endif
                                     </td>
-                                    <td class="p-6">
-                                        <div class="font-black text-white text-sm uppercase tracking-tight">{{ $reservasi->lapangan->nama_lapangan }}</div>
-                                        <div class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Rumput {{ $reservasi->lapangan->jenis_rumput ?? 'Sintetis' }}</div>
+
+                                    <!-- Field Arena Detail Info -->
+                                    <td>
+                                        <div style="font-size: 15px; font-weight: 700; color: white;">{{ $reservasi->lapangan->nama_lapangan ?? 'Arena Terhapus' }}</div>
+                                        <div style="font-family: var(--mono); font-size: 10px; color: var(--muted-2); text-transform: uppercase; font-weight: 700; margin-top: 2px;">Rumput {{ $reservasi->lapangan->jenis_rumput ?? 'Sintetis' }}</div>
                                     </td>
-                                    <td class="p-6 font-mono text-slate-400 uppercase tracking-wider">
+
+                                    <!-- Field Order Invoice Token -->
+                                    <td style="font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.02em;">
                                         {{ $reservasi->nomor_reservasi }}
                                     </td>
-                                    <td class="p-6 font-semibold text-slate-300">
-                                        {{ \Carbon\Carbon::parse($reservasi->tanggal_main)->translatedFormat('d F Y') }}
+
+                                    <!-- Field Tanggal Pertandingan -->
+                                    <td style="color: var(--line); font-weight: 600;">
+                                        {{ \Carbon\Carbon::parse($reservasi->tanggal_main)->translatedFormat('d M Y') }}
                                     </td>
-                                    <td class="p-6 font-mono text-xs text-slate-400">
-                                        {{ substr($reservasi->jam_mulai, 0, 5) }} - {{ substr($reservasi->jam_selesai, 0, 5) }}
+
+                                    <!-- Field Alokasi Slot Jam -->
+                                    <td style="font-family: var(--mono); color: var(--turf); font-weight: 700;">
+                                        ⏱️ {{ substr($reservasi->jam_mulai, 0, 5) }} - {{ substr($reservasi->jam_selesai, 0, 5) }} WITA
                                     </td>
-                                    <td class="p-6">
-                                        <span class="inline-block px-2 py-1 bg-[#0B131F] text-slate-400 border border-slate-800 rounded-md font-black uppercase tracking-wide text-[9px]">
-                                            {{ str_replace('_', ' ', $reservasi->metode_pembayaran ?? 'Gateway') }}
+
+                                    <!-- Field Metode Pembayaran Node -->
+                                    <td>
+                                        <span style="font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); padding: 4px 8px; border-radius: 4px; color: var(--muted);">
+                                            {{ str_replace('_', ' ', $reservasi->metode_pembayaran ?? 'Midtrans') }}
                                         </span>
                                     </td>
-                                    <td class="p-6 font-black text-white text-sm">
+
+                                    <!-- Field Finansial Cost -->
+                                    <td style="font-family: var(--mono); font-size: 14px; font-weight: 700; color: white;">
                                         Rp {{ number_format($reservasi->total_harga, 0, ',', '.') }}
                                     </td>
-                                    <td class="p-6">
+
+                                    <!-- Field Transaction Status Node -->
+                                    <td>
                                         @if($reservasi->status == 'Confirmed' || $reservasi->status == 'Completed')
-                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-950/60 text-emerald-400 border border-emerald-900/40 uppercase tracking-wider">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Lunas
+                                            <span class="badge-brutal badge-brutal-confirmed">
+                                                <span style="width: 6px; height: 6px; background: #2f9e58; border-radius: 50%;"></span> Confirmed
                                             </span>
                                         @elseif($reservasi->status == 'Cancelled')
-                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-red-950/60 text-red-400 border border-red-900/40 uppercase tracking-wider">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Batal
+                                            <span class="badge-brutal badge-brutal-cancelled">
+                                                <span style="width: 6px; height: 6px; background: #e2574c; border-radius: 50%;"></span> Cancelled
                                             </span>
                                         @else
-                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-amber-950/60 text-amber-400 border border-amber-900/40 uppercase tracking-wider">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Pending
+                                            <span class="badge-brutal badge-brutal-pending">
+                                                <span style="width: 6px; height: 6px; background: var(--floodlight); border-radius: 50%;" class="animate-pulse"></span> Pending
                                             </span>
                                         @endif
                                     </td>
-                                    <td class="p-6 text-center">
-                                        <div class="flex items-center justify-center gap-2">
+
+                                    <!-- Field Action Interaction Nodes -->
+                                    <td style="text-align: center;">
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
                                             @if(strtolower($reservasi->status) == 'waiting payment')
-                                                <button type="submit" form="form_batal_{{ $reservasi->id }}" class="px-3 py-2 bg-[#0B131F] hover:bg-red-950/30 text-red-400 border border-slate-800 hover:border-red-900/40 font-black text-[10px] rounded-xl uppercase tracking-wider transition duration-150">
-                                                    ❌ Batalkan Booking
+                                                <button type="submit" form="form_batal_{{ $reservasi->id }}" class="btn-ui btn-ui-danger btn-ui-sm" style="padding: 6px 12px; font-size: 11px; border-radius: 6px;">
+                                                    ❌ Batalkan Match
                                                 </button>
                                             @elseif($reservasi->status == 'Confirmed' || $reservasi->status == 'Completed')
-                                                <a href="{{ route('reservasi.tiket', $reservasi->id) }}" target="_blank"
-                                                   class="inline-block px-3 py-2 bg-[#0B131F] border border-slate-800 hover:bg-[#1A3D63] text-white font-black text-[10px] rounded-xl uppercase tracking-wider shadow-sm transition duration-150">
-                                                    🎟️ Tiket
+                                                <a href="{{ route('reservasi.tiket', $reservasi->id) }}" target="_blank" class="btn-ui btn-ui-ghost btn-ui-sm" style="padding: 6px 12px; font-size: 11px; border-radius: 6px; background: var(--surface-3);">
+                                                    🎟️ Unduh Tiket
                                                 </a>
                                             @else
-                                                <span class="text-[10px] font-black text-slate-600">-</span>
+                                                <span style="font-family: var(--mono); font-size: 11px; color: var(--muted-2); font-weight: 700; text-transform: uppercase;">No Action</span>
                                             @endif
                                         </div>
                                     </td>
@@ -236,6 +341,7 @@
         </div>
     </main>
 
+    <!-- CLIENT OPERATIONAL CONTAINER JAVASCRIPT JS -->
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', function () {
             const masterCheck = document.getElementById('check_all_master');
@@ -264,9 +370,9 @@
             function toggleRowStyle(checkbox) {
                 const row = checkbox.closest('.data-row');
                 if (checkbox.checked) {
-                    row.classList.add('bg-slate-800/20');
+                    row.style.background = "rgba(238, 241, 234, 0.03)";
                 } else {
-                    row.classList.remove('bg-slate-800/20');
+                    row.style.background = "transparent";
                 }
             }
 

@@ -4,47 +4,114 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tiket Reservasi #{{ $reservasi->nomor_reservasi ?? 'E-TICKET' }} - Futsal Mare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body class="bg-[#0B131F] font-sans antialiased text-slate-200 print:bg-white print:text-slate-800 scroll-smooth">
+    
+    <!-- JavaScript Library to convert HTML elements to pure Images -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --ink: #0a0f14;
+            --surface: #121a23;
+            --surface-2: #1a2431;
+            --surface-3: #212d3c;
+            --turf: #e25e20;
+            --turf-dark: #cb5119;
+            --floodlight: #f5c518;
+            --line: #eef1ea;
+            --muted: #8b97a6;
+            --muted-2: #5c6979;
+            --radius: 14px;
+            --display: 'Anton', sans-serif;
+            --body: 'Work Sans', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+        }
 
-    <nav class="bg-[#0F172A]/80 backdrop-blur-md shadow-lg sticky top-0 z-50 border-b border-slate-800 no-print">
-        <div class="max-w-4xl mx-auto px-4 h-20 flex justify-between items-center">
-            <a href="{{ route('landingPage') }}" class="flex items-center space-x-3 group">
-                <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-12 w-auto object-contain">
-                <div class="flex flex-col">
-                    <span class="text-xl font-black text-white tracking-wider leading-none">FUTSAL</span>
-                    <span class="text-[10px] font-bold text-[#E25E20] tracking-widest uppercase mt-0.5">Mare</span>
-                </div>
+        body {
+            background: var(--ink);
+            color: var(--line);
+            font-family: var(--body);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: var(--display);
+            letter-spacing: .01em;
+            text-transform: uppercase;
+        }
+
+        .label-brutal {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--muted-2);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .value-brutal {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--line);
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: #ffffff !important; color: #0a0f14 !important; }
+            .print-card { background: #ffffff !important; border: 2px solid #0a0f14 !important; box-shadow: none !important; border-radius: 0 !important; color: #0a0f14 !important; }
+            .print-header { background: #f1f5f9 !important; border-bottom: 2px solid #0a0f14 !important; color: #0a0f14 !important; }
+            .print-badge { background: #0a0f14 !important; color: #ffffff !important; border-radius: 0 !important; }
+            .label-brutal { color: #475569 !important; }
+            .value-brutal { color: #0a0f14 !important; font-weight: 700 !important; }
+            .print-box { background: #f8fafc !important; border: 1px solid #cbd5e1 !important; }
+            .print-total { color: #0f172a !important; font-weight: 900 !important; }
+        }
+    </style>
+</head>
+<body class="antialiased scroll-smooth selection:bg-[#E25E20] selection:text-white">
+
+    <!-- NAVIGATION HEADER -->
+    <header class="no-print" style="background: rgba(10, 15, 20, 0.85); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(238, 241, 234, 0.08); position: sticky; top: 0; z-index: 50;">
+        <div style="max-width: 1180px; margin: 0 auto; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; height: 80px;">
+            <a href="{{ route('landingPage') }}" style="display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 22px; color: white;">
+                <span style="width: 10px; height: 10px; background: var(--turf); border-radius: 2px; transform: rotate(45deg);"></span>FUTSAL MARE
             </a>
-            <a href="{{ route('dashboard') }}" class="text-xs font-black text-slate-400 hover:text-[#E25E20] uppercase tracking-wider transition duration-150">
-                &larr; Kembali ke Dashboard
+            <a href="{{ route('dashboard') }}" style="font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 700; border: 1px solid rgba(238,241,234,0.15); padding: 8px 14px; border-radius: 6px;">
+                &larr; Dashboard Member
             </a>
         </div>
-    </nav>
+    </header>
 
+    <!-- TICKET LAYOUT CENTER DECK -->
     <main class="max-w-md mx-auto px-4 py-12 print:py-0 print:px-0">
-        <div class="bg-[#152238] rounded-3xl shadow-2xl border border-slate-800 overflow-hidden relative print:shadow-none print:border-none print:bg-white print:rounded-none">
+        
+        <!-- TARGET CAPTURE BOX CONTAINER (ID: element-to-capture) -->
+        <div id="element-to-capture" class="print-card" style="background: var(--surface); border: 1px solid rgba(238, 241, 234, 0.1); border-radius: var(--radius); overflow: hidden; box-shadow: 0 20px 60px -20px rgba(0,0,0,0.6); padding-bottom: 1px;">
             
-            <div class="bg-gradient-to-r from-[#0F172A] to-[#1E293B] text-white p-6 text-center relative print:from-slate-100 print:to-slate-200 print:text-slate-800 print:border-b print:border-slate-300">
-                <span class="px-3 py-1 bg-[#E25E20] text-white text-[9px] font-black rounded-full tracking-wider uppercase shadow-sm print:bg-slate-800">
-                    E-Tiket Resmi
+            <!-- Ticket Header -->
+            <div class="print-header" style="background: rgba(15, 23, 42, 0.3); padding: 24px; text-align: center; border-bottom: 1px solid rgba(238, 241, 234, 0.08);">
+                <span class="print-badge" style="display: inline-block; padding: 4px 12px; background: var(--turf); color: white; font-family: var(--mono); font-size: 10px; font-weight: 700; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">
+                    E-Tiket Resmi Match
                 </span>
-                <h2 class="text-xs font-black mt-3 tracking-widest text-slate-400 print:text-slate-500 uppercase">Nomor Reservasi</h2>
-                <p class="text-xl font-mono font-black text-[#E25E20] print:text-slate-900 tracking-wider uppercase mt-1">
+                <h3 style="font-size: 13px; color: var(--muted); letter-spacing: 0.05em; margin-top: 16px;">NOMOR INVOICE RESERVASI</h3>
+                <p style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--floodlight); letter-spacing: 0.02em; margin-top: 2px;">
                     {{ $reservasi->nomor_reservasi }}
                 </p>
             </div>
 
-            <div class="p-6 space-y-4 print:p-4">
-                <div class="flex justify-between items-center pb-3 border-b border-dashed border-slate-800 print:border-slate-300">
+            <!-- Ticket Body -->
+            <div style="padding: 24px;" class="space-y-4">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 1px dashed rgba(238, 241, 234, 0.1);" class="print:border-slate-300">
                     <div>
-                        <p class="text-[9px] text-slate-500 font-black uppercase tracking-wider">Nama Pemesan</p>
-                        <p class="text-sm font-black text-white print:text-slate-800">{{ auth()->user()->name ?? 'Pelanggan' }}</p>
+                        <span class="label-brutal">Nama Pemesan</span>
+                        <p class="value-brutal" style="color: white;">{{ auth()->user()->name ?? 'Pelanggan' }}</p>
                     </div>
-                    <div class="text-right">
-                        <p class="text-[9px] text-slate-500 font-black uppercase tracking-wider">Status Pembayaran</p>
-                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 print:bg-emerald-50 print:text-emerald-700 print:border-emerald-200 uppercase tracking-wide">
+                    <div style="text-align: right;">
+                        <span class="label-brutal">Status Gerbang</span>
+                        <span style="font-family: var(--mono); font-size: 11px; font-weight: 700; background: rgba(47,158,88,0.15); color: #2f9e58; border: 1px solid rgba(47,158,88,0.25); padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">
                             Lunas
                         </span>
                     </div>
@@ -52,79 +119,103 @@
 
                 <div class="space-y-3">
                     <div>
-                        <p class="text-[9px] text-slate-500 font-black uppercase tracking-wider">Arena Lapangan</p>
-                        <p class="text-base font-black text-white print:text-slate-900 uppercase tracking-tight">{{ $reservasi->lapangan->nama_lapangan ?? 'Lapangan Utama' }}</p>
+                        <span class="label-brutal">Arena Lapangan</span>
+                        <h2 class="value-brutal" style="font-family: var(--body); font-weight: 700; font-size: 18px; color: white;">
+                            {{ $reservasi->lapangan->nama_lapangan ?? 'Lapangan Utama' }}
+                        </h2>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                         <div>
-                            <p class="text-[9px] text-slate-500 font-black uppercase tracking-wider">Tanggal Main</p>
-                            <p class="text-xs font-bold text-slate-300 print:text-slate-700">
+                            <span class="label-brutal">Tanggal Main</span>
+                            <p class="value-brutal">
                                 {{ \Carbon\Carbon::parse($reservasi->tanggal_main)->translatedFormat('d F Y') }}
                             </p>
                         </div>
                         <div>
-                            <p class="text-[9px] text-slate-500 font-black uppercase tracking-wider">Jam Tanding</p>
-                            <p class="text-xs font-bold text-slate-300 print:text-slate-700 font-mono">
-                                {{ substr($reservasi->jam_mulai, 0, 5) }} - {{ substr($reservasi->jam_selesai, 0, 5) }} WITA
+                            <span class="label-brutal">Waktu Slot WITA</span>
+                            <p class="value-brutal" style="font-family: var(--mono); color: var(--turf);">
+                                {{ substr($reservasi->jam_mulai, 0, 5) }} - {{ substr($reservasi->jam_selesai, 0, 5) }}
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex flex-col items-center justify-center p-4 bg-[#0B131F] border border-slate-800 rounded-2xl my-4 print:bg-slate-50 print:border-slate-200">
+                <!-- QR Scanner Content Center Display -->
+                <div class="print-box" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.06); border-radius: 12px; margin: 20px 0;">
                     @if($reservasi->qr_code_path && file_exists(public_path('images/qrcodes/' . $reservasi->qr_code_path)))
-                        <img src="{{ asset('images/qrcodes/' . $reservasi->qr_code_path) }}" alt="QR Code E-Tiket" class="w-48 h-48 object-contain bg-white p-2 rounded-xl print:p-0">
+                        <img src="{{ asset('images/qrcodes/' . $reservasi->qr_code_path) }}" alt="QR Code E-Tiket" style="width: 180px; height: 180px; background: white; padding: 12px; border-radius: 8px;" class="print:p-0">
                     @endif
-                    <p class="text-[9px] font-mono font-bold text-slate-500 uppercase tracking-widest mt-2">Pindai Masuk Pengawas Arena</p>
+                    <span style="font-family: var(--mono); font-size: 10px; color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 12px; font-weight: 700;">Pindai Masuk Pengawas Arena</span>
                 </div>
 
-                <div class="bg-[#0B131F] rounded-xl p-4 flex justify-between items-center border border-slate-800 print:bg-slate-50 print:border-slate-200">
+                <!-- Financial Checkout Summary Sheet -->
+                <div class="print-box" style="background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.06); border-radius: 8px; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <p class="text-[9px] text-slate-500 font-black uppercase tracking-wider">Total Biaya</p>
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-wide print:text-slate-500">Metode: {{ str_replace('_', ' ', $reservasi->metode_pembayaran ?? 'QRIS') }}</p>
+                        <span class="label-brutal">Total Biaya Lunas</span>
+                        <span style="font-family: var(--mono); font-size: 10px; color: var(--muted-2); font-weight: 700; text-transform: uppercase;">
+                            Gtw: {{ str_replace('_', ' ', $reservasi->metode_pembayaran ?? 'QRIS') }}
+                        </span>
                     </div>
-                    <p class="text-xl font-black text-[#22C55E] print:text-emerald-700">
+                    <span class="print-total" style="font-family: var(--mono); font-size: 22px; color: var(--floodlight); font-weight: 700;">
                         Rp {{ number_format($reservasi->total_harga, 0, ',', '.') }}
-                    </p>
+                    </span>
                 </div>
 
-                <div class="text-[10px] text-slate-500 space-y-1 pt-2 leading-relaxed print:text-slate-600">
-                    <p class="font-bold text-slate-400 print:text-slate-700">📌 Ketentuan Lapangan:</p>
-                    <p>• Datang 15 menit sebelum kick-off dimulai untuk persiapan tim.</p>
-                    <p>• Wajib menggunakan sepatu futsal standar (non-cleat / tanpa pul besi).</p>
-                    <p>• Tunjukkan e-tiket QR Code di atas kepada pengawas lapangan di lokasi untuk check-in.</p>
+                <!-- Ground Rules Policy Note -->
+                <div style="font-size: 12px; color: var(--muted); line-height: 1.6; font-weight: 500; padding-top: 8px; padding-bottom: 12px;" class="space-y-1">
+                    <span class="label-brutal" style="color: var(--line);">📌 Ketentuan Lapangan:</span>
+                    <p>• Hadir di lokasi stadium 15 menit sebelum kick-off untuk sinkronisasi administrasi.</p>
+                    <p>• Wajib memakai sepatu olahraga / futsal standar (non-cleat / tanpa pul besi).</p>
+                    <p>• Tunjukkan kode QR di atas ke kamera pengawas untuk proses autentikasi pintu gerbang.</p>
                 </div>
             </div>
 
-            <div class="p-6 bg-[#0B131F] border-t border-slate-800 flex gap-2 no-print">
-                <button onclick="window.print()" class="flex-1 py-4 bg-[#E25E20] hover:bg-[#cb5119] text-white rounded-xl font-black text-xs tracking-widest uppercase shadow-md transition text-center duration-150">
+            <!-- Form Action Triggers (Integrated Image Download Button) -->
+            <div class="no-print" style="padding: 0 24px 24px 24px; display: flex; flex-direction: column; gap: 8px;">
+                <button id="downloadImageBtn" type="button" class="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl font-bold text-xs tracking-widest uppercase shadow-md transition duration-150">
+                    💾 Unduh Gambar Tiket (PNG)
+                </button>
+                <button onclick="window.print()" class="w-full py-4 bg-[#212d3c] border border-slate-700/60 hover:bg-slate-700 text-white rounded-xl font-bold text-xs tracking-widest uppercase transition duration-150">
                     🖨️ Cetak / Simpan PDF
                 </button>
             </div>
         </div>
     </main>
 
-    <style>
-        @media print {
-            .no-print { display: none !important; }
-            body { 
-                background-color: white !important; 
-                color: #1e293b !important;
-            }
-            main { 
-                padding: 0 !important; 
-                max-w: 100% !important;
-            }
-            /* Memaksa elemen berubah menjadi putih bersih saat dicetak */
-            .print\:bg-white { background-color: #ffffff !important; }
-            .print\:text-slate-800 { color: #1e293b !important; }
-            .print\:text-slate-900 { color: #0f172a !important; }
-            .print\:text-slate-700 { color: #334155 !important; }
-            .print\:border-none { border-style: none !important; }
-            .print\:shadow-none { box-shadow: none !important; }
-            .print\:rounded-none { border-radius: 0 !important; }
-        }
-    </style>
+    <!-- INTERACTIVE CAPTURE DOWNLOAD SCRIPT ENGINE -->
+    <script type="text/javascript">
+        document.getElementById('downloadImageBtn').addEventListener('click', function () {
+            const targetElement = document.getElementById('element-to-capture');
+            const actionButtons = targetElement.querySelector('.no-print');
+            
+            // Sembunyikan tombol aksi agar tidak ikut terfoto masuk gambar
+            actionButtons.style.display = 'none';
+
+            // Ambil screenshot elemen html secara presisi menggunakan konfigurasi engine canvas
+            html2canvas(targetElement, {
+                backgroundColor: '#121a23', // Selaras dengan warna --surface dasar
+                scale: 2, // Meningkatkan resolusi gambar agar kode QR tajam saat dipindai staff
+                logging: false,
+                useCORS: true
+            }).then(function (canvas) {
+                // Munculkan kembali tombol aksi di halaman web setelah pemotretan selesai
+                actionButtons.style.display = 'flex';
+
+                // Ubah data canvas menjadi link download instan
+                const imageURI = canvas.toDataURL("image/png");
+                const temporaryLink = document.createElement('a');
+                temporaryLink.download = 'Tiket_FutsalMare_{{ $reservasi->nomor_reservasi }}.png';
+                temporaryLink.href = imageURI;
+                
+                document.body.appendChild(temporaryLink);
+                temporaryLink.click();
+                document.body.removeChild(temporaryLink);
+            }).catch(function (error) {
+                actionButtons.style.display = 'flex';
+                alert("Gagal merender file gambar.");
+            });
+        });
+    </script>
 </body>
 </html>
