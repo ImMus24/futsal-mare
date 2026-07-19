@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
+
     <!-- JavaScript Library to convert HTML elements to pure Images -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -87,10 +87,10 @@
 
     <!-- TICKET LAYOUT CENTER DECK -->
     <main class="max-w-md mx-auto px-4 py-12 print:py-0 print:px-0">
-        
+
         <!-- TARGET CAPTURE BOX CONTAINER (ID: element-to-capture) -->
         <div id="element-to-capture" class="print-card" style="background: var(--surface); border: 1px solid rgba(238, 241, 234, 0.1); border-radius: var(--radius); overflow: hidden; box-shadow: 0 20px 60px -20px rgba(0,0,0,0.6); padding-bottom: 1px;">
-            
+
             <!-- Ticket Header -->
             <div class="print-header" style="background: rgba(15, 23, 42, 0.3); padding: 24px; text-align: center; border-bottom: 1px solid rgba(238, 241, 234, 0.08);">
                 <span class="print-badge" style="display: inline-block; padding: 4px 12px; background: var(--turf); color: white; font-family: var(--mono); font-size: 10px; font-weight: 700; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">
@@ -143,8 +143,13 @@
 
                 <!-- QR Scanner Content Center Display -->
                 <div class="print-box" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.06); border-radius: 12px; margin: 20px 0;">
-                    @if($reservasi->qr_code_path && file_exists(public_path('images/qrcodes/' . $reservasi->qr_code_path)))
-                        <img src="{{ asset('images/qrcodes/' . $reservasi->qr_code_path) }}" alt="QR Code E-Tiket" style="width: 180px; height: 180px; background: white; padding: 12px; border-radius: 8px;" class="print:p-0">
+                    @if(!empty($qrUrl))
+                        <img src="{{ $qrUrl }}" alt="QR Code E-Tiket" style="width: 180px; height: 180px; background: white; padding: 12px; border-radius: 8px;" class="print:p-0">
+                    @else
+                        {{-- Fallback kalau QR gagal dibuat/tidak ditemukan — jangan biarkan kotak kosong tanpa penjelasan --}}
+                        <div style="width: 180px; height: 180px; display: flex; align-items: center; justify-content: center; background: rgba(226,87,76,0.08); border: 1px dashed rgba(226,87,76,0.3); border-radius: 8px; text-align: center; padding: 12px;">
+                            <span style="font-family: var(--mono); font-size: 10px; color: #e2574c; font-weight: 700; text-transform: uppercase;">QR tidak tersedia, hubungi admin</span>
+                        </div>
                     @endif
                     <span style="font-family: var(--mono); font-size: 10px; color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 12px; font-weight: 700;">Pindai Masuk Pengawas Arena</span>
                 </div>
@@ -184,36 +189,34 @@
     </main>
 
     <!-- INTERACTIVE CAPTURE DOWNLOAD SCRIPT ENGINE -->
-    <<!-- Masukkan script ini tepat sebelum </body> -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script>
-    document.getElementById('downloadImageBtn').addEventListener('click', function () {
-        const targetElement = document.getElementById('element-to-capture');
-        const actionButtons = targetElement.querySelector('.no-print');
-        
-        actionButtons.style.display = 'none';
+    <script type="text/javascript">
+        document.getElementById('downloadImageBtn').addEventListener('click', function () {
+            const targetElement = document.getElementById('element-to-capture');
+            const actionButtons = targetElement.querySelector('.no-print');
 
-        html2canvas(targetElement, {
-            backgroundColor: '#121a23',
-            scale: 4, // Skala 4 membuat gambar sangat tajam
-            useCORS: true,
-            onclone: function (clonedDoc) {
-                // Memaksa area kotak QR menjadi Putih total agar kontras maksimal
-                const qrBox = clonedDoc.querySelector('.print-box');
-                if (qrBox) {
-                    qrBox.style.backgroundColor = '#ffffff';
-                    qrBox.style.border = 'none';
-                }
-            }
-        }).then(function (canvas) {
-            actionButtons.style.display = 'flex';
-            
-            const link = document.createElement('a');
-            link.download = 'Tiket_{{ $reservasi->nomor_reservasi }}.png';
-            link.href = canvas.toDataURL("image/png", 1.0);
-            link.click();
+            actionButtons.style.display = 'none';
+
+            html2canvas(targetElement, {
+                backgroundColor: '#121a23',
+                scale: 2,
+                logging: false,
+                useCORS: true
+            }).then(function (canvas) {
+                actionButtons.style.display = 'flex';
+
+                const imageURI = canvas.toDataURL("image/png");
+                const temporaryLink = document.createElement('a');
+                temporaryLink.download = 'Tiket_FutsalMare_{{ $reservasi->nomor_reservasi }}.png';
+                temporaryLink.href = imageURI;
+
+                document.body.appendChild(temporaryLink);
+                temporaryLink.click();
+                document.body.removeChild(temporaryLink);
+            }).catch(function (error) {
+                actionButtons.style.display = 'flex';
+                alert("Gagal merender file gambar. Kalau QR code sudah tampil normal di halaman ini tapi hasil download tetap kosong/tidak terbaca scanner, kemungkinan penyebabnya format SVG QR tidak selalu bisa di-screenshot html2canvas — hubungi admin untuk beralih ke format PNG.");
+            });
         });
-    });
-</script>
+    </script>
 </body>
 </html>
