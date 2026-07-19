@@ -25,8 +25,14 @@ Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCa
 // 3. PROTECTED ROUTES (Member)
 Route::middleware(['auth', 'verified'])->group(function () {
 
+<<<<<<< HEAD
+    // Pembatalan & konfirmasi pembayaran instan
+    Route::post('/reservasi/{nomor_reservasi}/batal-instan', [ReservasiController::class, 'cancelPendingInstant'])->name('reservasi.cancelInstant');
+    Route::post('/reservasi/confirm-payment/{nomor_reservasi}', [ReservasiController::class, 'confirmPayment'])->name('reservasi.confirmPayment');
+=======
     // Dashboard Member & Riwayat Reservasi
     Route::get('/dashboard', [ReservasiController::class, 'dashboard'])->name('dashboard');
+>>>>>>> a66bdc2f86d7a3b0df9b1eaeb41d9ee186650d29
 
     // Dashboard & Reservasi
     Route::get('/dashboard', [ReservasiController::class, 'dashboard'])->name('dashboard');
@@ -82,8 +88,19 @@ Route::prefix('admin')->name('admin.')->group(function () {
         'kelola-lapangan' => 'lapangan'
     ]);
 
+<<<<<<< HEAD
+    // Role
+    Route::get('/role', [AdminDashboardController::class, 'role'])->name('role.index');
+    Route::put('/role/{id}', [AdminDashboardController::class, 'updateRole'])->name('role.update');
+
+    // 🛡️ Terminal Gate Scanner — sengaja di grup admin (bukan grup member biasa),
+    // supaya hanya admin yang login yang bisa memicu check-in tiket.
+    Route::get('/staff/scan', function () { return view('staff.scan'); })->name('staff.scan');
+    Route::post('/staff/checkin', [ReservasiController::class, 'processStaffCheckIn'])->name('staff.checkin');
+=======
     // 👥 Modul 4: Data Member & Loyalitas Poin Gamifikasi
     Route::get('/member', [AdminDashboardController::class, 'member'])->name('member.index');
+>>>>>>> a66bdc2f86d7a3b0df9b1eaeb41d9ee186650d29
 });
 
 require __DIR__.'/auth.php';
