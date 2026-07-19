@@ -28,6 +28,10 @@ class AdminDashboardController extends Controller
         $credentials = $request->validate([
             'email'    => ['required', 'email'],
             'password' => ['required'],
+        ], [
+            'email.required'    => 'Email wajib diisi.',
+            'email.email'       => 'Format email tidak valid.',
+            'password.required' => 'Password wajib diisi.',
         ]);
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
@@ -67,26 +71,82 @@ class AdminDashboardController extends Controller
         return view('admin.reservasi.index', compact('reservasis'));
     }
 
+    public function exportExcel(Request $request)
+    {
+        $query = Reservasi::with(['lapangan', 'user']);
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        $reservasis = $query->latest()->get();
+
+        header("Content-Type: application/vnd.ms-excel; charset=utf-8");
+        header("Content-Disposition: attachment; filename=Laporan_Reservasi_" . date('Ymd_His') . ".xls");
+        header("Pragma: no-cache");
+        header("Expires: 0");
+
+        return view('admin.reservasi.excel', compact('reservasis'));
+    }
+
     public function updateStatus(Request $request, $id)
     {
-        $request->validate(['status' => 'required|in:Confirmed,Waiting Payment,Completed,Cancelled']);
-        $reservasi = Reservasi::findOrFail($id);
-        $reservasi->update(['status' => $request->status]);
-        return back()->with('success', "Status reservasi #{$reservasi->id} berhasil diubah.");
+        $request->validate([
+            'status' => 'required|in:Confirmed,Waiting Payment,Completed,Cancelled',
+        ], [
+            'status.required' => 'Status wajib dipilih.',
+            'status.in'       => 'Status yang dipilih tidak valid.',
+        ]);
+
+        try {
+            $reservasi = Reservasi::findOrFail($id);
+            $reservasi->update(['status' => $request->status]);
+
+            return back()->with('success', "Status reservasi #{$reservasi->id} berhasil diubah menjadi {$request->status}.");
+
+        } catch (\Exception $e) {
+            Log::error('Gagal update status reservasi ID ' . $id . ': ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan sistem saat mengubah status reservasi.');
+        }
     }
 
     public function deleteReservasi($id)
     {
-        Reservasi::findOrFail($id)->delete();
-        return redirect()->route('admin.reservasi.index')->with('success', 'Data reservasi berhasil dihapus.');
+        try {
+            $reservasi = Reservasi::findOrFail($id);
+            $reservasi->delete();
+
+            return redirect()->route('admin.reservasi.index')
+                ->with('success', 'Data reservasi #' . $id . ' berhasil dihapus dari sistem.');
+
+        } catch (\Exception $e) {
+            Log::error('Gagal hapus reservasi ID ' . $id . ': ' . $e->getMessage());
+            return redirect()->route('admin.reservasi.index')
+                ->with('error', 'Gagal menghapus data reservasi. Silakan coba lagi.');
+        }
     }
 
     public function deleteReservasiMassal(Request $request)
     {
-        $request->validate(['ids' => 'required|array']);
-        $jumlah = Reservasi::whereIn('id', $request->ids)->count();
-        Reservasi::whereIn('id', $request->ids)->delete();
-        return redirect()->route('admin.reservasi.index')->with('success', $jumlah . ' data berhasil dihapus.');
+        $request->validate([
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'exists:reservasis,id',
+        ], [
+            'ids.required' => 'Pilih minimal satu data reservasi untuk dihapus.',
+            'ids.array'    => 'Data yang dikirim tidak valid.',
+            'ids.*.exists' => 'Salah satu data yang dipilih tidak ditemukan (mungkin sudah dihapus sebelumnya).',
+        ]);
+
+        try {
+            $jumlah = Reservasi::whereIn('id', $request->ids)->count();
+            Reservasi::whereIn('id', $request->ids)->delete();
+
+            return redirect()->route('admin.reservasi.index')
+                ->with('success', $jumlah . ' data reservasi terpilih berhasil dihapus dari sistem.');
+
+        } catch (\Exception $e) {
+            Log::error('Gagal hapus massal reservasi: ' . $e->getMessage());
+            return redirect()->route('admin.reservasi.index')
+                ->with('error', 'Terjadi kesalahan sistem saat menghapus data terpilih.');
+        }
     }
 
     /**
@@ -110,7 +170,6 @@ class AdminDashboardController extends Controller
         return view('admin.member.index', compact('members'));
     }
 
-    // TAMBAHAN: Method agar route('admin.member.edit') bisa berjalan
     public function editMember($id)
     {
         $member = User::with('membership')->findOrFail($id);
@@ -120,34 +179,70 @@ class AdminDashboardController extends Controller
     public function updateMember(Request $request, $id)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name'   => 'required|string|max:255',
             'points' => 'required|integer|min:0',
+        ], [
+            'name.required'   => 'Nama member wajib diisi.',
+            'name.max'        => 'Nama member maksimum 255 karakter.',
+            'points.required' => 'Saldo poin wajib diisi.',
+            'points.integer'  => 'Saldo poin harus berupa angka bulat.',
+            'points.min'      => 'Saldo poin tidak boleh negatif.',
         ]);
 
         $member = User::findOrFail($id);
-        DB::transaction(function () use ($member, $request) {
-            $member->update(['name' => $request->name]);
-            $membership = Membership::firstOrCreate(['user_id' => $member->id]);
-            
-            $tierBaru = $request->points >= 300 ? 'Gold' : ($request->points >= 100 ? 'Silver' : 'Bronze');
-            
-            $membership->update([
-                'points' => $request->points,
-                'membership_type' => $tierBaru,
-            ]);
-        });
 
-        return redirect()->route('admin.member.index')->with('success', "Data member \"{$member->name}\" berhasil diperbarui.");
+        try {
+            DB::transaction(function () use ($member, $request) {
+                $member->update(['name' => $request->name]);
+
+                $membership = Membership::firstOrCreate(
+                    ['user_id' => $member->id],
+                    ['membership_type' => 'Bronze', 'points' => 0]
+                );
+
+                $tierBaru = $request->points >= 300 ? 'Gold' : ($request->points >= 100 ? 'Silver' : 'Bronze');
+
+                $membership->update([
+                    'points'          => $request->points,
+                    'membership_type' => $tierBaru,
+                ]);
+            });
+
+            return redirect()->route('admin.member.index')
+                ->with('success', "Data member \"{$member->name}\" berhasil diperbarui.");
+
+        } catch (\Exception $e) {
+            Log::error('Gagal update member ID ' . $id . ': ' . $e->getMessage());
+            return back()->withInput()
+                ->with('error', 'Terjadi kesalahan sistem saat menyimpan perubahan data member.');
+        }
     }
 
     public function deleteMember($id)
     {
         $member = User::findOrFail($id);
-        if ($member->id === Auth::id()) return back()->with('error', 'Tidak bisa menghapus akun sendiri.');
-        
-        $member->membership()->delete();
-        $member->delete();
-        return redirect()->route('admin.member.index')->with('success', "Member \"{$member->name}\" berhasil dihapus.");
+
+        if ($member->id === Auth::id()) {
+            return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
+        }
+
+        if ($member->is_admin == 1) {
+            return back()->with('error', 'Akun admin tidak dapat dihapus melalui halaman manajemen member.');
+        }
+
+        try {
+            DB::transaction(function () use ($member) {
+                $member->membership()->delete();
+                $member->delete();
+            });
+
+            return redirect()->route('admin.member.index')
+                ->with('success', "Member \"{$member->name}\" berhasil dihapus dari sistem.");
+
+        } catch (\Exception $e) {
+            Log::error('Gagal hapus member ID ' . $id . ': ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan sistem saat menghapus data member.');
+        }
     }
 
     /**
@@ -156,7 +251,7 @@ class AdminDashboardController extends Controller
     public function role(Request $request)
     {
         $query = User::query();
-        
+
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%')
                   ->orWhere('email', 'like', '%' . $request->search . '%');
@@ -168,14 +263,27 @@ class AdminDashboardController extends Controller
 
     public function updateRole(Request $request, $id)
     {
-        $request->validate(['is_admin' => 'required|in:0,1']);
+        $request->validate([
+            'is_admin' => 'required|in:0,1',
+        ], [
+            'is_admin.required' => 'Status akses wajib dipilih.',
+            'is_admin.in'       => 'Status akses tidak valid.',
+        ]);
+
         $user = User::findOrFail($id);
 
         if ($user->id === Auth::id()) {
             return back()->with('error', 'Anda tidak dapat mengubah status akses sendiri!');
         }
 
-        $user->update(['is_admin' => $request->is_admin]);
-        return back()->with('success', "Status akses {$user->name} berhasil diperbarui.");
+        try {
+            DB::transaction(function () use ($user, $request) {
+                $user->update(['is_admin' => $request->is_admin]);
+            });
+            return back()->with('success', "Status akses {$user->name} berhasil diperbarui.");
+        } catch (\Exception $e) {
+            Log::error('Gagal update role ID ' . $id . ': ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan sistem saat mengubah status akses.');
+        }
     }
 }

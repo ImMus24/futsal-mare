@@ -47,7 +47,6 @@
         outline: 2px solid var(--color-secondary); outline-offset: 2px;
     }
 
-    /* Tombol & interaksi — dipindah dari inline JS ke CSS agar konsisten & tanpa handler berulang */
     .fm-scope .fm-btn-outline {
         background: var(--color-bg-card); border: 1px solid var(--line); color: var(--color-text-muted);
         transition: color .18s ease, border-color .18s ease;
@@ -136,14 +135,17 @@
 
             <div class="flex flex-wrap gap-2 p-2 rounded-xl" style="background: var(--color-bg-card); border: 1px solid var(--line);">
                 <a href="{{ route('admin.reservasi.index') }}" class="fm-btn-nav px-4 py-2.5 font-semibold text-[11px] rounded-lg uppercase tracking-wide">
-                    Log Reservasii
+                    Log Reservasi
                 </a>
                 <a href="{{ route('admin.lapangan.index') }}" class="fm-btn-nav px-4 py-2.5 font-semibold text-[11px] rounded-lg uppercase tracking-wide">
                     Kelola Arena
                 </a>
+                <a href="{{ route('admin.staff.scan') }}" class="fm-btn-nav px-4 py-2.5 font-semibold text-[11px] rounded-lg uppercase tracking-wide inline-flex items-center gap-1.5">
+                    📷 Gate Scanner
+                </a>
                 @if(auth()->user()->is_admin == 1)
                     <a href="{{ route('admin.role.index') }}" class="fm-btn-gold px-4 py-2.5 font-semibold text-[11px] rounded-lg uppercase tracking-wide">
-                        Manajemen Aksesss
+                        Manajemen Akses
                     </a>
                 @endif
             </div>

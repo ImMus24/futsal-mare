@@ -584,38 +584,39 @@ class ReservasiController extends Controller
     }
 
     // MENCETAK E-TIKET QR CODE (SVG)
-    public function cetakTiket($id)
-    {
-        $reservasi = Reservasi::where('id', $id)
-            ->where('user_id', Auth::id())
-            ->whereIn('status', ['Confirmed', 'Completed'])
-            ->first();
+   public function cetakTiket($id)
+{
+    $reservasi = Reservasi::where('id', $id)
+        ->where('user_id', Auth::id())
+        ->whereIn('status', ['Confirmed', 'Completed'])
+        ->first();
 
-        // Ganti firstOrFail() -> pengecekan manual: kalau reservasi belum lunas
-        // atau bukan milik user ini, arahkan kembali ke dashboard dengan pesan
-        // yang jelas, bukan halaman 404 polos.
-        if (!$reservasi) {
-            return redirect()->route('dashboard')->with('error', 'Tiket tidak dapat dibuka. Pastikan reservasi sudah lunas sebelum mengunduh e-tiket.');
-        }
-
-        $nama_file = 'qr_' . $reservasi->nomor_reservasi . '.svg';
-        $relative_path = 'qrcodes/' . $nama_file;
-
-        // Pakai Storage facade (bukan public_path()/mkdir manual) — lebih portable
-        // kalau suatu saat disk berubah ke S3/cloud storage.
-        if (!Storage::disk('public')->exists($relative_path)) {
-            $svg = QrCode::format('svg')
-                ->size(300)
-                ->margin(2)
-                ->errorCorrection('H')
-                ->generate($reservasi->nomor_reservasi);
-
-            Storage::disk('public')->put($relative_path, $svg);
-            $reservasi->update(['qr_code_path' => $nama_file]);
-        }
-
-        return view('reservasi.tiket', compact('reservasi'));
+    if (!$reservasi) {
+        return redirect()->route('dashboard')->with('error', 'Tiket tidak ditemukan.');
     }
+
+    $nama_file = 'qr_' . $reservasi->nomor_reservasi . '.svg';
+    $directory = 'public/qrcodes'; // Simpan di storage/app/public/qrcodes
+    $path = storage_path('app/' . $directory . '/' . $nama_file);
+
+    if (!file_exists(storage_path('app/' . $directory))) {
+        mkdir(storage_path('app/' . $directory), 0755, true);
+    }
+
+    if (!file_exists($path)) {
+        // Gunakan Error Correction 'H' (High) agar tetap terbaca meski ada kerusakan 30%
+        $svg = QrCode::format('svg')
+            ->size(500) // Ukuran diperbesar
+            ->margin(1)
+            ->errorCorrection('H') 
+            ->generate($reservasi->nomor_reservasi);
+
+        file_put_contents($path, $svg);
+        $reservasi->update(['qr_code_path' => $nama_file]);
+    }
+
+    return view('reservasi.tiket', compact('reservasi'));
+}
 
     /**
      * TERMINAL GATE SCANNER CHECK-IN.

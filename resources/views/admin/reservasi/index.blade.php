@@ -88,6 +88,25 @@
         </div>
     @endif
 
+    @if(session('error'))
+        <div class="p-4 rounded-2xl text-xs font-semibold flex items-center gap-2 shadow-md"
+             style="background: var(--danger-bg); border: 1px solid rgba(239,68,68,0.3); color: var(--danger);">
+            <span>⚠️</span> {{ session('error') }}
+        </div>
+    @endif
+
+    @if ($errors->any())
+        <div class="p-4 rounded-2xl text-xs font-semibold shadow-md"
+             style="background: var(--danger-bg); border: 1px solid rgba(239,68,68,0.3); color: var(--danger);">
+            <p class="f-mono uppercase tracking-wide font-bold flex items-center gap-2"><span>⚠️</span> Aksi Gagal Diproses:</p>
+            <ul class="list-disc list-inside mt-1.5 font-medium" style="opacity: 0.9;">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <!-- 3. SEARCH & FILTER CONTROL DECK -->
     <div class="p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl"
          style="background: var(--color-bg-card); border: 1px solid var(--line);">
