@@ -99,11 +99,7 @@
                 <span style="font-size: 14px; line-height: 1;">🛡️</span>
                 <div>
                     <b class="f-mono" style="text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 2px;">Otoritas Validasi Petugas</b>
-<<<<<<< HEAD
                     Halaman ini hanya bisa diakses oleh admin yang login. Jangan membagikan tautan endpoint scanner ini kepada pihak luar.
-=======
-                    Halaman ini seharusnya hanya bisa diakses oleh staf/admin. Jangan membagikan tautan endpoint scanner ini kepada pihak luar.
->>>>>>> origin/main
                 </div>
             </div>
         </div>
@@ -131,17 +127,9 @@
 
             function onScanFailure(error) {
                 // SENGAJA DIBIARKAN KOSONG.
-<<<<<<< HEAD
                 // Dipanggil setiap frame kamera TIDAK menemukan QR code — kondisi
                 // normal yang terjadi puluhan kali per detik selama kamera aktif.
                 // Bukan error nyata, jadi tidak perlu ditampilkan di UI/console.
-=======
-                // Ini dipanggil setiap frame kamera TIDAK menemukan QR code —
-                // kondisi normal yang terjadi puluhan kali per detik selama
-                // kamera aktif (mis. saat QR belum diarahkan tepat, terlalu
-                // jauh, atau sedang bergerak). Ini bukan error nyata, jadi
-                // tidak perlu ditampilkan di UI maupun console.
->>>>>>> origin/main
             }
 
             function onScanSuccess(decodedText, decodedResult) {

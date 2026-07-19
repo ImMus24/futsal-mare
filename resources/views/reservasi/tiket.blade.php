@@ -217,7 +217,6 @@
                 alert("Gagal merender file gambar. Kalau QR code sudah tampil normal di halaman ini tapi hasil download tetap kosong/tidak terbaca scanner, kemungkinan penyebabnya format SVG QR tidak selalu bisa di-screenshot html2canvas — hubungi admin untuk beralih ke format PNG.");
             });
         });
-    });
-</script>
+    </script>
 </body>
 </html>

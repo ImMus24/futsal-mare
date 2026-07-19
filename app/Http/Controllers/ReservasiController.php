@@ -566,29 +566,6 @@ class ReservasiController extends Controller
         return view('reservasi.tiket', compact('reservasi', 'qrUrl'));
     }
 
-    $nama_file = 'qr_' . $reservasi->nomor_reservasi . '.svg';
-    $directory = 'public/qrcodes'; // Simpan di storage/app/public/qrcodes
-    $path = storage_path('app/' . $directory . '/' . $nama_file);
-
-    if (!file_exists(storage_path('app/' . $directory))) {
-        mkdir(storage_path('app/' . $directory), 0755, true);
-    }
-
-    if (!file_exists($path)) {
-        // Gunakan Error Correction 'H' (High) agar tetap terbaca meski ada kerusakan 30%
-        $svg = QrCode::format('svg')
-            ->size(500) // Ukuran diperbesar
-            ->margin(1)
-            ->errorCorrection('H') 
-            ->generate($reservasi->nomor_reservasi);
-
-        file_put_contents($path, $svg);
-        $reservasi->update(['qr_code_path' => $nama_file]);
-    }
-
-    return view('reservasi.tiket', compact('reservasi'));
-}
-
     /**
      * TERMINAL GATE SCANNER CHECK-IN.
      */
