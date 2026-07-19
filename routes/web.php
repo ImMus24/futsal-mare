@@ -21,8 +21,8 @@ Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCa
 
 // 3. PROTECTED ROUTES (Member)
 Route::middleware(['auth', 'verified'])->group(function () {
-    
-    // PEMBATALAN & KONFIRMASI (Fix Error 500)
+
+    // PEMBATALAN & KONFIRMASI
     Route::post('/reservasi/{nomor_reservasi}/batal-instan', [ReservasiController::class, 'cancelPendingInstant'])->name('reservasi.cancelInstant');
     Route::post('/reservasi/confirm-payment/{nomor_reservasi}', [ReservasiController::class, 'confirmPayment'])->name('reservasi.confirmPayment');
 
@@ -31,12 +31,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/reservasi/lapangan/{id}', [ReservasiController::class, 'create'])->name('reservasi.create');
     Route::post('/reservasi/store', [ReservasiController::class, 'store'])->name('reservasi.store');
     Route::get('/reservasi/tiket/{id}', [ReservasiController::class, 'cetakTiket'])->name('reservasi.tiket');
-    
-    // Staff & Kendali
-    Route::get('/staff/scan', function() { return view('staff.scan'); })->name('staff.scan');
-    Route::post('/staff/checkin', [ReservasiController::class, 'processStaffCheckIn'])->name('staff.checkin');
+
     Route::post('/reservasi/batal/{id}', [ReservasiController::class, 'batalkanReservasi'])->name('reservasi.batal');
-    
     Route::delete('/reservasi/destroy-massal', [ReservasiController::class, 'destroyMassal'])->name('reservasi.destroyMassal');
     Route::delete('/reservasi/{id}', [ReservasiController::class, 'destroy'])->name('reservasi.destroy');
 
@@ -49,14 +45,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // 4. ADMIN PANEL ROUTES
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-    
+
     // Reservasi Admin
     Route::get('/reservasi', [AdminDashboardController::class, 'reservasi'])->name('reservasi.index');
     Route::get('/reservasi/export-excel', [AdminDashboardController::class, 'exportExcel'])->name('reservasi.exportExcel');
     Route::patch('/reservasi/{id}/update-status', [AdminDashboardController::class, 'updateStatus'])->name('reservasi.updateStatus');
     Route::delete('/reservasi/{id}/delete', [AdminDashboardController::class, 'deleteReservasi'])->name('reservasi.delete');
     Route::delete('/reservasi/delete-massal', [AdminDashboardController::class, 'deleteReservasiMassal'])->name('reservasi.deleteMassal');
-    
+
     // Lapangan
     Route::resource('kelola-lapangan', LapanganController::class)->names([
         'index' => 'lapangan.index', 'create' => 'lapangan.create', 'store' => 'lapangan.store',
@@ -72,6 +68,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Role
     Route::get('/role', [AdminDashboardController::class, 'role'])->name('role.index');
     Route::put('/role/{id}', [AdminDashboardController::class, 'updateRole'])->name('role.update');
+
+    // 🛡️ TERMINAL GATE SCANNER — dipindah ke sini dari grup member biasa.
+    // Sebelumnya hanya dilindungi 'auth' (siapa pun yang login bisa akses
+    // dan memicu check-in tiket orang lain). Sekarang wajib 'admin' juga.
+    // PENTING: nama route berubah jadi 'admin.staff.scan' & 'admin.staff.checkin'
+    // — pastikan route('staff.checkin') di staff/scan.blade.php ikut diubah
+    // menjadi route('admin.staff.checkin'), begitu juga link manapun yang
+    // mengarah ke halaman ini.
+    Route::get('/staff/scan', function () { return view('staff.scan'); })->name('staff.scan');
+    Route::post('/staff/checkin', [ReservasiController::class, 'processStaffCheckIn'])->name('staff.checkin');
 });
 
 require __DIR__.'/auth.php';
