@@ -16,6 +16,32 @@ Route::get('/', [ReservasiController::class, 'landingPage'])->name('landingPage'
 Route::get('/lapangan/{id}', [ReservasiController::class, 'showLapangan'])->name('lapangan.detail');
 
 // ==========================================
+// 🔔 1a. MIDTRANS SERVER-TO-SERVER WEBHOOK
+// ==========================================
+// PENTING #1: route ini SENGAJA publik (tanpa middleware 'auth') — yang memanggilnya
+// adalah server Midtrans, bukan user yang login lewat browser, jadi tidak ada
+// sesi/cookie sama sekali. Keamanannya ditangani di dalam handleNotification()
+// sendiri lewat verifikasi signature_key + kecocokan gross_amount.
+//
+// PENTING #2: route POST publik dari luar seperti ini WAJIB dikecualikan dari
+// verifikasi CSRF, karena Midtrans tidak mengirim token CSRF Laravel. Tambahkan
+// di bootstrap/app.php:
+//
+//     ->withMiddleware(function (Middleware $middleware) {
+//         $middleware->validateCsrfTokens(except: [
+//             'midtrans/notification',
+//         ]);
+//     })
+//
+// Daftarkan URL lengkap https://domainmu.com/midtrans/notification sebagai
+// "Payment Notification URL" di Midtrans Dashboard → Settings → Configuration.
+// (Untuk development lokal, URL ini tidak akan pernah kepanggil oleh Midtrans
+// karena localhost tidak reachable dari internet — makanya endpoint
+// confirmPayment() di bawah dibuat sebagai jalur konfirmasi sisi klien.)
+Route::post('/midtrans/notification', [ReservasiController::class, 'handleNotification'])
+    ->name('midtrans.notification');
+
+// ==========================================
 // 🛡️ 1b. PORTAL AUTHENTICATION ADMIN GATEWAY
 // ==========================================
 // Diletakkan secara publik agar halaman login admin bisa diakses sebelum masuk dashboard
@@ -42,6 +68,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // route('reservasi.cancelInstant', ['nomor_reservasi' => ...]) di create.blade.php.
     Route::post('/reservasi/{nomor_reservasi}/batal-instan', [ReservasiController::class, 'cancelPendingInstant'])
         ->name('reservasi.cancelInstant');
+
+    // 🟢 KONFIRMASI PEMBAYARAN INSTAN dari sisi klien (dipanggil dari onSuccess Snap.js).
+    // Jalur ini yang membuat status langsung "lunas" di dashboard tanpa menunggu
+    // webhook/admin — lihat komentar lengkap di ReservasiController::confirmPayment().
+    Route::post('/reservasi/{nomor_reservasi}/confirm-payment', [ReservasiController::class, 'confirmPayment'])
+        ->name('reservasi.confirmPayment');
+
+    // 🔍 Polling status reservasi (dipakai frontend setelah onSuccess/onPending
+    // untuk memastikan status terbaru sebelum redirect final ke dashboard).
+    Route::get('/reservasi/{nomor_reservasi}/status', [ReservasiController::class, 'checkStatus'])
+        ->name('reservasi.checkStatus');
 
     // Dashboard Member & Riwayat Reservasi
     Route::get('/dashboard', [ReservasiController::class, 'dashboard'])->name('dashboard');
