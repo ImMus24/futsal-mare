@@ -4,14 +4,10 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReservasiController;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\LapanganController; // 🏟️ Impor Kontroler Lapangan Baru
+use App\Http\Controllers\LapanganController;
 use Illuminate\Support\Facades\Route;
 
-// ==========================================
-// 1. PUBLIC ROUTES (Bisa Diakses Tanpa Login)
-// ==========================================
-
-// Landing Page Utama Futsal Mare
+// 1. PUBLIC ROUTES
 Route::get('/', [ReservasiController::class, 'landingPage'])->name('landingPage');
 Route::get('/lapangan/{id}', [ReservasiController::class, 'showLapangan'])->name('lapangan.detail');
 
@@ -22,34 +18,24 @@ Route::get('/lapangan/{id}', [ReservasiController::class, 'showLapangan'])->name
 Route::get('/admin/login', [AdminDashboardController::class, 'showLoginForm'])->name('admin.login');
 Route::post('/admin/login', [AdminDashboardController::class, 'login'])->name('admin.login.submit');
 
-
-// ==========================================
-// 2. GOOGLE OAUTH ROUTES (Proses Autentikasi)
-// ==========================================
+// 2. GOOGLE OAUTH
 Route::get('auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
 
-
-// ==========================================
-// 3. PROTECTED ROUTES (Wajib Login / Auth)
-// ==========================================
+// 3. PROTECTED ROUTES (Member)
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // Dashboard Member & Riwayat Reservasi
     Route::get('/dashboard', [ReservasiController::class, 'dashboard'])->name('dashboard');
 
-    // 🌟 KEMBALI KE SEMULA: Rute Alur Form Booking Member Berfungsi Sempurna
+    // Dashboard & Reservasi
+    Route::get('/dashboard', [ReservasiController::class, 'dashboard'])->name('dashboard');
     Route::get('/reservasi/lapangan/{id}', [ReservasiController::class, 'create'])->name('reservasi.create');
     Route::post('/reservasi/store', [ReservasiController::class, 'store'])->name('reservasi.store');
     
     // Rute untuk mengakses cetak E-Tiket QR Code Futsal Mare
     Route::get('/reservasi/tiket/{id}', [ReservasiController::class, 'cetakTiket'])->name('reservasi.tiket');
 
-    // Alur Staff / Gate Scanner Real-Time
-    Route::get('/staff/scan', function() { return view('staff.scan'); })->name('staff.scan');
-    Route::post('/staff/checkin', [ReservasiController::class, 'processStaffCheckIn'])->name('staff.checkin');
-
-    // ❌ KENDALI UTAMA PEMBATALAN (Diletakkan di atas rute wildcard {id} lainnya agar aman)
     Route::post('/reservasi/batal/{id}', [ReservasiController::class, 'batalkanReservasi'])->name('reservasi.batal');
     
     // 👑 MANAJEMEN PEMBERSIHAN RIWAYAT: Massal & Tunggal
@@ -75,6 +61,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // 📝 Amankan Urutan: Taruh rute statis excel di atas agar tidak termakan parameter dinamis resource
     Route::get('/reservasi/export-excel', [AdminDashboardController::class, 'exportExcel'])->name('reservasi.exportExcel');
     Route::get('/reservasi', [AdminDashboardController::class, 'reservasi'])->name('reservasi.index');
+    Route::get('/reservasi/export-excel', [AdminDashboardController::class, 'exportExcel'])->name('reservasi.exportExcel');
     Route::patch('/reservasi/{id}/update-status', [AdminDashboardController::class, 'updateStatus'])->name('reservasi.updateStatus');
     Route::delete('/reservasi/{id}/delete', [AdminDashboardController::class, 'deleteReservasi'])->name('reservasi.delete');
     
@@ -99,8 +86,4 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/member', [AdminDashboardController::class, 'member'])->name('member.index');
 });
 
-// ==========================================
-// 5. INJECT AUTHENTICATION ROUTES (Breeze Fix)
-// ==========================================
-// 🌟 BARIS SAKTI PENYELAMAT ERROR LOGIN:
 require __DIR__.'/auth.php';

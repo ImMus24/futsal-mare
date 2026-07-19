@@ -196,6 +196,37 @@
             window.location.href = "?tanggal_main=" + tanggal;
         }
 
+        function showVerifyOverlay(show){
+            document.getElementById('verify-overlay').classList.toggle('show', show);
+        }
+
+        /**
+         * Panggil endpoint confirm-payment supaya server memverifikasi status ASLI ke
+         * Midtrans dan mengubah status reservasi jadi Confirmed SEBELUM kita pindah ke
+         * dashboard. Tanpa langkah ini, status akan tetap "Waiting Payment" di database
+         * walau Midtrans sudah menerima pembayaran — karena webhook tidak bisa menjangkau
+         * localhost saat development. Notifikasi sukses/gagalnya sendiri ditampilkan oleh
+         * komponen toast global (FMToast) di halaman dashboard lewat session flash yang
+         * di-set oleh controller, jadi di sini kita hanya perlu menunggu lalu redirect.
+         */
+        function konfirmasiPembayaranLaluRedirect(nomorReservasi, redirectUrl) {
+            showVerifyOverlay(true);
+
+            const confirmUrl = CONFIRM_PAYMENT_URL_TEMPLATE.replace('GANTI_NOMOR', nomorReservasi);
+
+            fetch(confirmUrl, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken(),
+                }
+            })
+            .catch(() => { /* diabaikan di sini — pesan kegagalan sudah di-flash oleh controller */ })
+            .finally(() => {
+                window.location.href = redirectUrl;
+            });
+        }
+
         function hitungTotal() {
             const inputTanggal = document.getElementById('input_tanggal').value;
             const selectDurasi = document.getElementById('input_durasi').value;
@@ -262,7 +293,7 @@
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                    'X-CSRF-TOKEN': csrfToken()
                 }
             })
             .then(async response => {

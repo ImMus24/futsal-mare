@@ -179,6 +179,151 @@ class ReservasiController extends Controller
         }); 
     }
 
+    /**
+     * KONFIRMASI PEMBAYARAN INSTAN DARI SISI KLIEN (dipanggil dari onSuccess Snap.js).
+     *
+     * KENAPA INI DIPERLUKAN: di lingkungan development lokal (127.0.0.1/localhost),
+     * webhook Midtrans (handleNotification() di bawah) TIDAK PERNAH terpanggil,
+     * karena server Midtrans tidak bisa menjangkau alamat localhost dari internet.
+     * Akibatnya status reservasi tertahan di "Waiting Payment" terus meski
+     * pembayaran sudah sukses — sampai admin mengubahnya manual.
+     *
+     * Endpoint ini memberi jalur konfirmasi kedua: begitu popup Snap melaporkan
+     * onSuccess di browser, frontend memanggil endpoint ini. Endpoint ini TIDAK
+     * langsung percaya klaim dari browser — ia mengecek status transaksi yang
+     * SEBENARNYA langsung ke API status Midtrans, baru mengubah status lokal.
+     * Aman dipanggil berkali-kali maupun bersamaan dengan webhook produksi
+     * nanti, karena logikanya idempotent (lihat konfirmasiPembayaranSukses()).
+     */
+    public function confirmPayment($nomor_reservasi)
+    {
+        $reservasi = Reservasi::where('nomor_reservasi', $nomor_reservasi)
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if (!$reservasi) {
+            return response()->json(['success' => false, 'message' => 'Reservasi tidak ditemukan.'], 404);
+        }
+
+        // Sudah lunas sebelumnya (mis. webhook produksi lebih dulu memproses) — tidak perlu hit API lagi.
+        if (in_array($reservasi->status, ['Confirmed', 'Completed'])) {
+            return response()->json(['success' => true, 'status' => $reservasi->status]);
+        }
+
+        try {
+            $serverKey = config('services.midtrans.server_key');
+            $base64Auth = base64_encode($serverKey . ':');
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Basic ' . $base64Auth,
+                'Accept'        => 'application/json',
+            ])->timeout(8)->get("https://api.sandbox.midtrans.com/v2/{$reservasi->nomor_reservasi}/status");
+
+            if ($response->failed()) {
+                Log::warning("Gagal cek status Midtrans untuk {$reservasi->nomor_reservasi}: " . $response->body());
+                return response()->json([
+                    'success' => false,
+                    'status'  => $reservasi->status,
+                    'message' => 'Belum bisa memverifikasi status pembayaran, silakan cek lagi sebentar.',
+                ], 202);
+            }
+
+            $data = $response->json();
+            $transactionStatus = $data['transaction_status'] ?? null;
+
+            // Cocokkan nominal juga di jalur ini, sama seperti di handleNotification(),
+            // supaya endpoint ini tidak asal percaya field transaction_status.
+            $gross_amount_int = isset($data['gross_amount']) ? (int) round((float) $data['gross_amount']) : null;
+            if ($gross_amount_int !== null && $gross_amount_int !== (int) $reservasi->total_harga) {
+                Log::error("Nominal status API tidak cocok untuk order {$reservasi->nomor_reservasi}: dilaporkan {$gross_amount_int}, tercatat {$reservasi->total_harga}");
+                return response()->json(['success' => false, 'status' => $reservasi->status, 'message' => 'Verifikasi nominal pembayaran gagal.'], 422);
+            }
+
+            DB::transaction(function () use ($transactionStatus, $reservasi, $data) {
+                if ($transactionStatus === 'settlement' || $transactionStatus === 'capture') {
+                    $this->konfirmasiPembayaranSukses($reservasi, $data['payment_type'] ?? null);
+                } elseif (in_array($transactionStatus, ['cancel', 'expire', 'deny'])) {
+                    if ($reservasi->status === 'Waiting Payment') {
+                        $reservasi->update(['status' => 'Cancelled']);
+                    }
+                }
+            });
+
+            $statusAkhir = $reservasi->fresh()->status;
+
+            // Titip pesan lewat session flash — request ini dipanggil via fetch() dari
+            // browser yang SAMA yang sebentar lagi redirect penuh ke halaman dashboard,
+            // jadi flash ini akan otomatis terbaca & ditampilkan oleh komponen toast
+            // (components/toast.blade.php) begitu dashboard selesai dimuat. Tidak perlu
+            // logika toast tambahan di JS booking.
+            if ($statusAkhir === 'Confirmed') {
+                session()->flash('success', 'Pembayaran berhasil dikonfirmasi! Jadwal reservasi Anda sudah lunas.');
+            } elseif ($statusAkhir === 'Cancelled' && $transactionStatus !== null) {
+                session()->flash('error', 'Transaksi pembayaran dibatalkan/kadaluarsa di sisi Midtrans.');
+            }
+
+            return response()->json([
+                'success' => true,
+                'status'  => $statusAkhir,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Gagal konfirmasi instan pembayaran {$reservasi->nomor_reservasi}: " . $e->getMessage());
+
+            // Jangan klaim gagal ke user di titik ini — pembayaran di sisi Midtrans mungkin
+            // tetap sukses, cuma verifikasi instan-nya yang bermasalah (mis. timeout jaringan).
+            // Webhook produksi (kalau sudah live) atau pengecekan berikutnya tetap bisa
+            // mengoreksi status ini nanti; di sini cukup beri tahu bahwa sedang diverifikasi.
+            session()->flash('error', 'Pembayaran diterima, namun verifikasi instan gagal. Status akan diperbarui otomatis dalam beberapa saat — refresh halaman ini jika belum berubah.');
+
+            return response()->json([
+                'success' => false,
+                'status'  => $reservasi->status,
+                'message' => 'Terjadi kesalahan sistem saat memverifikasi pembayaran.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Terapkan efek pembayaran sukses: ubah status jadi Confirmed dan tambahkan
+     * poin membership. Dipakai bersama oleh confirmPayment() (jalur klien/lokal)
+     * dan handleNotification() (webhook resmi/produksi) supaya logikanya satu
+     * tempat saja. IDEMPOTENT — aman dipanggil lebih dari sekali untuk reservasi
+     * yang sama, karena langsung berhenti kalau status sudah Confirmed/Completed.
+     */
+    private function konfirmasiPembayaranSukses(Reservasi $reservasi, ?string $paymentType = null): void
+    {
+        if (in_array($reservasi->status, ['Confirmed', 'Completed'])) {
+            return;
+        }
+
+        $reservasi->update([
+            'status'            => 'Confirmed',
+            'metode_pembayaran' => $paymentType,
+            'expired_at'        => null,
+        ]);
+
+        $membership = Membership::firstOrCreate(
+            ['user_id' => $reservasi->user_id],
+            ['membership_type' => 'Bronze', 'points' => 0]
+        );
+
+        $poinBaru = floor($reservasi->total_harga / 10000);
+        $totalPoinAkhir = $membership->points + $poinBaru;
+
+        $tierEvaluasi = 'Bronze';
+        if ($totalPoinAkhir >= 300) {
+            $tierEvaluasi = 'Gold';
+        } elseif ($totalPoinAkhir >= 100) {
+            $tierEvaluasi = 'Silver';
+        }
+
+        $membership->update([
+            'points'          => $totalPoinAkhir,
+            'membership_type' => $tierEvaluasi,
+        ]);
+    }
+
     // MIDTRANS WEBHOOK NOTIFICATION HANDLER + AUTOMATED TIERING SYSTEM
     public function handleNotification(Request $request)
     {
@@ -234,15 +379,45 @@ class ReservasiController extends Controller
         return response()->json(['message' => 'Callback diproses sukses']);
     }
 
-    // Menampilkan Halaman Dashboard Riwayat Reservasi Member
+    /**
+     * Menampilkan Halaman Dashboard Riwayat Reservasi Member.
+     *
+     * PERBAIKAN: sebelumnya hanya mengirim $reservasis ke view, padahal
+     * dashboard.blade.php butuh $membership, $totalBooking, $lunasBooking,
+     * dan $totalPengeluaran juga — itu yang menyebabkan error
+     * "Undefined variable $membership".
+     */
     public function dashboard()
     {
-        $reservasis = Reservasi::where('user_id', Auth::id())
-            ->with(['lapangan', 'user.membership'])
+        $user = Auth::user();
+
+        $reservasis = Reservasi::where('user_id', $user->id)
+            ->with('lapangan')
             ->latest()
             ->get();
 
-        return view('dashboard', compact('reservasis'));
+        // Data membership diambil langsung dari relasi user yang sedang login,
+        // dengan fallback Bronze/0 poin untuk akun yang belum pernah bertransaksi
+        // (baris membership baru dibuat otomatis di handleNotification() saat
+        // pembayaran pertama sukses).
+        $membership = $user->membership ?? (object) [
+            'membership_type' => 'Bronze',
+            'points' => 0,
+        ];
+
+        // Metrik dihitung dari koleksi yang sama dengan tabel riwayat di bawahnya,
+        // supaya angka ringkasan selalu konsisten dengan data yang ditampilkan.
+        $totalBooking = $reservasis->count();
+        $lunasBooking = $reservasis->whereIn('status', ['Confirmed', 'Completed'])->count();
+        $totalPengeluaran = $reservasis->whereIn('status', ['Confirmed', 'Completed'])->sum('total_harga');
+
+        return view('dashboard', compact(
+            'reservasis',
+            'membership',
+            'totalBooking',
+            'lunasBooking',
+            'totalPengeluaran'
+        ));
     }
 
     // PEMBATALAN INSTAN DENGAN TOLERANSI KASUS STATUS
@@ -285,7 +460,14 @@ class ReservasiController extends Controller
         $reservasi = Reservasi::where('id', $id)
             ->where('user_id', Auth::id())
             ->whereIn('status', ['Confirmed', 'Completed', 'Cancelled'])
-            ->firstOrFail();
+            ->first();
+
+        // Ganti firstOrFail() -> pengecekan manual, supaya ID yang salah/bukan
+        // milik user/masih Waiting Payment memberi notifikasi yang jelas,
+        // bukan halaman 404 polos yang membingungkan pengguna.
+        if (!$reservasi) {
+            return redirect()->route('dashboard')->with('error', 'Riwayat transaksi tidak ditemukan, atau belum bisa dihapus karena masih menunggu pembayaran.');
+        }
 
         $reservasi->delete();
         return redirect()->route('dashboard')->with('success', 'Riwayat transaksi berhasil dibersihkan dari dashboard.');
@@ -312,12 +494,12 @@ class ReservasiController extends Controller
     }
 
     // MENCETAK E-TIKET QR CODE (SVG)
-    public function cetakTiket($id)
-    {
-        $reservasi = Reservasi::where('id', $id)
-            ->where('user_id', Auth::id())
-            ->whereIn('status', ['Confirmed', 'Completed'])
-            ->firstOrFail();
+   public function cetakTiket($id)
+{
+    $reservasi = Reservasi::where('id', $id)
+        ->where('user_id', Auth::id())
+        ->whereIn('status', ['Confirmed', 'Completed'])
+        ->first();
 
         $folder_path = public_path('images/qrcodes');
         if (!file_exists($folder_path)) {
@@ -337,8 +519,20 @@ class ReservasiController extends Controller
             $reservasi->update(['qr_code_path' => $nama_file]);
         }
 
-        return view('reservasi.tiket', compact('reservasi'));
+    if (!file_exists($path)) {
+        // Gunakan Error Correction 'H' (High) agar tetap terbaca meski ada kerusakan 30%
+        $svg = QrCode::format('svg')
+            ->size(500) // Ukuran diperbesar
+            ->margin(1)
+            ->errorCorrection('H') 
+            ->generate($reservasi->nomor_reservasi);
+
+        file_put_contents($path, $svg);
+        $reservasi->update(['qr_code_path' => $nama_file]);
     }
+
+    return view('reservasi.tiket', compact('reservasi'));
+}
 
     /**
      * 📷 REAL-TIME TERMINAL GATE SCANNER CHECK-IN

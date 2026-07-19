@@ -184,38 +184,36 @@
     </main>
 
     <!-- INTERACTIVE CAPTURE DOWNLOAD SCRIPT ENGINE -->
-    <script type="text/javascript">
-        document.getElementById('downloadImageBtn').addEventListener('click', function () {
-            const targetElement = document.getElementById('element-to-capture');
-            const actionButtons = targetElement.querySelector('.no-print');
+    <<!-- Masukkan script ini tepat sebelum </body> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+    document.getElementById('downloadImageBtn').addEventListener('click', function () {
+        const targetElement = document.getElementById('element-to-capture');
+        const actionButtons = targetElement.querySelector('.no-print');
+        
+        actionButtons.style.display = 'none';
+
+        html2canvas(targetElement, {
+            backgroundColor: '#121a23',
+            scale: 4, // Skala 4 membuat gambar sangat tajam
+            useCORS: true,
+            onclone: function (clonedDoc) {
+                // Memaksa area kotak QR menjadi Putih total agar kontras maksimal
+                const qrBox = clonedDoc.querySelector('.print-box');
+                if (qrBox) {
+                    qrBox.style.backgroundColor = '#ffffff';
+                    qrBox.style.border = 'none';
+                }
+            }
+        }).then(function (canvas) {
+            actionButtons.style.display = 'flex';
             
-            // Sembunyikan tombol aksi agar tidak ikut terfoto masuk gambar
-            actionButtons.style.display = 'none';
-
-            // Ambil screenshot elemen html secara presisi menggunakan konfigurasi engine canvas
-            html2canvas(targetElement, {
-                backgroundColor: '#121a23', // Selaras dengan warna --surface dasar
-                scale: 2, // Meningkatkan resolusi gambar agar kode QR tajam saat dipindai staff
-                logging: false,
-                useCORS: true
-            }).then(function (canvas) {
-                // Munculkan kembali tombol aksi di halaman web setelah pemotretan selesai
-                actionButtons.style.display = 'flex';
-
-                // Ubah data canvas menjadi link download instan
-                const imageURI = canvas.toDataURL("image/png");
-                const temporaryLink = document.createElement('a');
-                temporaryLink.download = 'Tiket_FutsalMare_{{ $reservasi->nomor_reservasi }}.png';
-                temporaryLink.href = imageURI;
-                
-                document.body.appendChild(temporaryLink);
-                temporaryLink.click();
-                document.body.removeChild(temporaryLink);
-            }).catch(function (error) {
-                actionButtons.style.display = 'flex';
-                alert("Gagal merender file gambar.");
-            });
+            const link = document.createElement('a');
+            link.download = 'Tiket_{{ $reservasi->nomor_reservasi }}.png';
+            link.href = canvas.toDataURL("image/png", 1.0);
+            link.click();
         });
-    </script>
+    });
+</script>
 </body>
 </html>
