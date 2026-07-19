@@ -22,7 +22,7 @@ Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCa
 // 3. PROTECTED ROUTES (Member)
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // PEMBATALAN & KONFIRMASI
+    // Pembatalan & konfirmasi pembayaran instan
     Route::post('/reservasi/{nomor_reservasi}/batal-instan', [ReservasiController::class, 'cancelPendingInstant'])->name('reservasi.cancelInstant');
     Route::post('/reservasi/confirm-payment/{nomor_reservasi}', [ReservasiController::class, 'confirmPayment'])->name('reservasi.confirmPayment');
 
@@ -69,13 +69,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/role', [AdminDashboardController::class, 'role'])->name('role.index');
     Route::put('/role/{id}', [AdminDashboardController::class, 'updateRole'])->name('role.update');
 
-    // 🛡️ TERMINAL GATE SCANNER — dipindah ke sini dari grup member biasa.
-    // Sebelumnya hanya dilindungi 'auth' (siapa pun yang login bisa akses
-    // dan memicu check-in tiket orang lain). Sekarang wajib 'admin' juga.
-    // PENTING: nama route berubah jadi 'admin.staff.scan' & 'admin.staff.checkin'
-    // — pastikan route('staff.checkin') di staff/scan.blade.php ikut diubah
-    // menjadi route('admin.staff.checkin'), begitu juga link manapun yang
-    // mengarah ke halaman ini.
+    // 🛡️ Terminal Gate Scanner — sengaja di grup admin (bukan grup member biasa),
+    // supaya hanya admin yang login yang bisa memicu check-in tiket.
     Route::get('/staff/scan', function () { return view('staff.scan'); })->name('staff.scan');
     Route::post('/staff/checkin', [ReservasiController::class, 'processStaffCheckIn'])->name('staff.checkin');
 });

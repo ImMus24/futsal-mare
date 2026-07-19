@@ -22,7 +22,7 @@ class GoogleAuthController extends Controller
     {
         try {
             $googleUser = Socialite::driver('google')->user();
-
+            
             // Cek apakah pengguna sudah terdaftar dengan email ini
             $user = User::where('email', $googleUser->getEmail())->first();
 
@@ -37,12 +37,6 @@ class GoogleAuthController extends Controller
 
             // Login-kan pengguna ke dalam sistem Laravel
             Auth::login($user);
-
-            // Arahkan ke dashboard admin kalau akun ini sudah diberi akses admin
-            if ($user->is_admin == 1) {
-                return redirect()->route('admin.dashboard')
-                    ->with('success', 'Selamat datang kembali, Admin ' . $user->name);
-            }
 
             return redirect()->route('dashboard')->with('success', 'Selamat Datang, ' . $user->name);
 
