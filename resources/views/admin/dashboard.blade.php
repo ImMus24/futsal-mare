@@ -136,14 +136,14 @@
 
             <div class="flex flex-wrap gap-2 p-2 rounded-xl" style="background: var(--color-bg-card); border: 1px solid var(--line);">
                 <a href="{{ route('admin.reservasi.index') }}" class="fm-btn-nav px-4 py-2.5 font-semibold text-[11px] rounded-lg uppercase tracking-wide">
-                    Log Reservasi
+                    Log Reservasii
                 </a>
                 <a href="{{ route('admin.lapangan.index') }}" class="fm-btn-nav px-4 py-2.5 font-semibold text-[11px] rounded-lg uppercase tracking-wide">
                     Kelola Arena
                 </a>
                 @if(auth()->user()->is_admin == 1)
                     <a href="{{ route('admin.role.index') }}" class="fm-btn-gold px-4 py-2.5 font-semibold text-[11px] rounded-lg uppercase tracking-wide">
-                        Manajemen Akses
+                        Manajemen Aksesss
                     </a>
                 @endif
             </div>
