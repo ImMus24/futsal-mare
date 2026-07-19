@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Membership; // Tambahkan import model Membership
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB; // Tambahkan untuk transaksi database
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
@@ -25,8 +27,6 @@ class RegisteredUserController extends Controller
 
     /**
      * Handle an incoming registration request.
-     *
-     * @throws ValidationException
      */
     public function store(Request $request): RedirectResponse
     {
@@ -36,16 +36,30 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        // Menggunakan DB::transaction untuk memastikan User dan Membership terbuat bersamaan
+        $user = DB::transaction(function () use ($request) {
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'is_admin' => 0, // Default sebagai user biasa
+            ]);
+
+            // Inisialisasi tier awal saat registrasi
+            Membership::create([
+                'user_id' => $user->id,
+                'membership_type' => 'Bronze',
+                'points' => 0,
+            ]);
+
+            return $user;
+        });
 
         event(new Registered($user));
 
         Auth::login($user);
 
+        // Arahkan ke dashboard member
         return redirect(route('dashboard', absolute: false));
     }
 }
