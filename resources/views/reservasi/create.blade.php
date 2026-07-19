@@ -79,6 +79,18 @@
         .toast.err .t-ic{ color: var(--danger); }
         @keyframes toastIn{ from{ opacity:0; transform:translateX(20px);} to{ opacity:1; transform:translateX(0);} }
 
+        /* Overlay saat menunggu verifikasi pembayaran ke server, sebelum redirect ke dashboard */
+        #verify-overlay {
+            position: fixed; inset: 0; background: rgba(10,15,20,.88); backdrop-filter: blur(3px);
+            z-index: 2000; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+        }
+        #verify-overlay.show { display: flex; }
+        #verify-overlay .spinner-lg {
+            width: 36px; height: 36px; border: 3px solid rgba(255,255,255,.15); border-top-color: var(--turf);
+            border-radius: 50%; animation: spin .8s linear infinite;
+        }
+        #verify-overlay p { font-family: var(--mono); font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+
         @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
     </style>
 </head>
@@ -217,14 +229,26 @@
 
     <div id="toast-container"></div>
 
+    <!-- OVERLAY VERIFIKASI PEMBAYARAN — tampil sesaat setelah Snap melaporkan sukses,
+         sambil server mengecek status asli ke Midtrans, SEBELUM redirect ke dashboard. -->
+    <div id="verify-overlay">
+        <div class="spinner-lg"></div>
+        <p>Memverifikasi pembayaran...</p>
+    </div>
+
     <script>
         const hargaPerJam = {{ $lapangan->harga_per_jam }};
         const BTN_LABEL_DEFAULT = 'Kunci Jadwal Arena →';
         const BTN_LABEL_LOADING = 'Memproses...';
 
-        // Template URL cancel-instant — placeholder diganti nomor reservasi asli saat dipakai.
+        // Template URL — placeholder GANTI_NOMOR diganti nomor reservasi asli saat dipakai.
         // Menghindari hardcode path manual supaya tetap ikut kalau prefix route berubah.
-        const CANCEL_INSTANT_URL_TEMPLATE = "{{ route('reservasi.cancelInstant', ['nomor_reservasi' => 'GANTI_NOMOR']) }}";
+        const CANCEL_INSTANT_URL_TEMPLATE  = "{{ route('reservasi.cancelInstant', ['nomor_reservasi' => 'GANTI_NOMOR']) }}";
+        const CONFIRM_PAYMENT_URL_TEMPLATE = "{{ route('reservasi.confirmPayment', ['nomor_reservasi' => 'GANTI_NOMOR']) }}";
+
+        function csrfToken(){
+            return document.querySelector('input[name="_token"]').value;
+        }
 
         function gantiTanggal(tanggal) {
             const url = new URL(window.location.href);
@@ -235,7 +259,8 @@
         function showToast(type, msg){
             const box = document.createElement('div');
             box.className = 'toast ' + type;
-            box.innerHTML = `<span class="t-ic">${type === 'ok' ? '✓' : '✕'}</span><span>${msg}</span>`;
+            box.innerHTML = `<span class="t-ic">${type === 'ok' ? '✓' : '✕'}</span><span></span>`;
+            box.querySelector('span:last-child').textContent = msg;
             document.getElementById('toast-container').appendChild(box);
             setTimeout(() => {
                 box.style.opacity = '0';
@@ -244,10 +269,42 @@
             }, 4000);
         }
 
-        // Simpan pesan untuk ditampilkan SETELAH location.reload() — toast biasa akan
-        // langsung hilang karena DOM dibuang begitu halaman dimuat ulang.
+        // Simpan pesan untuk ditampilkan SETELAH location.reload() di halaman YANG SAMA ini
+        // (dipakai khusus alur pembatalan onClose) — toast biasa akan langsung hilang
+        // karena DOM dibuang begitu halaman dimuat ulang.
         function queueToastAfterReload(type, msg){
             sessionStorage.setItem('pending_toast', JSON.stringify({ type, msg }));
+        }
+
+        function showVerifyOverlay(show){
+            document.getElementById('verify-overlay').classList.toggle('show', show);
+        }
+
+        /**
+         * Panggil endpoint confirm-payment supaya server memverifikasi status ASLI ke
+         * Midtrans dan mengubah status reservasi jadi Confirmed SEBELUM kita pindah ke
+         * dashboard. Tanpa langkah ini, status akan tetap "Waiting Payment" di database
+         * walau Midtrans sudah menerima pembayaran — karena webhook tidak bisa menjangkau
+         * localhost saat development. Notifikasi sukses/gagalnya sendiri ditampilkan oleh
+         * komponen toast global (FMToast) di halaman dashboard lewat session flash yang
+         * di-set oleh controller, jadi di sini kita hanya perlu menunggu lalu redirect.
+         */
+        function konfirmasiPembayaranLaluRedirect(nomorReservasi, redirectUrl) {
+            showVerifyOverlay(true);
+
+            const confirmUrl = CONFIRM_PAYMENT_URL_TEMPLATE.replace('GANTI_NOMOR', nomorReservasi);
+
+            fetch(confirmUrl, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken(),
+                }
+            })
+            .catch(() => { /* diabaikan di sini — pesan kegagalan sudah di-flash oleh controller */ })
+            .finally(() => {
+                window.location.href = redirectUrl;
+            });
         }
 
         function hitungTotal() {
@@ -329,7 +386,7 @@
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                    'X-CSRF-TOKEN': csrfToken()
                 }
             })
             .then(async response => {
@@ -350,8 +407,18 @@
                 const currentOrder = data.nomor_reservasi;
 
                 window.snap.pay(data.snap_token, {
-                    onSuccess: (result) => { window.location.href = data.redirect; },
-                    onPending: (result) => { window.location.href = data.redirect; },
+                    // PERBAIKAN UTAMA: sebelumnya langsung redirect tanpa pernah memberi tahu
+                    // server bahwa pembayaran sudah sukses — status jadi nyangkut "Waiting
+                    // Payment" terus. Sekarang panggil confirm-payment dulu (server mengecek
+                    // status ASLI ke Midtrans), baru redirect setelah itu selesai.
+                    onSuccess: (result) => {
+                        konfirmasiPembayaranLaluRedirect(currentOrder, data.redirect);
+                    },
+                    onPending: (result) => {
+                        // Tetap aman dipanggil di sini: kalau ternyata statusnya masih benar2
+                        // pending di Midtrans, confirm-payment tidak akan mengubah apa pun.
+                        konfirmasiPembayaranLaluRedirect(currentOrder, data.redirect);
+                    },
                     onError: (result) => {
                         showToast('err', 'Pembayaran gagal diproses, silakan coba lagi.');
                         setButtonLoading(false);
@@ -363,7 +430,7 @@
                             method: 'POST',
                             headers: {
                                 'Accept': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                                'X-CSRF-TOKEN': csrfToken(),
                             }
                         })
                         .then(res => res.json())
@@ -377,9 +444,9 @@
                             }
 
                             if (result.already_confirmed) {
-                                // Race condition: webhook settlement sudah masuk duluan sebelum
-                                // popup ditutup — bukan pembatalan, langsung arahkan ke redirect sukses.
-                                window.location.href = data.redirect;
+                                // Race condition: pembayaran ternyata sudah sukses sebelum popup
+                                // ditutup — verifikasi dulu ke server, baru redirect sukses.
+                                konfirmasiPembayaranLaluRedirect(currentOrder, data.redirect);
                                 return;
                             }
 
