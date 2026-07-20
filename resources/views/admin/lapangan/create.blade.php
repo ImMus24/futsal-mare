@@ -224,12 +224,15 @@
 
                 <div class="field-group">
                     <label class="label-brutal">Foto Utama Arena <span class="req">*</span></label>
-                    <div class="upload-box" id="upload-box">
-                        <input id="foto" type="file" name="foto" accept="image/png, image/jpeg, image/webp" required>
-                        <div class="ic">⬆</div>
-                        <div class="txt"><b>Klik untuk unggah</b> atau tarik & lepas foto di sini</div>
-                        <div class="hint">JPG, PNG, atau WEBP · maks. 5MB</div>
-                    </div>
+                    <!-- ... kode sebelumnya ... -->
+<div class="upload-box" id="upload-box">
+    <input id="foto" type="file" name="foto" accept="image/png, image/jpeg, image/webp" required>
+    <div class="ic">⬆</div>
+    <div class="txt"><b>Klik untuk unggah</b> atau tarik & lepas foto di sini</div>
+    <!-- Perubahan dilakukan di baris bawah ini: -->
+    <div class="hint">JPG, PNG, atau WEBP · maks. 15MB</div> 
+</div>
+<!-- ... kode selanjutnya ... -->
                     <div id="preview-wrap">
                         <img id="preview-img" src="" alt="Pratinjau foto lapangan">
                         <div>
