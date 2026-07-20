@@ -121,28 +121,72 @@
         .stat b { display: block; font-family: var(--mono); font-size: 25px; color: var(--floodlight); }
         .stat span { font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
 
-        /* Hero E-Ticket signature widget */
+        /* ---------- HERO BANNER (FOTO PNG) ---------- */
+        .hero-visual { display: flex; flex-direction: column; gap: 20px; }
+        .hero-banner {
+            position: relative; border-radius: var(--radius); overflow: hidden;
+            border: 1px solid var(--line-soft-2); box-shadow: 0 26px 60px -22px rgba(0,0,0,0.6);
+            background: linear-gradient(180deg, #101a26 0%, var(--ink) 100%);
+            aspect-ratio: 4 / 3;
+        }
+        .hero-banner img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+        }
+        /* Gradient tipis di bawah foto supaya chip informasi tetap terbaca di atas foto apa pun */
+        .hero-banner::after {
+            content: ""; position: absolute; inset: 0; pointer-events: none;
+            background: linear-gradient(180deg, rgba(10,14,19,0) 45%, rgba(10,14,19,0.62) 100%);
+        }
+        /* Fallback rapi kalau file gambar belum diunggah ke public/images/ */
+        .hero-banner-fallback {
+            width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 10px; text-align: center; padding: 24px;
+            background: radial-gradient(ellipse 70% 60% at 50% 30%, rgba(226,96,31,0.14), transparent 65%);
+        }
+        .hero-banner-fallback .glyph { font-size: 34px; opacity: .9; }
+        .hero-banner-fallback p { font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 700; max-width: 260px; line-height: 1.6; }
+        .hero-banner-fallback code { color: var(--floodlight); font-weight: 700; }
+
+        .float-chip {
+            position: absolute; z-index: 2; display: flex; align-items: center; gap: 10px;
+            background: rgba(19, 26, 34, 0.85); backdrop-filter: blur(8px);
+            border: 1px solid var(--line-soft-2); border-radius: 12px; padding: 10px 14px;
+            box-shadow: 0 14px 30px -12px rgba(0,0,0,0.6); animation: float-y 4.5s ease-in-out infinite;
+        }
+        .float-chip .ico { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+        .float-chip .ttl { font-size: 11px; font-weight: 700; color: var(--chalk); line-height: 1.3; }
+        .float-chip .sub { font-size: 10px; color: var(--muted-2); font-family: var(--mono); }
+        .chip-status { top: 16px; left: 16px; animation-delay: 0s; }
+        .chip-status .ico { background: rgba(47,158,88,0.18); color: #2f9e58; }
+        .chip-price { bottom: 16px; right: 16px; animation-delay: .6s; }
+        .chip-price .ico { background: var(--floodlight-glow); color: var(--floodlight); }
+        @keyframes float-y { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+        @media (max-width: 480px) { .float-chip { padding: 8px 10px; } .float-chip .ttl { font-size: 10px; } }
+        @media (prefers-reduced-motion: reduce) { .float-chip { animation: none; } }
+
+        /* Signature widget: digital e-ticket stub (elemen kedua, di bawah banner) */
         .ticket {
             position: relative; background: var(--surface);
-            border-radius: var(--radius); box-shadow: 0 30px 70px -24px rgba(0,0,0,0.65);
+            border-radius: var(--radius); box-shadow: 0 24px 55px -22px rgba(0,0,0,0.6);
             border: 1px solid var(--line-soft-2);
         }
-        .ticket-top { padding: 26px 26px 20px; }
-        .ticket-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+        .ticket-top { padding: 22px 24px 18px; }
+        .ticket-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .ticket-head span.tag { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; }
         .ticket-head .live { font-family: var(--mono); font-size: 11px; color: var(--turf); display: flex; align-items: center; gap: 6px; font-weight: 700; }
         .live .pip { width: 7px; height: 7px; border-radius: 50%; background: var(--turf); animation: pulse 1.6s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+        @media (prefers-reduced-motion: reduce) { .live .pip { animation: none; } }
 
-        .ticket-title { font-family: var(--display); font-size: 26px; color: white; margin-bottom: 4px; }
-        .ticket-sub { font-size: 13px; color: var(--muted); font-weight: 500; margin-bottom: 22px; }
+        .ticket-title { font-family: var(--display); font-size: 22px; color: white; margin-bottom: 4px; }
+        .ticket-sub { font-size: 12.5px; color: var(--muted); font-weight: 500; margin-bottom: 20px; }
 
-        .ticket-rows { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 4px; }
+        .ticket-rows { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 4px; }
         .ticket-rows .cell span.k { display: block; font-family: var(--mono); font-size: 10px; color: var(--muted-2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 5px; }
-        .ticket-rows .cell span.v { font-size: 14px; font-weight: 700; color: var(--chalk); }
+        .ticket-rows .cell span.v { font-size: 13px; font-weight: 700; color: var(--chalk); }
 
         .ticket-perf {
-            position: relative; height: 0; border-top: 1.5px dashed var(--line-soft-2); margin: 22px 0 0;
+            position: relative; height: 0; border-top: 1.5px dashed var(--line-soft-2); margin: 20px 0 0;
         }
         .ticket-perf::before, .ticket-perf::after {
             content: ""; position: absolute; top: -10px; width: 20px; height: 20px; background: var(--ink); border-radius: 50%;
@@ -150,8 +194,8 @@
         .ticket-perf::before { left: -30px; }
         .ticket-perf::after { right: -30px; }
 
-        .ticket-bottom { padding: 18px 26px 24px; display: flex; justify-content: space-between; align-items: center; }
-        .ticket-barcode { display: flex; gap: 3px; align-items: flex-end; height: 26px; }
+        .ticket-bottom { padding: 16px 24px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .ticket-barcode { display: flex; gap: 3px; align-items: flex-end; height: 24px; }
         .ticket-barcode i { display: block; width: 3px; background: var(--muted-2); border-radius: 1px; opacity: .8; }
         .ticket-id { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .05em; }
 
@@ -305,30 +349,67 @@
       </div>
     </div>
 
-    <!-- Signature widget: digital e-ticket stub -->
-    <div class="ticket">
-      <div class="ticket-top">
-        <div class="ticket-head">
-          <span class="tag">E-Tiket Pratinjau</span>
-          <div class="live"><span class="pip"></span>Live Monitoring</div>
-        </div>
-        <div class="ticket-title">Malam Ini, Arena Siap.</div>
-        <div class="ticket-sub">Login ke akun member untuk melihat slot kosong &amp; booking langsung.</div>
-        <div class="ticket-rows">
-          <div class="cell"><span class="k">Lapangan</span><span class="v">Rumput Sintetis</span></div>
-          <div class="cell"><span class="k">Pencahayaan</span><span class="v">Full LED Night</span></div>
-          <div class="cell"><span class="k">Durasi</span><span class="v">Per 60 Menit</span></div>
-          <div class="cell"><span class="k">Pembayaran</span><span class="v">Midtrans Gateway</span></div>
-        </div>
+    <!-- KOLOM VISUAL: hero banner foto PNG + widget tiket digital -->
+    <div class="hero-visual">
+
+      <!-- ============ HERO BANNER: FOTO ARENA (PNG) ============ -->
+      {{--
+          PENTING: letakkan file gambar di public/images/hero-banner.png
+          (bukan di storage/), supaya bisa diakses langsung lewat asset().
+          Rasio disarankan 4:3 (mis. 1200x900px), fokus subjek di tengah/atas
+          karena bagian bawah foto tertutup gradient tipis untuk keterbacaan chip.
+      --}}
+      <div class="hero-banner">
+        @if(file_exists(public_path('images/hero-banner.png')))
+            <img src="{{ asset('images/hero-banner.png') }}" alt="Suasana malam hari lapangan futsal Futsal Mare dengan lampu sorot menyala">
+        @else
+            <div class="hero-banner-fallback">
+                <span class="glyph">🏟️</span>
+                <p>Letakkan foto arena di<br><code>public/images/hero-banner.png</code></p>
+            </div>
+        @endif
+
+        <span class="float-chip chip-status">
+          <span class="ico">✔</span>
+          <span>
+            <span class="ttl">Slot Malam Tersedia</span><br>
+            <span class="sub">3 arena · live</span>
+          </span>
+        </span>
+        <span class="float-chip chip-price">
+          <span class="ico">💳</span>
+          <span>
+            <span class="ttl">Bayar via Midtrans</span><br>
+            <span class="sub">aman &amp; instan</span>
+          </span>
+        </span>
       </div>
-      <div class="ticket-perf"></div>
-      <div class="ticket-bottom">
-        <div class="ticket-barcode" aria-hidden="true">
-          <i style="height:70%"></i><i style="height:100%"></i><i style="height:50%"></i><i style="height:85%"></i>
-          <i style="height:60%"></i><i style="height:95%"></i><i style="height:40%"></i><i style="height:75%"></i>
-          <i style="height:55%"></i><i style="height:90%"></i><i style="height:65%"></i><i style="height:100%"></i>
+
+      <!-- Widget tiket digital (elemen kedua) -->
+      <div class="ticket">
+        <div class="ticket-top">
+          <div class="ticket-head">
+            <span class="tag">E-Tiket Pratinjau</span>
+            <div class="live"><span class="pip"></span>Live Monitoring</div>
+          </div>
+          <div class="ticket-title">Malam Ini, Arena Siap.</div>
+          <div class="ticket-sub">Login ke akun member untuk melihat slot kosong &amp; booking langsung.</div>
+          <div class="ticket-rows">
+            <div class="cell"><span class="k">Lapangan</span><span class="v">Rumput Sintetis</span></div>
+            <div class="cell"><span class="k">Pencahayaan</span><span class="v">Full LED Night</span></div>
+            <div class="cell"><span class="k">Durasi</span><span class="v">Per 60 Menit</span></div>
+            <div class="cell"><span class="k">Pembayaran</span><span class="v">Midtrans Gateway</span></div>
+          </div>
         </div>
-        <span class="ticket-id">FM · BAUBAU</span>
+        <div class="ticket-perf"></div>
+        <div class="ticket-bottom">
+          <div class="ticket-barcode" aria-hidden="true">
+            <i style="height:70%"></i><i style="height:100%"></i><i style="height:50%"></i><i style="height:85%"></i>
+            <i style="height:60%"></i><i style="height:95%"></i><i style="height:40%"></i><i style="height:75%"></i>
+            <i style="height:55%"></i><i style="height:90%"></i><i style="height:65%"></i><i style="height:100%"></i>
+          </div>
+          <span class="ticket-id">FM · BAUBAU</span>
+        </div>
       </div>
     </div>
   </div>
