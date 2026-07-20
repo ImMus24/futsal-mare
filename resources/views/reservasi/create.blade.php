@@ -114,10 +114,12 @@
             </div>
 
             <!-- RIGHT PANEL: FORM RESERVASI -->
-            <form id="form_reservasi" action="{{ route('reservasi.store') }}" method="POST" style="padding: 32px; display: flex; flex-direction: column; gap: 24px;">
-                @csrf
-                <input type="hidden" name="lapangan_id" value="{{ $lapangan->id }}">
+            <!-- RIGHT PANEL: FORM RESERVASI -->
+<form id="form_reservasi" action="{{ route('reservasi.store') }}" method="POST" style="padding: 32px; display: flex; flex-direction: column; gap: 24px;">
+    @csrf
+    <input type="hidden" name="lapangan_id" value="{{ $lapangan->id }}">
 
+<<<<<<< HEAD
                 <!-- step 1: tanggal main -->
                 <div>
                     <label class="label-title">1. Tentukan Tanggal Pertandingan</label>
@@ -185,11 +187,90 @@
                     Kunci Jadwal Arena &rarr;
                 </button>
             </form>
+=======
+    <!-- step 1: tanggal main -->
+    <div>
+        <label class="label-title">1. Tentukan Tanggal Pertandingan</label>
+        <input type="date" id="input_tanggal" name="tanggal_main" value="{{ $tanggal_pilihan }}" min="{{ date('Y-m-d') }}" onchange="gantiTanggal(this.value)">
+    </div>
+
+    <!-- step 2: slot jam tanding -->
+    <div>
+        <label class="label-title">2. Pilih Jam Mulai Tanding (Slot Waktu WITA)</label>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px;">
+            @php $hasChecked = false; @endphp
+            @for ($jam = 8; $jam <= 21; $jam++)
+                @php
+                    $isBooked = in_array($jam, $jam_terpesan);
+                    $jam_format = sprintf('%02d:00', $jam);
+                    $shouldCheck = (!$isBooked && !$hasChecked);
+                    if ($shouldCheck) { $hasChecked = true; }
+                @endphp
+                <label style="position: relative; cursor: pointer;">
+                    <input type="radio" name="jam_mulai" value="{{ $jam }}" class="peer sr-only"
+                        {{ $isBooked ? 'disabled' : '' }} onchange="hitungTotal()" {{ $shouldCheck ? 'checked' : '' }}>
+                    
+                    <div class="w-full text-center py-3 rounded-md font-mono text-xs font-bold border transition-all duration-150 select-none
+                        peer-disabled:bg-[#0B131F]/30 peer-disabled:border-slate-800 peer-disabled:text-slate-600 peer-disabled:cursor-not-allowed peer-disabled:line-through
+                        peer-checked:bg-[#e25e20] peer-checked:text-white peer-checked:border-transparent peer-checked:scale-105 peer-checked:shadow-lg
+                        bg-[#212d3c] border-transparent text-slate-300 hover:border-slate-600">
+                        {{ $jam_format }}
+                    </div>
+                </label>
+            @endfor
+        </div>
+    </div>
+
+    <!-- step 3: durasi -->
+    <div>
+        <label class="label-title">3. Durasi Pemakaian Lapangan</label>
+        <select name="durasi" id="input_durasi" onchange="hitungTotal()">
+            <option value="1">1 Jam Sewa Match</option>
+            <option value="2" selected>2 Jam Sewa Match (Sangat Direkomendasikan)</option>
+            <option value="3">3 Jam Sewa Match</option>
+        </select>
+    </div>
+
+    <!-- BANNER INFO MEMBERSHIP (BARU) -->
+    @if(Auth::check() && Auth::user()->membership)
+        <div style="background: rgba(47, 158, 88, 0.08); border: 1px solid rgba(47, 158, 88, 0.2); padding: 16px; border-radius: 8px; display: flex; gap: 12px; align-items: center; margin-top: 10px;">
+            <div style="font-size: 24px;">🏆</div>
+            <div>
+                <b style="color: #2f9e58; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; display: block;">
+                    {{ Auth::user()->membership->membership_type }} Member
+                </b>
+                <span style="color: var(--line); font-size: 12px; font-weight: 500;">
+                    Diskon otomatis <b>{{ Auth::user()->membership->discount_percent * 100 }}%</b> telah diterapkan pada total tagihan Anda.
+                </span>
+            </div>
+        </div>
+    @endif
+
+    <!-- total price checkout widget -->
+    <div style="background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.06); border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+        <div>
+            <span style="font-size: 12px; color: var(--muted); font-weight: 600; display: block;">Estimasi Total Tagihan</span>
+            <span id="rincian_surcharge" style="font-family: var(--mono); font-size: 10px; color: var(--muted-2); display: block; margin-top: 2px; font-weight: 700; text-transform: uppercase;"></span>
+        </div>
+        <span id="live_total_harga" style="font-family: var(--mono); font-size: 26px; color: var(--floodlight); font-weight: 700;">Rp 0</span>
+    </div>
+
+    <button type="submit" id="btn_submit" class="btn-ui btn-ui-primary">
+        Kunci Jadwal Arena &rarr;
+    </button>
+</form>
+>>>>>>> main
         </div>
     </main>
 
     <!-- CALCULATION & INTERACTIVE INTEGRATION ENGINE SCRIPT -->
+<<<<<<< HEAD
+=======
+   <!-- CALCULATION & INTERACTIVE INTEGRATION ENGINE SCRIPT -->
+>>>>>>> main
     <script>
+        // 1. Inisialisasi Data dari Server
+        const userDiscount = {{ Auth::user()->membership ? Auth::user()->membership->discount_percent : 0 }};
         const hargaPerJam = {{ $lapangan->harga_per_jam }};
 
         function gantiTanggal(tanggal) {
@@ -260,10 +341,27 @@
                 total += hargaSlot;
             }
 
+<<<<<<< HEAD
             if (isWeekend) infoSurcharge.push("Weekend Rate");
             if (startHour >= 16 || (startHour + durasi) > 16) infoSurcharge.push("Peak Rate");
 
             document.getElementById('live_total_harga').innerText = "Rp " + total.toLocaleString('id-ID');
+=======
+            // --- LOGIKA DISKON MEMBERSHIP ---
+            let diskonNominal = total * userDiscount;
+            let totalFinal = total - diskonNominal;
+
+            if (isWeekend) infoSurcharge.push("Weekend Rate");
+            if (startHour >= 16 || (startHour + durasi) > 16) infoSurcharge.push("Peak Rate");
+
+            // Tampilkan hasil dengan label diskon jika ada
+            let displayHtml = "Rp " + totalFinal.toLocaleString('id-ID');
+            if (userDiscount > 0) {
+                displayHtml += `<br><span style="font-size: 10px; color: var(--turf);">Diskon ${(userDiscount * 100)}% Applied</span>`;
+            }
+
+            document.getElementById('live_total_harga').innerHTML = displayHtml;
+>>>>>>> main
             document.getElementById('rincian_surcharge').innerText = infoSurcharge.join(' | ');
         }
 
@@ -271,7 +369,11 @@
             hitungTotal();
         });
 
+<<<<<<< HEAD
         // ASYNC FORM SUBMISSION CONTROL INTERPOLATION
+=======
+        // ASYNC FORM SUBMISSION CONTROL
+>>>>>>> main
         document.getElementById('form_reservasi').addEventListener('submit', function(e) {
             e.preventDefault(); 
             
@@ -313,19 +415,31 @@
                         onError: function(result) {
                             alert("Proses transaksi pembayaran dihentikan sistem.");
                             btnSubmit.disabled = false;
+<<<<<<< HEAD
                             btnSubmit.innerText = "Kunci Jadwal Arena &rarr;";
+=======
+                            btnSubmit.innerText = "Kunci Jadwal Arena →";
+>>>>>>> main
                         },
                         onClose: function() { window.location.href = data.redirect; }
                     });
                 } else {
                     alert("Gagal mengamankan alokasi slot: " + data.message);
                     btnSubmit.disabled = false;
+<<<<<<< HEAD
                     btnSubmit.innerText = "Kunci Jadwal Arena &rarr;";
+=======
+                    btnSubmit.innerText = "Kunci Jadwal Arena →";
+>>>>>>> main
                 }
             })
             .catch(error => {
                 btnSubmit.disabled = false;
+<<<<<<< HEAD
                 btnSubmit.innerText = "Kunci Jadwal Arena &rarr;";
+=======
+                btnSubmit.innerText = "Kunci Jadwal Arena →";
+>>>>>>> main
                 alert(error.message);
             });
         });

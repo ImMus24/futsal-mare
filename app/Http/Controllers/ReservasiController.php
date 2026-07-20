@@ -11,10 +11,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ReservasiController extends Controller
 {
+<<<<<<< HEAD
     // Menampilkan Landing Page Utama beserta daftar lapangan
     public function landingPage()
     {
@@ -25,9 +25,16 @@ class ReservasiController extends Controller
     /**
      * 🏟️ NEW METHOD: DETAIL INTERAKTIF LAPANGAN (GOLA BLUEPRINT)
      * Mengelola parameter data master, kalkulasi kalender, dan isolasi slot waktu terpesan.
+=======
+    const MENIT_KEDALUARSA_PEMBAYARAN = 10;
+
+    /**
+     * Helper untuk mendapatkan jam terpesan yang valid
+>>>>>>> main
      */
     public function showLapangan(Request $request, $id)
     {
+<<<<<<< HEAD
         // 1. Ambil data atau return fiksasi error 404 jika token ID manipulatif
         $lapangan = Lapangan::findOrFail($id);
         
@@ -38,6 +45,17 @@ class ReservasiController extends Controller
         $jam_terpesan = Reservasi::where('lapangan_id', $id)
             ->where('tanggal_main', $tanggal_pilihan)
             ->whereIn('status', ['Waiting Payment', 'Confirmed', 'Completed'])
+=======
+        return Reservasi::where('lapangan_id', $lapangan_id)
+            ->where('tanggal_main', $tanggal)
+            ->where(function ($q) {
+                $q->whereIn('status', ['Confirmed', 'Completed'])
+                  ->orWhere(function ($q2) {
+                      $q2->where('status', 'Waiting Payment')
+                         ->where('created_at', '>', now()->subMinutes(self::MENIT_KEDALUARSA_PEMBAYARAN));
+                  });
+            })
+>>>>>>> main
             ->get(['jam_mulai', 'jam_selesai'])
             ->map(function ($booking) {
                 $mulai = (int) substr($booking->jam_mulai, 0, 2);
@@ -45,16 +63,34 @@ class ReservasiController extends Controller
                 return range($mulai, $selesai - 1);
             })->flatten()->toArray();
 
+<<<<<<< HEAD
         // 4. Kirim data ke view detail dengan data ringkas kompensasi
         return view('admin.lapangan.detail', compact('lapangan', 'tanggal_pilihan', 'jam_terpesan'));
+=======
+    public function landingPage()
+    {
+        return view('welcome', ['lapangans' => Lapangan::all()]);
     }
 
-    // Menampilkan Form Booking & Cek Ketersediaan Slot Jam
+    public function showLapangan(Request $request, $id)
+    {
+        $lapangan = Lapangan::findOrFail($id);
+        $tanggal_pilihan = $request->get('tanggal_main', Carbon::today()->toDateString());
+        
+        return view('lapangan.detail', [
+            'lapangan' => $lapangan,
+            'tanggal_pilihan' => $tanggal_pilihan,
+            'jam_terpesan' => $this->getJamTerpesan($id, $tanggal_pilihan)
+        ]);
+>>>>>>> main
+    }
+
     public function create(Request $request, $id)
     {
         $lapangan = Lapangan::findOrFail($id);
         $tanggal_pilihan = $request->get('tanggal_main', Carbon::today()->toDateString());
 
+<<<<<<< HEAD
         $jam_terpesan = Reservasi::where('lapangan_id', $id)
             ->where('tanggal_main', $tanggal_pilihan)
             ->whereIn('status', ['Waiting Payment', 'Confirmed', 'Completed'])
@@ -619,4 +655,15 @@ class ReservasiController extends Controller
             ], 500);
         }
     }
+=======
+        return view('reservasi.create', [
+            'lapangan' => $lapangan,
+            'tanggal_pilihan' => $tanggal_pilihan,
+            'jam_terpesan' => $this->getJamTerpesan($id, $tanggal_pilihan)
+        ]);
+    }
+
+    // Metode lainnya (store, dashboard, dll) tetap di sini...
+    // Pastikan tidak ada duplikasi nama method di bawah ini.
+>>>>>>> main
 }
