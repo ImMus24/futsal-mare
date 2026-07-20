@@ -9,9 +9,13 @@ use Illuminate\Support\Facades\Route;
 
 // 1. PUBLIC ROUTES
 Route::get('/', [ReservasiController::class, 'landingPage'])->name('landingPage');
+// 🏟️ Rute Publik Detail Lapangan
 Route::get('/lapangan/{id}', [ReservasiController::class, 'showLapangan'])->name('lapangan.detail');
 
-// 🛡️ ADMIN AUTH GATEWAY
+// ==========================================
+// 🛡️ 1b. PORTAL AUTHENTICATION ADMIN GATEWAY
+// ==========================================
+// Diletakkan secara publik agar halaman login admin bisa diakses sebelum masuk dashboard
 Route::get('/admin/login', [AdminDashboardController::class, 'showLoginForm'])->name('admin.login');
 Route::post('/admin/login', [AdminDashboardController::class, 'login'])->name('admin.login.submit');
 
