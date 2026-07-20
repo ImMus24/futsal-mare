@@ -93,6 +93,7 @@
                 + Tambah Lapangan Baru
             </a>
         </div>
+    </div>
 
         <!-- 2. NOTIFIKASI SYSTEM SINKRON -->
         @if(session('success'))

@@ -10,8 +10,8 @@
                 M
             </div>
             <div>
-                <h2 class="text-sm font-black text-white uppercase tracking-wider leading-tight">Futsal Mare HQ</h2>
-                <div class="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mt-0.5">Workspace Pemrograman Web</div>
+                <h2 class="f-display text-base uppercase tracking-wide leading-tight" style="color: var(--color-text-main);">Futsal Mare HQ</h2>
+                <div class="eyebrow mt-1">Workspace Operasional</div>
             </div>
         </div>
         
@@ -19,7 +19,7 @@
             <a href="/" class="inline-flex items-center gap-2 px-4 py-2 bg-[#121a23] hover:bg-slate-800 border border-slate-800 rounded-lg text-xs font-black text-slate-300 transition duration-150 tracking-wide uppercase">
                 <span>⬅️</span> Beranda Utama
             </a>
-            <form method="POST" action="{{ route('logout') }}" class="inline">
+            <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-red-950/20 hover:bg-red-900/40 border border-red-900/30 text-red-400 text-xs font-black rounded-lg uppercase tracking-wider transition duration-150 shadow-sm">
                     <span>🚪</span> Keluar Sesi
@@ -86,8 +86,8 @@
         <div class="bg-[#121a23] lg:col-span-8 rounded-2xl p-6 border border-slate-800 shadow-2xl flex flex-col justify-between">
             <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
                 <div>
-                    <h3 class="text-xs font-black text-white uppercase tracking-wider">Tren Utilisasi & Finansial</h3>
-                    <p class="text-[10px] text-slate-500 font-bold mt-0.5 uppercase tracking-wide">Representasi grafik fluktuasi mingguan real-time</p>
+                    <p class="text-[10px] font-semibold uppercase tracking-widest" style="color: var(--color-text-meta);">{{ $metric['label'] }}</p>
+                    <p class="f-mono text-2xl font-bold mt-2" style="color: var(--color-text-main);">{{ $metric['value'] }}</p>
                 </div>
                 <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
             </div>
@@ -123,6 +123,7 @@
                 Keamanan enkripsi data SSL aktif
             </div>
         </div>
+        @endforeach
     </div>
 
     <!-- HISTORI RECENT TRANSACTIONS TABLE -->
@@ -136,7 +137,6 @@
             </div>
             <span class="self-start sm:self-auto text-[9px] font-mono font-black bg-[#0a0f14] text-slate-400 border border-slate-800 px-2.5 py-1 rounded-md uppercase tracking-wider">Live Stream Ready</span>
         </div>
-
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse whitespace-nowrap">
                 <thead>

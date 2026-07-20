@@ -102,9 +102,8 @@
                     <h1 style="font-size: 32px; color: white; line-height: 1;">Selamat Datang, {{ explode(' ', Auth::user()->name)[0] }}! 👋</h1>
                     <p style="color: var(--muted); font-size: 14px; font-weight: 500; margin-top: 6px;">Pantau jadwal tanding tim Anda dan dapatkan keuntungan prioritas booking arena.</p>
                 </div>
-                
+
                 @php
-                    $membership = Auth::user()->membership ?? (object)['membership_type' => 'Bronze', 'points' => 0];
                     $tierColors = [
                         'Gold' => 'from-amber-500 to-yellow-400 text-slate-950 border-amber-600',
                         'Silver' => 'from-slate-500 to-slate-400 text-white border-slate-600',

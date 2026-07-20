@@ -199,16 +199,80 @@
         // 1. Inisialisasi Data dari Server
         const userDiscount = {{ Auth::user()->membership ? Auth::user()->membership->discount_percent : 0 }};
         const hargaPerJam = {{ $lapangan->harga_per_jam }};
+        const BTN_LABEL_DEFAULT = 'Kunci Jadwal Arena →';
+        const BTN_LABEL_LOADING = 'Memproses...';
+
+        // Template URL — placeholder GANTI_NOMOR diganti nomor reservasi asli saat dipakai.
+        // Menghindari hardcode path manual supaya tetap ikut kalau prefix route berubah.
+        const CANCEL_INSTANT_URL_TEMPLATE  = "{{ route('reservasi.cancelInstant', ['nomor_reservasi' => 'GANTI_NOMOR']) }}";
+        const CONFIRM_PAYMENT_URL_TEMPLATE = "{{ route('reservasi.confirmPayment', ['nomor_reservasi' => 'GANTI_NOMOR']) }}";
+
+        function csrfToken(){
+            return document.querySelector('input[name="_token"]').value;
+        }
 
         function gantiTanggal(tanggal) {
-            window.location.href = "?tanggal_main=" + tanggal;
+            const url = new URL(window.location.href);
+            url.searchParams.set('tanggal_main', tanggal);
+            window.location.href = url.toString();
+        }
+
+        function showToast(type, msg){
+            const box = document.createElement('div');
+            box.className = 'toast ' + type;
+            box.innerHTML = `<span class="t-ic">${type === 'ok' ? '✓' : '✕'}</span><span></span>`;
+            box.querySelector('span:last-child').textContent = msg;
+            document.getElementById('toast-container').appendChild(box);
+            setTimeout(() => {
+                box.style.opacity = '0';
+                box.style.transition = 'opacity .3s';
+                setTimeout(() => box.remove(), 300);
+            }, 4000);
+        }
+
+        // Simpan pesan untuk ditampilkan SETELAH location.reload() di halaman YANG SAMA ini
+        // (dipakai khusus alur pembatalan onClose) — toast biasa akan langsung hilang
+        // karena DOM dibuang begitu halaman dimuat ulang.
+        function queueToastAfterReload(type, msg){
+            sessionStorage.setItem('pending_toast', JSON.stringify({ type, msg }));
+        }
+
+        function showVerifyOverlay(show){
+            document.getElementById('verify-overlay').classList.toggle('show', show);
+        }
+
+        /**
+         * Panggil endpoint confirm-payment supaya server memverifikasi status ASLI ke
+         * Midtrans dan mengubah status reservasi jadi Confirmed SEBELUM kita pindah ke
+         * dashboard. Tanpa langkah ini, status akan tetap "Waiting Payment" di database
+         * walau Midtrans sudah menerima pembayaran — karena webhook tidak bisa menjangkau
+         * localhost saat development. Notifikasi sukses/gagalnya sendiri ditampilkan oleh
+         * komponen toast global (FMToast) di halaman dashboard lewat session flash yang
+         * di-set oleh controller, jadi di sini kita hanya perlu menunggu lalu redirect.
+         */
+        function konfirmasiPembayaranLaluRedirect(nomorReservasi, redirectUrl) {
+            showVerifyOverlay(true);
+
+            const confirmUrl = CONFIRM_PAYMENT_URL_TEMPLATE.replace('GANTI_NOMOR', nomorReservasi);
+
+            fetch(confirmUrl, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken(),
+                }
+            })
+            .catch(() => { /* diabaikan di sini — pesan kegagalan sudah di-flash oleh controller */ })
+            .finally(() => {
+                window.location.href = redirectUrl;
+            });
         }
 
         function hitungTotal() {
             const inputTanggal = document.getElementById('input_tanggal').value;
             const selectDurasi = document.getElementById('input_durasi').value;
             const radioJam = document.querySelector('input[name="jam_mulai"]:checked');
-            
+
             let startHour = radioJam ? parseInt(radioJam.value) : null;
             let durasi = parseInt(selectDurasi);
             let total = 0;
@@ -247,19 +311,32 @@
 
             document.getElementById('live_total_harga').innerHTML = displayHtml;
             document.getElementById('rincian_surcharge').innerText = infoSurcharge.join(' | ');
+
+            document.getElementById('err_jam').classList.remove('show');
         }
 
         window.addEventListener('DOMContentLoaded', () => {
             hitungTotal();
+
+            // Tampilkan toast yang "dititipkan" sebelum reload (misal dari pembatalan instan)
+            const pending = sessionStorage.getItem('pending_toast');
+            if (pending) {
+                sessionStorage.removeItem('pending_toast');
+                try {
+                    const { type, msg } = JSON.parse(pending);
+                    showToast(type, msg);
+                } catch (e) { /* abaikan kalau datanya rusak */ }
+            }
         });
 
         // ASYNC FORM SUBMISSION CONTROL
         document.getElementById('form_reservasi').addEventListener('submit', function(e) {
-            e.preventDefault(); 
-            
+            e.preventDefault();
+
             const radioJam = document.querySelector('input[name="jam_mulai"]:checked');
             if (!radioJam) {
-                alert("Silakan tentukan pilihan slot jam main Anda terlebih dahulu!");
+                document.getElementById('err_jam').classList.add('show');
+                document.getElementById('err_jam').scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return;
             }
             
@@ -267,21 +344,21 @@
             btnSubmit.disabled = true;
             btnSubmit.innerText = "MEMPROSES KONTRAK SLOT...";
 
+            setButtonLoading(true);
             const formData = new FormData(this);
 
             fetch(this.action, {
-                method: "POST",
+                method: 'POST',
                 body: formData,
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                    'X-CSRF-TOKEN': csrfToken()
                 }
             })
             .then(async response => {
                 const isJson = response.headers.get('content-type')?.includes('application/json');
                 const data = isJson ? await response.json() : null;
-
                 if (!response.ok) {
                     throw new Error(data?.message || `Kendala Koneksi Server (Status: ${response.status})`);
                 }
@@ -304,6 +381,64 @@
                     btnSubmit.disabled = false;
                     btnSubmit.innerText = "Kunci Jadwal Arena →";
                 }
+
+                const currentOrder = data.nomor_reservasi;
+
+                window.snap.pay(data.snap_token, {
+                    // PERBAIKAN UTAMA: sebelumnya langsung redirect tanpa pernah memberi tahu
+                    // server bahwa pembayaran sudah sukses — status jadi nyangkut "Waiting
+                    // Payment" terus. Sekarang panggil confirm-payment dulu (server mengecek
+                    // status ASLI ke Midtrans), baru redirect setelah itu selesai.
+                    onSuccess: (result) => {
+                        konfirmasiPembayaranLaluRedirect(currentOrder, data.redirect);
+                    },
+                    onPending: (result) => {
+                        // Tetap aman dipanggil di sini: kalau ternyata statusnya masih benar2
+                        // pending di Midtrans, confirm-payment tidak akan mengubah apa pun.
+                        konfirmasiPembayaranLaluRedirect(currentOrder, data.redirect);
+                    },
+                    onError: (result) => {
+                        showToast('err', 'Pembayaran gagal diproses, silakan coba lagi.');
+                        setButtonLoading(false);
+                    },
+                    onClose: () => {
+                        const cancelUrl = CANCEL_INSTANT_URL_TEMPLATE.replace('GANTI_NOMOR', currentOrder);
+
+                        fetch(cancelUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken(),
+                            }
+                        })
+                        .then(res => res.json())
+                        .then(result => {
+                            if (!result.success) {
+                                // Gagal cancel (misal reservasi tidak ditemukan) — jangan klaim
+                                // "slot dilepas" kalau sebenarnya kita tidak yakin statusnya.
+                                setButtonLoading(false);
+                                showToast('err', result.message || 'Gagal memproses pembatalan, periksa status booking di dashboard.');
+                                return;
+                            }
+
+                            if (result.already_confirmed) {
+                                // Race condition: pembayaran ternyata sudah sukses sebelum popup
+                                // ditutup — verifikasi dulu ke server, baru redirect sukses.
+                                konfirmasiPembayaranLaluRedirect(currentOrder, data.redirect);
+                                return;
+                            }
+
+                            // Pembatalan normal — titip toast supaya tetap muncul setelah reload,
+                            // lalu reload untuk menyegarkan papan jadwal (slot ini kembali kosong).
+                            queueToastAfterReload('err', 'Pembayaran dibatalkan, slot jam dilepas kembali.');
+                            location.reload();
+                        })
+                        .catch(() => {
+                            setButtonLoading(false);
+                            showToast('err', 'Gagal menghubungi server. Periksa status booking di dashboard sebelum mencoba lagi.');
+                        });
+                    }
+                });
             })
             .catch(error => {
                 btnSubmit.disabled = false;

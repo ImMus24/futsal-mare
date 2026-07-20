@@ -1,0 +1,55 @@
+[33mc95a677[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeat/scanner-tiket[m[33m, [m[1;31morigin/feat/scanner-tiket[m[33m)[m fix: selesaikan perubahan pada tiket.blade.php
+[33m5190370[m fix: selesaikan konflik setelah pull
+[33me3e4750[m fix: perbaiki struktur fungsi di ReservasiController
+[33ma66bdc2[m Merge branch 'main' into feat/scanner-tiket
+[33m027311a[m fix: selesaikan konflik merge dengan main
+[33m7293323[m feat: selesaikan integrasi scanner tiket dan perbaikan controller
+[33m67264ea[m fix: update semua file scanner tiket dan reservasi
+[33me32c255[m Merge pull request #16 from ImMus24/feat/dashboard-admin
+[33m238a557[m[33m ([m[1;31morigin/feat/dashboard-admin[m[33m, [m[1;32mfeat/dashboard-admin[m[33m)[m Merge branch 'feat/dashboard-admin' of https://github.com/ImMus24/futsal-mare into feat/dashboard-admin
+[33ma8b0280[m feat: implementasi dashboard admin dan perbaikan scanner tiket
+[33mf862ae9[m Merge pull request #15 from ImMus24/feat/dashboard-admin
+[33mdf12f2f[m Merge branch 'main' into feat/dashboard-admin
+[33mbefdda6[m feat: implementasi fitur dashboard admin dan perbaikan routing
+[33m0669899[m Merge pull request #14 from ImMus24/feat/dashboard-admin
+[33mcfcab85[m Fix: perbaiki Undefined variable membership pada dashboard admin
+[33m4967c04[m Merge branch feat/dashboard-admin
+[33m295567e[m Selesaikan perbaikan dashboard admin
+[33maa4c730[m Selesaikan fitur dashboard admin2
+[33m5b86104[m Selesaikan konflik di file dashboardd
+[33m88369b3[m Merge pull request #13 from ImMus24/feat/dashboard-admin
+[33me8e2a8f[m Selesaikan fitur dashboard admin
+[33m507a5a8[m Selesaikan konflik di file dashboard
+[33mcc90867[m Merge pull request #12 from Mus24-cysec/feat/dashboard-admin
+[33ma5890f7[m chore: finalisasi dan pembersihan kode dashboard admin
+[33m562ac2c[m Merge pull request #11 from Mus24-cysec/feat/dashboard-admin
+[33mc81740b[m chore: finalisasi dan pembersihan kode dashboard admin
+[33m755eea5[m chore: finalisasi dan pembersihan kode dashboard admin
+[33m8c72475[m chore: update fitur dashboard admin
+[33m17cd523[m fix: hapus sisa tanda konflik git di view dan controller
+[33m5dccd79[m fix: hapus sisa tanda konflik git di view dan controller
+[33m60ccdbf[m Merge pull request #10 from Mus24-cysec/feat/dashboard-admin
+[33maa6e0be[m fix: selesaikan semua konflik merge secara manual
+[33m2890fb9[m fix: selesaikan semua konflik merge secara manual
+[33m98a9198[m feat: implementasi MemberDashboardController dan perbaikan tampilan dashboard member
+[33mfee0c89[m Merge pull request #9 from Mus24-cysec/feat/dashboard-admin
+[33m82e96e6[m Revert "feat: selesaikan fitur dashboard admin dan perbaikan autentikasi Google"
+[33m409e3a7[m Merge pull request #8 from Mus24-cysec/feat/scanner-tiket
+[33ma2587c6[m fix: tambahkan partial toast dan perbaiki error view admin
+[33m0c55908[m fix: tambahkan partial toast dan perbaiki error view admin
+[33mf51fb6c[m chore: trigger pull request update
+[33mb6d7015[m chore: trigger pull request update
+[33m6e4b6ab[m feat: selesaikan fitur dashboard admin dan perbaikan autentikasi Google
+[33m6ae3977[m Merge pull request #6 from Mus24-cysec/feat/scanner-tiket
+[33m7640c6a[m feat: perbarui halaman tambah lapangan dengan desain brutalist modular
+[33m30277cf[m feat: integrasi fitur gate scanner real-time dan unduh gambar tiket png
+[33m7b26a5a[m Merge pull request #5 from Mus24-cysec/feat/log-reservasi
+[33m17eb9fc[m[33m ([m[1;31morigin/feat/log-reservasi[m[33m)[m feat: sinkronisasi total arsitektur login, register, welcome, dan dashboard member berkasta loyalitas
+[33mf092895[m Merge pull request #4 from Mus24-cysec/feat/log-reservasi
+[33m02e8962[m feat: merampungkan interface log reservasi dan template ekspor excel
+[33m4c7f477[m Merge pull request #3 from Mus24-cysec/feat/dashboard-admin
+[33m62cd64c[m feat: menyelesaikan seluruh integrasi portal login admin dan visual dashboard premium
+[33m1020788[m feat: menyelesaikan integrasi metode dashboard dan kontroler modular admin
+[33m849f63d[m Merge pull request #1 from Mus24-cysec/feat/crud-lapangan
+[33mc020c13[m[33m ([m[1;31morigin/feat/crud-lapangan[m[33m)[m feat: menyelesaikan sinkronisasi data reservasi, member, dan perbaikan cetak excel
+[33m03a08bc[m[33m ([m[1;32mfeat/auth-database[m[33m)[m init: install laravel dan laravel breeze
