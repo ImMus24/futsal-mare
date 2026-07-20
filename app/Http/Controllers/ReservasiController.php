@@ -68,116 +68,99 @@ class ReservasiController extends Controller
         return view('reservasi.create', compact('lapangan', 'tanggal_pilihan', 'jam_terpesan'));
     }
 
-    // Menyimpan Data Reservasi Baru & Menggenerasi Token Pembayaran Instan via API Direct Hit
     public function store(Request $request)
-    {
-        $request->validate([
-            'lapangan_id'  => 'required|exists:lapangans,id',
-            'tanggal_main' => 'required|date|after_or_equal:today',
-            'jam_mulai'    => 'required|integer|between:8,21',
-            'durasi'       => 'required|integer|between:1,3',
+{
+    $request->validate([
+        'lapangan_id'  => 'required|exists:lapangans,id',
+        'tanggal_main' => 'required|date|after_or_equal:today',
+        'jam_mulai'    => 'required|integer|between:8,21',
+        'durasi'       => 'required|integer|between:1,3',
+    ]);
+
+    $lapangan = Lapangan::findOrFail($request->lapangan_id);
+    $user = Auth::user();
+    $tanggal = Carbon::parse($request->tanggal_main);
+    
+    $start_hour = $request->jam_mulai;
+    $end_hour = $start_hour + $request->durasi;
+    $start_time = sprintf('%02d:00:00', $start_hour);
+    $end_time = sprintf('%02d:00:00', $end_hour);
+
+    return DB::transaction(function () use ($request, $lapangan, $user, $tanggal, $start_hour, $end_hour, $start_time, $end_time) {
+        
+        // 1. Kalkulasi Harga Dasar (Dynamic Pricing)
+        $biaya_dasar = $lapangan->harga_per_jam;
+        $total_harga = 0;
+        for ($hour = $start_hour; $hour < $end_hour; $hour++) {
+            $harga_slot = $biaya_dasar;
+            if ($hour >= 16 && $hour < 22) $harga_slot += 50000;
+            if ($tanggal->isWeekend()) $harga_slot += 20000;
+            $total_harga += $harga_slot;
+        }
+
+        // 2. Terapkan Diskon Membership
+        $membership = $user->membership; // Menggunakan relasi dari model User
+        $diskon = $membership ? ($total_harga * $membership->discount_percent) : 0;
+        $total_final = $total_harga - $diskon;
+
+        // 3. Generate Nomor Reservasi
+        $nomor_reservasi = 'FM-' . date('YmdHis') . '-' . strtoupper(substr(uniqid(), -5));
+
+        // 4. Simpan Data Reservasi (HANYA SATU KALI)
+        $reservasi = Reservasi::create([
+            'user_id'         => $user->id,
+            'lapangan_id'     => $request->lapangan_id,
+            'nomor_reservasi' => $nomor_reservasi,
+            'tanggal_main'    => $request->tanggal_main,
+            'jam_mulai'       => $start_time,
+            'jam_selesai'     => $end_time,
+            'total_harga'     => (int) $total_final, // Total akhir setelah diskon
+            'status'          => 'Waiting Payment', 
         ]);
 
-        $lapangan = Lapangan::findOrFail($request->lapangan_id);
-        $tanggal = Carbon::parse($request->tanggal_main);
-        
-        $start_hour = $request->jam_mulai;
-        $end_hour = $start_hour + $request->durasi;
+        // 5. Integrasi Midtrans
+        $params = [
+            'transaction_details' => [
+                'order_id'     => (string) $nomor_reservasi,
+                'gross_amount' => (int) $total_final,
+            ],
+            'customer_details' => [
+                'first_name' => (string) $user->name,
+                'email'      => (string) $user->email,
+            ]
+        ];
 
-        $start_time = sprintf('%02d:00:00', $start_hour);
-        $end_time = sprintf('%02d:00:00', $end_hour);
-
-        return DB::transaction(function () use ($request, $lapangan, $tanggal, $start_hour, $end_hour, $start_time, $end_time) {
+        try {
+            $serverKey = config('services.midtrans.server_key');
+            $base64Auth = base64_encode($serverKey . ':');
             
-            // 1. VALIDASI OVERLAP JADWAL (Mencegah Race Condition)
-            $bentrok = Reservasi::where('lapangan_id', $request->lapangan_id)
-                ->where('tanggal_main', $request->tanggal_main)
-                ->whereIn('status', ['Waiting Payment', 'Confirmed', 'Completed'])
-                ->where(function ($query) use ($start_time, $end_time) {
-                    $query->where(function ($q) use ($start_time, $end_time) {
-                        $q->where('jam_mulai', '>=', $start_time)
-                          ->where('jam_mulai', '<', $end_time);
-                    })->orWhere(function ($q) use ($start_time, $end_time) {
-                        $q->where('jam_mulai', '<=', $start_time)
-                          ->where('jam_selesai', '>', $start_time);
-                    });
-                })->lockForUpdate()->exists();
+            $response = Http::withHeaders([
+                'Accept'        => 'application/json',
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Basic ' . $base64Auth,
+            ])->post('https://app.sandbox.midtrans.com/snap/v1/transactions', $params);
 
-            if ($bentrok) {
-                return response()->json(['success' => false, 'message' => 'Jadwal slot jam tersebut baru saja dipesan oleh tim lain!'], 422);
+            if ($response->failed()) {
+                throw new \Exception('API Midtrans Menolak: ' . $response->body());
             }
 
-            // 2. PREMIUM: DYNAMIC PRICING CALCULATOR
-            $biaya_dasar = $lapangan->harga_per_jam;
-            $total_harga = 0;
+            $snapToken = $response->json()['token'];
+            $reservasi->update(['snap_token' => $snapToken]);
 
-            for ($hour = $start_hour; $hour < $end_hour; $hour++) {
-                $harga_slot = $biaya_dasar;
-                if ($hour >= 16 && $hour < 22) $harga_slot += 50000;
-                if ($tanggal->isWeekend()) $harga_slot += 20000;
-                $total_harga += $harga_slot;
-            }
-
-            // 3. GENERATE NOMOR RESERVASI UNIK
-            $nomor_reservasi = 'FM-' . date('YmdHis') . '-' . strtoupper(substr(uniqid(), -5));
-
-            // 4. SIMPAN TRANSAKSI BARU (Status awal: Waiting Payment)
-            $reservasi = Reservasi::create([
-                'user_id'         => Auth::id(),
-                'lapangan_id'     => $request->lapangan_id,
-                'nomor_reservasi' => $nomor_reservasi,
-                'tanggal_main'    => $request->tanggal_main,
-                'jam_mulai'       => $start_time,
-                'jam_selesai'     => $end_time,
-                'total_harga'     => (int) $total_harga,
-                'status'          => 'Waiting Payment', 
+            return response()->json([
+                'success'    => true,
+                'snap_token' => $snapToken,
+                'redirect'   => route('dashboard')
             ]);
-
-            // 5. BYPASS SDK MIDTRANS: PEMBUATAN STRUKTUR PAYLOAD BERSIH
-            $params = [
-                'transaction_details' => [
-                    'order_id'     => (string) $nomor_reservasi,
-                    'gross_amount' => (int) $total_harga,
-                ],
-                'customer_details' => [
-                    'first_name' => (string) Auth::user()->name,
-                    'email'      => (string) Auth::user()->email,
-                ]
-            ];
-
-            try {
-                $serverKey = config('services.midtrans.server_key');
-                $base64Auth = base64_encode($serverKey . ':');
-                
-                $response = Http::withHeaders([
-                    'Accept'        => 'application/json',
-                    'Content-Type'  => 'application/json',
-                    'Authorization' => 'Basic ' . $base64Auth,
-                ])->post('https://app.sandbox.midtrans.com/snap/v1/transactions', $params);
-
-                if ($response->failed()) {
-                    throw new \Exception('API Midtrans Menolak Permintaan: ' . $response->body());
-                }
-
-                $responseData = $response->json();
-                $snapToken = $responseData['token'];
-                
-                $reservasi->update(['snap_token' => $snapToken]);
-
-                return response()->json([
-                    'success'    => true,
-                    'snap_token' => $snapToken,
-                    'redirect'   => route('dashboard')
-                ]);
-                
-            } catch (\Exception $e) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Gagal jabat tangan API gateway: ' . $e->getMessage()
-                ], 500);
-            }
-        }); 
-    }
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal jabat tangan API gateway: ' . $e->getMessage()
+            ], 500);
+        }
+    }); 
+}
 
     // MIDTRANS WEBHOOK NOTIFICATION HANDLER + AUTOMATED TIERING SYSTEM
     public function handleNotification(Request $request)
