@@ -114,17 +114,20 @@
             </div>
 
             <!-- RIGHT PANEL: FORM RESERVASI -->
-            <!-- RIGHT PANEL: FORM RESERVASI -->
-<form id="form_reservasi" action="{{ route('reservasi.store') }}" method="POST" style="padding: 32px; display: flex; flex-direction: column; gap: 24px;">
-    @csrf
-    <input type="hidden" name="lapangan_id" value="{{ $lapangan->id }}">
+            <form id="form_reservasi" action="{{ route('reservasi.store') }}" method="POST" style="padding: 32px; display: flex; flex-direction: column; gap: 24px;">
+                @csrf
+                <input type="hidden" name="lapangan_id" value="{{ $lapangan->id }}">
 
+<<<<<<< Updated upstream
 <<<<<<< HEAD
+=======
+>>>>>>> Stashed changes
                 <!-- step 1: tanggal main -->
                 <div>
                     <label class="label-title">1. Tentukan Tanggal Pertandingan</label>
                     <input type="date" id="input_tanggal" name="tanggal_main" value="{{ $tanggal_pilihan }}" min="{{ date('Y-m-d') }}" onchange="gantiTanggal(this.value)">
                 </div>
+<<<<<<< Updated upstream
 
                 <!-- step 2: slot jam tanding (Sempurna dengan Peer-Checked Oranye) -->
                 <div>
@@ -193,106 +196,193 @@
         <label class="label-title">1. Tentukan Tanggal Pertandingan</label>
         <input type="date" id="input_tanggal" name="tanggal_main" value="{{ $tanggal_pilihan }}" min="{{ date('Y-m-d') }}" onchange="gantiTanggal(this.value)">
     </div>
+=======
+>>>>>>> Stashed changes
 
-    <!-- step 2: slot jam tanding -->
-    <div>
-        <label class="label-title">2. Pilih Jam Mulai Tanding (Slot Waktu WITA)</label>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px;">
-            @php $hasChecked = false; @endphp
-            @for ($jam = 8; $jam <= 21; $jam++)
-                @php
-                    $isBooked = in_array($jam, $jam_terpesan);
-                    $jam_format = sprintf('%02d:00', $jam);
-                    $shouldCheck = (!$isBooked && !$hasChecked);
-                    if ($shouldCheck) { $hasChecked = true; }
-                @endphp
-                <label style="position: relative; cursor: pointer;">
-                    <input type="radio" name="jam_mulai" value="{{ $jam }}" class="peer sr-only"
-                        {{ $isBooked ? 'disabled' : '' }} onchange="hitungTotal()" {{ $shouldCheck ? 'checked' : '' }}>
-                    
-                    <div class="w-full text-center py-3 rounded-md font-mono text-xs font-bold border transition-all duration-150 select-none
-                        peer-disabled:bg-[#0B131F]/30 peer-disabled:border-slate-800 peer-disabled:text-slate-600 peer-disabled:cursor-not-allowed peer-disabled:line-through
-                        peer-checked:bg-[#e25e20] peer-checked:text-white peer-checked:border-transparent peer-checked:scale-105 peer-checked:shadow-lg
-                        bg-[#212d3c] border-transparent text-slate-300 hover:border-slate-600">
-                        {{ $jam_format }}
+                <!-- step 2: slot jam tanding -->
+                <div>
+                    <label class="label-title">2. Pilih Jam Mulai Tanding (Slot Waktu WITA)</label>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px;">
+                        @php $hasChecked = false; @endphp
+                        @for ($jam = 8; $jam <= 21; $jam++)
+                            @php
+                                $isBooked = in_array($jam, $jam_terpesan);
+                                $jam_format = sprintf('%02d:00', $jam);
+                                $shouldCheck = (!$isBooked && !$hasChecked);
+                                if ($shouldCheck) { $hasChecked = true; }
+                            @endphp
+                            <label style="position: relative; cursor: pointer;">
+                                <input type="radio" name="jam_mulai" value="{{ $jam }}" class="peer sr-only"
+                                    {{ $isBooked ? 'disabled' : '' }} onchange="hitungTotal()" {{ $shouldCheck ? 'checked' : '' }}>
+                                
+                                <div class="w-full text-center py-3 rounded-md font-mono text-xs font-bold border transition-all duration-150 select-none
+                                    peer-disabled:bg-[#0B131F]/30 peer-disabled:border-slate-800 peer-disabled:text-slate-600 peer-disabled:cursor-not-allowed peer-disabled:line-through
+                                    peer-checked:bg-[#e25e20] peer-checked:text-white peer-checked:border-transparent peer-checked:scale-105 peer-checked:shadow-lg
+                                    bg-[#212d3c] border-transparent text-slate-300 hover:border-slate-600">
+                                    {{ $jam_format }}
+                                </div>
+                            </label>
+                        @endfor
                     </div>
-                </label>
-            @endfor
-        </div>
-    </div>
+                </div>
 
-    <!-- step 3: durasi -->
-    <div>
-        <label class="label-title">3. Durasi Pemakaian Lapangan</label>
-        <select name="durasi" id="input_durasi" onchange="hitungTotal()">
-            <option value="1">1 Jam Sewa Match</option>
-            <option value="2" selected>2 Jam Sewa Match (Sangat Direkomendasikan)</option>
-            <option value="3">3 Jam Sewa Match</option>
-        </select>
-    </div>
+                <!-- step 3: durasi -->
+                <div>
+                    <label class="label-title">3. Durasi Pemakaian Lapangan</label>
+                    <select name="durasi" id="input_durasi" onchange="hitungTotal()">
+                        <option value="1">1 Jam Sewa Match</option>
+                        <option value="2" selected>2 Jam Sewa Match (Sangat Direkomendasikan)</option>
+                        <option value="3">3 Jam Sewa Match</option>
+                    </select>
+                </div>
 
-    <!-- BANNER INFO MEMBERSHIP (BARU) -->
-    @if(Auth::check() && Auth::user()->membership)
-        <div style="background: rgba(47, 158, 88, 0.08); border: 1px solid rgba(47, 158, 88, 0.2); padding: 16px; border-radius: 8px; display: flex; gap: 12px; align-items: center; margin-top: 10px;">
-            <div style="font-size: 24px;">🏆</div>
-            <div>
-                <b style="color: #2f9e58; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; display: block;">
-                    {{ Auth::user()->membership->membership_type }} Member
-                </b>
-                <span style="color: var(--line); font-size: 12px; font-weight: 500;">
-                    Diskon otomatis <b>{{ Auth::user()->membership->discount_percent * 100 }}%</b> telah diterapkan pada total tagihan Anda.
-                </span>
-            </div>
-        </div>
-    @endif
+                <!-- BANNER INFO MEMBERSHIP (BARU) -->
+                @if(Auth::check() && Auth::user()->membership)
+                    <div style="background: rgba(47, 158, 88, 0.08); border: 1px solid rgba(47, 158, 88, 0.2); padding: 16px; border-radius: 8px; display: flex; gap: 12px; align-items: center; margin-top: 10px;">
+                        <div style="font-size: 24px;">🏆</div>
+                        <div>
+                            <b style="color: #2f9e58; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; display: block;">
+                                {{ Auth::user()->membership->membership_type }} Member
+                            </b>
+                            <span style="color: var(--line); font-size: 12px; font-weight: 500;">
+                                Diskon otomatis <b>{{ Auth::user()->membership->discount_percent * 100 }}%</b> telah diterapkan pada total tagihan Anda.
+                            </span>
+                        </div>
+                    </div>
+                @endif
 
-    <!-- total price checkout widget -->
-    <div style="background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.06); border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-        <div>
-            <span style="font-size: 12px; color: var(--muted); font-weight: 600; display: block;">Estimasi Total Tagihan</span>
-            <span id="rincian_surcharge" style="font-family: var(--mono); font-size: 10px; color: var(--muted-2); display: block; margin-top: 2px; font-weight: 700; text-transform: uppercase;"></span>
-        </div>
-        <span id="live_total_harga" style="font-family: var(--mono); font-size: 26px; color: var(--floodlight); font-weight: 700;">Rp 0</span>
-    </div>
+                <!-- total price checkout widget -->
+                <div style="background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.06); border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                    <div>
+                        <span style="font-size: 12px; color: var(--muted); font-weight: 600; display: block;">Estimasi Total Tagihan</span>
+                        <span id="rincian_surcharge" style="font-family: var(--mono); font-size: 10px; color: var(--muted-2); display: block; margin-top: 2px; font-weight: 700; text-transform: uppercase;"></span>
+                    </div>
+                    <span id="live_total_harga" style="font-family: var(--mono); font-size: 26px; color: var(--floodlight); font-weight: 700;">Rp 0</span>
+                </div>
 
+<<<<<<< Updated upstream
     <button type="submit" id="btn_submit" class="btn-ui btn-ui-primary">
         Kunci Jadwal Arena &rarr;
     </button>
 </form>
 >>>>>>> main
+=======
+                <button type="submit" id="btn_submit" class="btn-ui btn-ui-primary">
+                    Kunci Jadwal Arena &rarr;
+                </button>
+            </form>
+>>>>>>> Stashed changes
         </div>
     </main>
 
     <!-- CALCULATION & INTERACTIVE INTEGRATION ENGINE SCRIPT -->
+<<<<<<< Updated upstream
 <<<<<<< HEAD
 =======
    <!-- CALCULATION & INTERACTIVE INTEGRATION ENGINE SCRIPT -->
 >>>>>>> main
+=======
+>>>>>>> Stashed changes
     <script>
         // 1. Inisialisasi Data dari Server
         const userDiscount = {{ Auth::user()->membership ? Auth::user()->membership->discount_percent : 0 }};
         const hargaPerJam = {{ $lapangan->harga_per_jam }};
+<<<<<<< Updated upstream
+=======
+        const BTN_LABEL_DEFAULT = 'Kunci Jadwal Arena →';
+        const BTN_LABEL_LOADING = 'Memproses...';
+
+        // Template URL — placeholder GANTI_NOMOR diganti nomor reservasi asli saat dipakai.
+        const CANCEL_INSTANT_URL_TEMPLATE  = "{{ route('reservasi.cancelInstant', ['nomor_reservasi' => 'GANTI_NOMOR']) }}";
+        const CONFIRM_PAYMENT_URL_TEMPLATE = "{{ route('reservasi.confirmPayment', ['nomor_reservasi' => 'GANTI_NOMOR']) }}";
+
+        function csrfToken(){
+            return document.querySelector('input[name="_token"]').value;
+        }
+>>>>>>> Stashed changes
+
+        function setButtonLoading(isLoading) {
+            const btn = document.getElementById('btn_submit');
+            if (btn) {
+                btn.disabled = isLoading;
+                btn.innerText = isLoading ? BTN_LABEL_LOADING : BTN_LABEL_DEFAULT;
+            }
+        }
 
         function gantiTanggal(tanggal) {
+<<<<<<< Updated upstream
             window.location.href = "?tanggal_main=" + tanggal;
+=======
+            const url = new URL(window.location.href);
+            url.searchParams.set('tanggal_main', tanggal);
+            window.location.href = url.toString();
+        }
+
+        function showToast(type, msg){
+            // Membuat kontainer jika belum ada
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                container.style.position = 'fixed';
+                container.style.bottom = '20px';
+                container.style.right = '20px';
+                container.style.zIndex = '9999';
+                document.body.appendChild(container);
+            }
+
+            const box = document.createElement('div');
+            box.className = 'toast ' + type;
+            box.style.background = type === 'ok' ? '#2f9e58' : '#e25e20';
+            box.style.color = '#fff';
+            box.style.padding = '12px 24px';
+            box.style.borderRadius = '8px';
+            box.style.marginTop = '8px';
+            box.style.fontSize = '14px';
+            box.style.fontWeight = '600';
+            box.style.display = 'flex';
+            box.style.alignItems = 'center';
+            box.style.gap = '8px';
+            box.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            
+            box.innerHTML = `<span class="t-ic">${type === 'ok' ? '✓' : '✕'}</span><span></span>`;
+            box.querySelector('span:last-child').textContent = msg;
+            container.appendChild(box);
+
+            setTimeout(() => {
+                box.style.opacity = '0';
+                box.style.transition = 'opacity .3s';
+                setTimeout(() => box.remove(), 300);
+            }, 4000);
+        }
+
+        // Simpan pesan untuk ditampilkan SETELAH location.reload() di halaman YANG SAMA ini
+        function queueToastAfterReload(type, msg){
+            sessionStorage.setItem('pending_toast', JSON.stringify({ type, msg }));
+>>>>>>> Stashed changes
         }
 
         function showVerifyOverlay(show){
-            document.getElementById('verify-overlay').classList.toggle('show', show);
+            let overlay = document.getElementById('verify-overlay');
+            if (!overlay && show) {
+                overlay = document.createElement('div');
+                overlay.id = 'verify-overlay';
+                overlay.style.position = 'fixed';
+                overlay.style.inset = '0';
+                overlay.style.background = 'rgba(10,15,20,0.8)';
+                overlay.style.zIndex = '9998';
+                overlay.style.display = 'flex';
+                overlay.style.alignItems = 'center';
+                overlay.style.justifyContent = 'center';
+                overlay.innerHTML = '<div style="color:white; font-weight:bold;">Memverifikasi Pembayaran...</div>';
+                document.body.appendChild(overlay);
+            } else if (overlay && !show) {
+                overlay.remove();
+            }
         }
 
-        /**
-         * Panggil endpoint confirm-payment supaya server memverifikasi status ASLI ke
-         * Midtrans dan mengubah status reservasi jadi Confirmed SEBELUM kita pindah ke
-         * dashboard. Tanpa langkah ini, status akan tetap "Waiting Payment" di database
-         * walau Midtrans sudah menerima pembayaran — karena webhook tidak bisa menjangkau
-         * localhost saat development. Notifikasi sukses/gagalnya sendiri ditampilkan oleh
-         * komponen toast global (FMToast) di halaman dashboard lewat session flash yang
-         * di-set oleh controller, jadi di sini kita hanya perlu menunggu lalu redirect.
-         */
         function konfirmasiPembayaranLaluRedirect(nomorReservasi, redirectUrl) {
             showVerifyOverlay(true);
-
             const confirmUrl = CONFIRM_PAYMENT_URL_TEMPLATE.replace('GANTI_NOMOR', nomorReservasi);
 
             fetch(confirmUrl, {
@@ -363,6 +453,12 @@
             document.getElementById('live_total_harga').innerHTML = displayHtml;
 >>>>>>> main
             document.getElementById('rincian_surcharge').innerText = infoSurcharge.join(' | ');
+<<<<<<< Updated upstream
+=======
+
+            const errJam = document.getElementById('err_jam');
+            if (errJam) errJam.style.display = 'none';
+>>>>>>> Stashed changes
         }
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -378,7 +474,10 @@
             e.preventDefault(); 
             
             const radioJam = document.querySelector('input[name="jam_mulai"]:checked');
+            const errJam = document.getElementById('err_jam');
+            
             if (!radioJam) {
+<<<<<<< Updated upstream
                 alert("Silakan tentukan pilihan slot jam main Anda terlebih dahulu!");
                 return;
             }
@@ -387,6 +486,13 @@
             btnSubmit.disabled = true;
             btnSubmit.innerText = "MEMPROSES KONTRAK SLOT...";
 
+=======
+                if (errJam) errJam.style.display = 'block';
+                return;
+            }
+            
+            setButtonLoading(true);
+>>>>>>> Stashed changes
             const formData = new FormData(this);
 
             fetch(this.action, {
@@ -399,6 +505,7 @@
                 }
             })
             .then(async response => {
+<<<<<<< Updated upstream
                 const isJson = response.headers.get('content-type')?.includes('application/json');
                 const data = isJson ? await response.json() : null;
 
@@ -440,6 +547,36 @@
 =======
                 btnSubmit.innerText = "Kunci Jadwal Arena →";
 >>>>>>> main
+=======
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || "Gagal memproses reservasi.");
+                return data;
+            })
+            .then(data => {
+                window.snap.pay(data.snap_token, {
+                    onSuccess: (result) => konfirmasiPembayaranLaluRedirect(data.nomor_reservasi, data.redirect),
+                    onPending: (result) => konfirmasiPembayaranLaluRedirect(data.nomor_reservasi, data.redirect),
+                    onError: (result) => {
+                        showToast('err', 'Pembayaran gagal.');
+                        setButtonLoading(false);
+                    },
+                    onClose: () => {
+                        const cancelUrl = CANCEL_INSTANT_URL_TEMPLATE.replace('GANTI_NOMOR', data.nomor_reservasi);
+                        fetch(cancelUrl, { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken() } })
+                        .then(() => {
+                            // Menyimpan pesan toast ke sessionStorage sebelum memuat ulang halaman
+                            queueToastAfterReload('err', 'Pemesanan dibatalkan karena Anda menutup jendela pembayaran.');
+                            location.reload();
+                        })
+                        .catch(() => {
+                            location.reload();
+                        });
+                    }
+                });
+            })
+            .catch(error => {
+                setButtonLoading(false);
+>>>>>>> Stashed changes
                 alert(error.message);
             });
         });
