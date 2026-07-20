@@ -17,35 +17,10 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ReservasiController extends Controller
 {
-<<<<<<< HEAD
     // Berapa lama slot "Waiting Payment" boleh menggantung sebelum otomatis dianggap kadaluarsa
     const MENIT_KEDALUARSA_PEMBAYARAN = 10;
 
     // Menampilkan Landing Page Utama beserta daftar lapangan
-=======
-    const MENIT_KEDALUARSA_PEMBAYARAN = 10;
-
-    // Helper untuk mendapatkan jam terpesan
-    private function getJamTerpesan($lapangan_id, $tanggal)
-    {
-        return Reservasi::where('lapangan_id', $lapangan_id)
-            ->where('tanggal_main', $tanggal)
-            ->where(function ($q) {
-                $q->whereIn('status', ['Confirmed', 'Completed'])
-                  ->orWhere(function ($q2) {
-                      $q2->where('status', 'Waiting Payment')
-                         ->where('created_at', '>', now()->subMinutes(self::MENIT_KEDALUARSA_PEMBAYARAN));
-                  });
-            })
-            ->get(['jam_mulai', 'jam_selesai'])
-            ->map(function ($booking) {
-                $mulai = (int) substr($booking->jam_mulai, 0, 2);
-                $selesai = (int) substr($booking->jam_selesai, 0, 2);
-                return range($mulai, $selesai - 1);
-            })->flatten()->toArray();
-    }
-
->>>>>>> ca280ce (Perbaikan struktur controller dan integrasi membership)
     public function landingPage()
     {
         $lapangans = Lapangan::all();
@@ -63,7 +38,6 @@ class ReservasiController extends Controller
 
     public function create(Request $request, $id)
     {
-<<<<<<< HEAD
         return Reservasi::where('lapangan_id', $lapangan_id)
             ->where('tanggal_main', $tanggal)
             ->where(function ($q) {
@@ -97,10 +71,6 @@ class ReservasiController extends Controller
         $lapangan = Lapangan::findOrFail($id);
         $tanggal_pilihan = $request->get('tanggal_main', Carbon::today()->toDateString());
 
-=======
-        $lapangan = Lapangan::findOrFail($id);
-        $tanggal_pilihan = $request->get('tanggal_main', Carbon::today()->toDateString());
->>>>>>> ca280ce (Perbaikan struktur controller dan integrasi membership)
         $jam_terpesan = $this->getJamTerpesan($id, $tanggal_pilihan);
 
         return view('reservasi.create', compact('lapangan', 'tanggal_pilihan', 'jam_terpesan'));
@@ -111,7 +81,6 @@ class ReservasiController extends Controller
         // ... (gunakan kode store yang sudah kita perbaiki sebelumnya)
     }
 
-<<<<<<< HEAD
     $lapangan = Lapangan::findOrFail($request->lapangan_id);
     $user = Auth::user();
     $tanggal = Carbon::parse($request->tanggal_main);
@@ -275,21 +244,10 @@ class ReservasiController extends Controller
             'lunasBooking',
             'totalPengeluaran'
         ));
-=======
-    public function handleNotification(Request $request)
-    {
-        // ... (kode handleNotification Anda)
-    }
-
-    public function dashboard()
-    {
-        // ... (kode dashboard Anda)
->>>>>>> ca280ce (Perbaikan struktur controller dan integrasi membership)
     }
 
     public function batalkanReservasi($id)
     {
-<<<<<<< HEAD
         $reservasi = Reservasi::where('id', $id)
             ->where('user_id', Auth::id())
             ->first();
@@ -323,14 +281,10 @@ class ReservasiController extends Controller
         ]);
         
         return redirect()->route('dashboard')->with('success', 'Jadwal reservasi match Anda telah berhasil dibatalkan.');
-=======
-        // ... (kode pembatalan Anda)
->>>>>>> ca280ce (Perbaikan struktur controller dan integrasi membership)
     }
 
     public function destroy($id)
     {
-<<<<<<< HEAD
         $reservasi = Reservasi::where('id', $id)
             ->where('user_id', Auth::id())
             ->whereIn('status', ['Confirmed', 'Completed', 'Cancelled'])
@@ -342,14 +296,10 @@ class ReservasiController extends Controller
 
         $reservasi->delete();
         return redirect()->route('dashboard')->with('success', 'Riwayat transaksi berhasil dihapus.');
-=======
-        // ... (kode hapus Anda)
->>>>>>> ca280ce (Perbaikan struktur controller dan integrasi membership)
     }
 
     public function destroyMassal(Request $request)
     {
-<<<<<<< HEAD
         $request->validate([
             'ids'   => 'required|array',
             'ids.*' => 'exists:reservasis,id',
@@ -369,14 +319,10 @@ class ReservasiController extends Controller
         }
 
         return redirect()->route('dashboard')->with('success', 'Seluruh riwayat transaksi terpilih berhasil dihapus.');
-=======
-        // ... (kode hapus massal Anda)
->>>>>>> ca280ce (Perbaikan struktur controller dan integrasi membership)
     }
 
     public function cetakTiket($id)
     {
-<<<<<<< HEAD
         $reservasi = Reservasi::where('id', $id)
             ->where('user_id', Auth::id())
             ->whereIn('status', ['Confirmed', 'Completed'])
@@ -474,9 +420,6 @@ class ReservasiController extends Controller
                 'message' => 'Terjadi kesalahan sistem, silakan coba lagi.'
             ], 500);
         }
-=======
-        // ... (kode tiket Anda)
->>>>>>> ca280ce (Perbaikan struktur controller dan integrasi membership)
     }
 
     public function processStaffCheckIn(Request $request)
