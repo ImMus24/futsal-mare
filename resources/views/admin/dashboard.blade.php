@@ -229,14 +229,15 @@
                             <div class="f-mono text-[10px] font-semibold uppercase tracking-wider mt-0.5" style="color: var(--color-text-meta);">Rumput {{ $reservasi->lapangan->jenis_rumput ?? 'Sintetis' }}</div>
                         </td>
 
-                        <td class="p-5 f-mono uppercase tracking-wider" style="color: var(--color-text-muted);">{{ $reservasi->nomor_reservasi }}</td>
+                        <td class="p-5 f-mono uppercase tracking-wider" style="color: var(--color-text-muted);">{{ $reservasi->nomor_reservasi ?? '#' . $reservasi->id }}</td>
 
                         <td class="p-5">
                             <div class="text-sm font-semibold tracking-tight" style="color: var(--color-text-main);">{{ $reservasi->user->name ?? 'Guest User' }}</div>
                             @if($reservasi->user && $reservasi->user->membership)
-                                @if($reservasi->user->membership->membership_type == 'Gold')
+                                @php $tier = strtoupper($reservasi->user->membership->membership_type); @endphp
+                                @if($tier === 'GOLD')
                                     <span class="inline-block mt-1 f-mono text-[8px] font-bold tracking-widest px-2 py-0.5 rounded uppercase" style="background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3);">🏆 Gold</span>
-                                @elseif($reservasi->user->membership->membership_type == 'Silver')
+                                @elseif($tier === 'SILVER')
                                     <span class="inline-block mt-1 f-mono text-[8px] font-bold tracking-widest px-2 py-0.5 rounded uppercase" style="background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3);">🥈 Silver</span>
                                 @else
                                     <span class="inline-block mt-1 f-mono text-[8px] font-bold tracking-widest px-2 py-0.5 rounded uppercase" style="background: rgba(180,83,9,0.15); color: #b45309; border: 1px solid rgba(180,83,9,0.3);">🥉 Bronze</span>
@@ -248,17 +249,19 @@
 
                         <td class="p-5">
                             <div style="color: var(--color-text-main);">{{ \Carbon\Carbon::parse($reservasi->tanggal_main)->translatedFormat('d M Y') }}</div>
-                            <div class="f-mono text-[10px] mt-0.5 uppercase tracking-wide" style="color: var(--info);">⏱️ {{ substr($reservasi->jam_mulai, 0, 5) }} - {{ substr($reservasi->jam_selesai, 0, 5) }} WITA</div>
+                            <div class="f-mono text-[10px] mt-0.5 uppercase tracking-wide" style="color: var(--info);">
+                                ⏱️ {{ substr($reservasi->jam_mulai ?? '00:00', 0, 5) }} - {{ substr($reservasi->jam_selesai ?? '00:00', 0, 5) }} WITA
+                            </div>
                         </td>
 
                         <td class="p-5 font-bold f-mono text-sm" style="color: var(--color-text-main);">Rp {{ number_format($reservasi->total_harga, 0, ',', '.') }}</td>
 
                         <td class="p-5">
-                            @if($reservasi->status == 'Confirmed' || $reservasi->status == 'Completed')
+                            @if(in_array($reservasi->status, ['Confirmed', 'Completed']))
                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-semibold uppercase tracking-wider" style="background: var(--success-bg); color: var(--success); border: 1px solid rgba(34,197,94,0.25);">
                                     <span class="w-1.5 h-1.5 rounded-full" style="background: var(--success);"></span> {{ $reservasi->status }}
                                 </span>
-                            @elseif($reservasi->status == 'Cancelled')
+                            @elseif($reservasi->status === 'Cancelled')
                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-semibold uppercase tracking-wider" style="background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(239,68,68,0.25);">
                                     <span class="w-1.5 h-1.5 rounded-full" style="background: var(--danger);"></span> Cancelled
                                 </span>
@@ -300,11 +303,10 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const ctx = document.getElementById('dashboardPerformanceChart').getContext('2d');
+        const canvas = document.getElementById('dashboardPerformanceChart');
+        if (!canvas) return;
 
-        // Data ASLI dari controller (AdminDashboardController::index()) —
-        // bukan angka hardcode. Dihitung dari total jam booking Confirmed/
-        // Completed per hari, 7 hari terakhir.
+        const ctx = canvas.getContext('2d');
         const labelUtilisasi = @json($labelUtilisasi);
         const dataUtilisasi = @json($dataUtilisasi);
 
@@ -316,19 +318,38 @@
                     label: 'Utilisasi Lapangan (Jam)',
                     data: dataUtilisasi,
                     borderColor: '#e2601f',
-                    backgroundColor: 'rgba(226, 96, 31, 0.06)',
+                    backgroundColor: 'rgba(226, 96, 31, 0.08)',
                     borderWidth: 2,
                     fill: true,
-                    tension: 0.2,
+                    tension: 0.35,
                     pointBackgroundColor: '#ffffff',
                     pointBorderColor: '#e2601f',
-                    pointRadius: 3
+                    pointHoverBackgroundColor: '#e2601f',
+                    pointHoverBorderColor: '#ffffff',
+                    pointRadius: 4,
+                    pointHoverRadius: 6
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0a0f14',
+                        titleColor: '#ffffff',
+                        bodyColor: '#e2601f',
+                        borderColor: 'rgba(238, 241, 234, 0.14)',
+                        borderWidth: 1,
+                        padding: 10,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `Utilisasi: ${context.parsed.y} Jam`;
+                            }
+                        }
+                    }
+                },
                 scales: {
                     x: {
                         grid: { color: 'rgba(255, 255, 255, 0.03)' },
