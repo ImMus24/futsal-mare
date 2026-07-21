@@ -40,27 +40,24 @@ class AdminDashboardController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email'    => ['required', 'email'],
-            'password' => ['required'],
-        ], [
-            'email.required'    => 'Email wajib diisi.',
-            'email.email'       => 'Format email tidak valid.',
-            'password.required' => 'Password wajib diisi.',
+            'email'    => 'required|email',
+            'password' => 'required|string',
         ]);
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
-            $request->session()->regenerate();
-
-            if (Auth::user()->is_admin == 1) {
-                return redirect()->route('admin.dashboard')->with('success', 'Selamat datang kembali di Panel Kontrol Utama!');
+        // Mencoba mencocokkan kredensial dengan database
+        if (Auth::attempt($credentials, $request->remember)) {
+            // Validasi hak akses flag admin di tabel user
+            if (Auth::user()->is_admin) {
+                $request->session()->regenerate();
+                return redirect()->route('admin.dashboard')->with('success', 'Selamat Datang Kembali di Panel Kontrol Utama!');
             }
 
-            // Jika berhasil login tapi bukan admin, keluarkan sesi
+            // Jika berhasil masuk tapi bukan admin, paksa keluar sesi demi keamanan
             Auth::logout();
-            return back()->with('error', 'Akses ditolak. Anda tidak memiliki otoritas Administrator.');
+            return redirect()->back()->withErrors(['email' => 'Akses Ditolak. Akun Anda tidak memiliki otoritas Administrator.'])->withInput();
         }
 
-        return back()->with('error', 'Email atau password yang Anda masukkan salah.')->withInput();
+        return redirect()->back()->withErrors(['email' => 'Kredensial atau kata sandi yang Anda masukkan salah.'])->withInput();
     }
 
     /**
@@ -129,10 +126,12 @@ class AdminDashboardController extends Controller
      */
     public function reservasi(Request $request)
     {
+        $status = $request->get('status');
+        
         $query = Reservasi::with(['lapangan', 'user']);
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+        if ($status && $status != '') {
+            $query->where('status', $status);
         }
 
         $reservasis = $query->latest()->paginate(15);
@@ -145,17 +144,15 @@ class AdminDashboardController extends Controller
      */
     public function exportExcel(Request $request)
     {
+        $status = $request->get('status');
+        
         $query = Reservasi::with(['lapangan', 'user']);
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+        if ($status && $status != '') {
+            $query->where('status', $status);
         }
 
         $reservasis = $query->latest()->get();
-
-        if (ob_get_level()) {
-            ob_end_clean();
-        }
 
         $filename = "Laporan_Reservasi_Futsal_Mare_" . date('Ymd_His') . ".xls";
 
