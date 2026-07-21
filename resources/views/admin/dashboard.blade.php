@@ -68,8 +68,8 @@
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-lg flex items-center justify-center f-display text-lg shadow-lg" style="background: var(--color-primary); color: #fff; transform: rotate(-2deg);">M</div>
             <div>
-                <h2 class="f-display text-sm uppercase tracking-wide leading-tight" style="color: var(--color-text-main);">Futsal Mare HQ</h2>
-                <div class="f-mono text-[10px] font-semibold uppercase tracking-widest mt-0.5" style="color: var(--color-text-meta);">Workspace Pemrograman Web</div>
+                <h2 class="f-display text-base uppercase tracking-wide leading-tight" style="color: var(--color-text-main);">Futsal Mare HQ</h2>
+                <div class="eyebrow mt-1">Workspace Operasional</div>
             </div>
         </div>
 
@@ -157,8 +157,8 @@
         <div class="lg:col-span-8 rounded-2xl p-6 shadow-2xl flex flex-col justify-between" style="background: var(--color-bg-card); border: 1px solid var(--line);">
             <div class="flex items-center justify-between border-b pb-4 mb-4" style="border-color: var(--line);">
                 <div>
-                    <h3 class="f-display text-xs uppercase tracking-wider" style="color: var(--color-text-main);">Utilisasi Lapangan — 7 Hari Terakhir</h3>
-                    <p class="text-[10px] font-semibold mt-0.5 uppercase tracking-wide" style="color: var(--color-text-meta);">Total jam booking Confirmed/Completed per hari</p>
+                    <p class="text-[10px] font-semibold uppercase tracking-widest" style="color: var(--color-text-meta);">{{ $metric['label'] }}</p>
+                    <p class="f-mono text-2xl font-bold mt-2" style="color: var(--color-text-main);">{{ $metric['value'] }}</p>
                 </div>
                 <div class="w-2.5 h-2.5 rounded-full fm-live-pip" style="background: var(--success); animation: fm-pulse 1.6s infinite;"></div>
             </div>
