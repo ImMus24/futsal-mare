@@ -16,17 +16,27 @@ use Illuminate\Support\Facades\Log;
 class AdminDashboardController extends Controller
 {
     /**
-     * MODUL 0: AUTENTIKASI ADMIN
+     * ==========================================
+     * 🛡️ MODUL KHUSUS: AUTENTIKASI PORTAL ADMIN
+     * ==========================================
+     */
+
+    /**
+     * Menampilkan Form Login Khusus Portal Admin
      */
     public function showLoginForm()
     {
-        if (Auth::check() && Auth::user()->is_admin == 1) {
+        // Jika sudah login dan memiliki akses admin, langsung bypass ke dashboard
+        if (Auth::check() && Auth::user()->is_admin) { 
             return redirect()->route('admin.dashboard');
         }
 
-        return view('admin.login');
+        return view('admin.auth.login');
     }
 
+    /**
+     * Memproses Autentikasi Login Masuk Admin
+     */
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -42,18 +52,21 @@ class AdminDashboardController extends Controller
             $request->session()->regenerate();
 
             if (Auth::user()->is_admin == 1) {
-                return redirect()->route('admin.dashboard')->with('success', 'Selamat datang Admin!');
+                return redirect()->route('admin.dashboard')->with('success', 'Selamat datang kembali di Panel Kontrol Utama!');
             }
 
+            // Jika berhasil login tapi bukan admin, keluarkan sesi
             Auth::logout();
-            return back()->with('error', 'Anda tidak memiliki akses sebagai admin.');
+            return back()->with('error', 'Akses ditolak. Anda tidak memiliki otoritas Administrator.');
         }
 
-        return back()->with('error', 'Email atau password salah.');
+        return back()->with('error', 'Email atau password yang Anda masukkan salah.')->withInput();
     }
 
     /**
-     * MODUL 1: DASHBOARD OVERVIEW
+     * ==========================================
+     * 📊 MODUL 1: DASHBOARD OVERVIEW ADMIN
+     * ==========================================
      */
     public function index()
     {
@@ -63,7 +76,7 @@ class AdminDashboardController extends Controller
         $totalMember = User::has('membership')->count();
         $reservasis = Reservasi::with(['lapangan', 'user.membership'])->latest()->paginate(10);
 
-        // 2. Kalkulasi Grafik Utilisasi 7 Hari Terakhir (Optimized: 1 Single Query)
+        // 2. Kalkulasi Grafik Utilisasi 7 Hari Terakhir
         $startDate = Carbon::now()->subDays(6)->startOfDay();
         $endDate = Carbon::now()->endOfDay();
 
@@ -83,7 +96,6 @@ class AdminDashboardController extends Controller
 
             $labelUtilisasi[] = $date->translatedFormat('d M');
 
-            // Hitung total jam untuk tanggal ini dari collection yang sudah di-load
             $totalJam = 0;
             if (isset($reservasi7Hari[$dateString])) {
                 $totalJam = $reservasi7Hari[$dateString]->sum(function ($reservasi) {
@@ -111,7 +123,9 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * MODUL 2: LOG RESERVASI
+     * ==========================================
+     * 📅 MODUL 2: LOG & PENGELOLAAN RESERVASI
+     * ==========================================
      */
     public function reservasi(Request $request)
     {
@@ -126,6 +140,9 @@ class AdminDashboardController extends Controller
         return view('admin.reservasi.index', compact('reservasis'));
     }
 
+    /**
+     * Fitur Ekspor Excel Data Reservasi Dinamis
+     */
     public function exportExcel(Request $request)
     {
         $query = Reservasi::with(['lapangan', 'user']);
@@ -140,14 +157,19 @@ class AdminDashboardController extends Controller
             ob_end_clean();
         }
 
+        $filename = "Laporan_Reservasi_Futsal_Mare_" . date('Ymd_His') . ".xls";
+
         header("Content-Type: application/vnd.ms-excel; charset=utf-8");
-        header("Content-Disposition: attachment; filename=Laporan_Reservasi_" . date('Ymd_His') . ".xls");
+        header("Content-Disposition: attachment; filename=\"$filename\"");
         header("Pragma: no-cache");
         header("Expires: 0");
 
         return view('admin.reservasi.excel', compact('reservasis'));
     }
 
+    /**
+     * Mengubah Status Reservasi secara Manual
+     */
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
@@ -168,6 +190,9 @@ class AdminDashboardController extends Controller
         }
     }
 
+    /**
+     * Menghapus Single Data Reservasi
+     */
     public function deleteReservasi($id)
     {
         try {
@@ -183,6 +208,9 @@ class AdminDashboardController extends Controller
         }
     }
 
+    /**
+     * Hapus Reservasi secara Massal (Bulk Delete)
+     */
     public function deleteReservasiMassal(Request $request)
     {
         $request->validate([
@@ -191,7 +219,7 @@ class AdminDashboardController extends Controller
         ], [
             'ids.required' => 'Pilih minimal satu data reservasi untuk dihapus.',
             'ids.array'    => 'Data yang dikirim tidak valid.',
-            'ids.*.exists' => 'Salah satu data yang dipilih tidak ditemukan (mungkin sudah dihapus sebelumnya).',
+            'ids.*.exists' => 'Salah satu data yang dipilih tidak ditemukan.',
         ]);
 
         try {
@@ -200,7 +228,7 @@ class AdminDashboardController extends Controller
             });
 
             return redirect()->route('admin.reservasi.index')
-                ->with('success', count($request->ids) . ' data reservasi terpilih berhasil dihapus dari sistem.');
+                ->with('success', count($request->ids) . ' data reservasi terpilih berhasil dihapus.');
         } catch (\Exception $e) {
             Log::error('Gagal hapus massal reservasi: ' . $e->getMessage());
             return redirect()->route('admin.reservasi.index')
@@ -209,7 +237,9 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * MODUL 3: KELOLA ARENA
+     * ==========================================
+     * 🌱 MODUL 3: KELOLA ARENA LAPANGAN
+     * ==========================================
      */
     public function lapangan()
     {
@@ -218,13 +248,16 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * MODUL 4: DATA MEMBER
+     * ==========================================
+     * 👥 MODUL 4: LOYALITAS & DATA MEMBER
+     * ==========================================
      */
-    public function member()
+    public function member(Request $request)
     {
-        $members = User::select('users.*', 'memberships.points as total_points')
+        $members = User::with('membership')
             ->leftJoin('memberships', 'users.id', '=', 'memberships.user_id')
-            ->orderByRaw('total_points IS NULL, total_points DESC')
+            ->select('users.*', 'memberships.points as total_points')
+            ->orderBy('total_points', 'desc')
             ->paginate(10);
 
         return view('admin.member.index', compact('members'));
@@ -255,17 +288,15 @@ class AdminDashboardController extends Controller
             DB::transaction(function () use ($member, $request) {
                 $member->update(['name' => $request->name]);
 
-                $membership = Membership::firstOrCreate(
-                    ['user_id' => $member->id],
-                    ['membership_type' => 'Bronze', 'points' => 0]
-                );
-
                 $tierBaru = $request->points >= 300 ? 'Gold' : ($request->points >= 100 ? 'Silver' : 'Bronze');
 
-                $membership->update([
-                    'points'          => $request->points,
-                    'membership_type' => $tierBaru,
-                ]);
+                $member->membership()->updateOrCreate(
+                    ['user_id' => $member->id],
+                    [
+                        'points'          => $request->points,
+                        'membership_type' => $tierBaru,
+                    ]
+                );
             });
 
             return redirect()->route('admin.member.index')
@@ -300,48 +331,6 @@ class AdminDashboardController extends Controller
         } catch (\Exception $e) {
             Log::error('Gagal hapus member ID ' . $id . ': ' . $e->getMessage());
             return back()->with('error', 'Terjadi kesalahan sistem saat menghapus data member.');
-        }
-    }
-
-    /**
-     * MODUL 5: MANAJEMEN ROLE
-     */
-    public function role(Request $request)
-    {
-        $query = User::query();
-
-        if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
-            });
-        }
-
-        $users = $query->paginate(10);
-        return view('admin.role.index', compact('users'));
-    }
-
-    public function updateRole(Request $request, $id)
-    {
-        $request->validate([
-            'is_admin' => 'required|in:0,1',
-        ], [
-            'is_admin.required' => 'Status akses wajib dipilih.',
-            'is_admin.in'       => 'Status akses tidak valid.',
-        ]);
-
-        $user = User::findOrFail($id);
-
-        if ($user->id === Auth::id()) {
-            return back()->with('error', 'Anda tidak dapat mengubah status akses sendiri!');
-        }
-
-        try {
-            $user->update(['is_admin' => $request->is_admin]);
-            return back()->with('success', "Status akses {$user->name} berhasil diperbarui.");
-        } catch (\Exception $e) {
-            Log::error('Gagal update role ID ' . $id . ': ' . $e->getMessage());
-            return back()->with('error', 'Terjadi kesalahan sistem saat mengubah status akses.');
         }
     }
 }

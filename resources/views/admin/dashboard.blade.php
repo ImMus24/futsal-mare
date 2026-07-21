@@ -109,8 +109,10 @@
                 <a href="{{ route('admin.reservasi.index') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-2.5 font-semibold text-[10px] rounded-lg uppercase tracking-wider">Log Reservasi</a>
                 <a href="{{ route('admin.lapangan.index') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-2.5 font-semibold text-[10px] rounded-lg uppercase tracking-wider">Kelola Arena</a>
                 <a href="{{ route('admin.member.index') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-2.5 font-semibold text-[10px] rounded-lg uppercase tracking-wider">Data Member</a>
-                <a href="{{ route('admin.staff.scan') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-2.5 font-semibold text-[10px] rounded-lg uppercase tracking-wider">📷 Gate Scanner</a>
-                @if(auth()->user()->is_admin == 1)
+                @if(Route::has('admin.staff.scan'))
+                    <a href="{{ route('admin.staff.scan') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-2.5 font-semibold text-[10px] rounded-lg uppercase tracking-wider">📷 Gate Scanner</a>
+                @endif
+                @if(auth()->user()->is_admin == 1 && Route::has('admin.role.index'))
                     <a href="{{ route('admin.role.index') }}" class="flex-1 lg:flex-none text-center px-4 py-2.5 font-semibold text-[10px] rounded-lg uppercase tracking-wider transition"
                        style="background: rgba(245,197,24,0.1); border: 1px solid rgba(245,197,24,0.35); color: var(--color-secondary);"
                        onmouseover="this.style.background='var(--color-secondary)'; this.style.color='var(--color-bg-main)'"
@@ -128,7 +130,7 @@
             <div class="space-y-1.5">
                 <p class="f-mono text-[10px] font-semibold uppercase tracking-widest" style="color: var(--color-text-meta);">Akumulasi Omset Lunas</p>
                 <p class="f-mono text-2xl font-bold tracking-tight" style="color: var(--success);">Rp {{ number_format($totalPendapatan, 0, ',', '.') }}</p>
-                <span class="inline-flex text-[9px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded" style="background: var(--success-bg); color: var(--success); border: 1px solid rgba(34,197,94,0.25);">⚡ Terverifikasi Midtrans</span>
+                <span class="inline-flex text-[9px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded" style="background: var(--success-bg); color: var(--success); border: 1px solid rgba(34,197,94,0.25);">⚡ Terverifikasi System</span>
             </div>
             <div class="p-4 rounded-xl text-xl" style="background: var(--color-bg-main); border: 1px solid var(--line);">🪙</div>
         </div>
@@ -184,10 +186,12 @@
                     <span class="f-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase" style="background: var(--success-bg); color: var(--success); border: 1px solid rgba(34,197,94,0.25);">Unduh</span>
                 </a>
 
-                <a href="{{ route('admin.staff.scan') }}" class="fm-quick-link flex items-center justify-between p-3.5 rounded-xl transition group">
-                    <span class="text-xs font-semibold" style="color: var(--color-text-muted);">📷 Buka Konsol Scanner QR</span>
-                    <span class="f-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase" style="background: var(--info-bg); color: var(--info); border: 1px solid rgba(59,130,246,0.25);">Terminal</span>
-                </a>
+                @if(Route::has('admin.staff.scan'))
+                    <a href="{{ route('admin.staff.scan') }}" class="fm-quick-link flex items-center justify-between p-3.5 rounded-xl transition group">
+                        <span class="text-xs font-semibold" style="color: var(--color-text-muted);">📷 Buka Konsol Scanner QR</span>
+                        <span class="f-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase" style="background: var(--info-bg); color: var(--info); border: 1px solid rgba(59,130,246,0.25);">Terminal</span>
+                    </a>
+                @endif
             </div>
 
             <div class="p-3 rounded-lg text-[9px] font-bold text-center uppercase tracking-wider f-mono" style="background: var(--color-bg-main); border: 1px solid var(--line); color: var(--color-text-meta);">
@@ -203,7 +207,7 @@
                 <h2 class="f-display text-xs uppercase tracking-wider flex items-center gap-1.5" style="color: var(--color-text-main);">
                     <span class="w-2 h-2 rounded-full fm-live-pip" style="background: var(--color-primary); animation: fm-pulse 1.6s infinite;"></span> Aliran Data Transaksi Terakhir
                 </h2>
-                <p class="text-[10px] font-semibold mt-0.5 uppercase tracking-wide" style="color: var(--color-text-meta);">Log pemantauan 10 entri data booking terbaru</p>
+                <p class="text-[10px] font-semibold mt-0.5 uppercase tracking-wide" style="color: var(--color-text-meta);">Log pemantauan entri data booking terbaru</p>
             </div>
             <span class="self-start sm:self-auto f-mono text-[9px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider" style="background: var(--color-bg-card); color: var(--color-text-muted); border: 1px solid var(--line);">Live Stream Ready</span>
         </div>
@@ -267,7 +271,7 @@
                                 </span>
                             @else
                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-semibold uppercase tracking-wider" style="background: var(--pending-bg); color: var(--pending); border: 1px solid rgba(245,158,11,0.25);">
-                                    <span class="w-1.5 h-1.5 rounded-full fm-live-pip" style="background: var(--pending); animation: fm-pulse 1.6s infinite;"></span> Pending
+                                    <span class="w-1.5 h-1.5 rounded-full fm-live-pip" style="background: var(--pending); animation: fm-pulse 1.6s infinite;"></span> {{ $reservasi->status ?? 'Pending' }}
                                 </span>
                             @endif
                         </td>
