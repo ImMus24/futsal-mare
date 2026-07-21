@@ -263,11 +263,6 @@ class ReservasiController extends Controller
         }
     }
 
-    /**
-     * Bangun nomor reservasi unik. uniqid() saja secara teoritis bisa bentrok
-     * pada request yang sangat rapat, jadi ditambahkan pengecekan ke DB dengan
-     * beberapa kali percobaan sebelum menyerah.
-     */
     private function generateNomorReservasiUnik(int $maxAttempts = 5): string
     {
         for ($i = 0; $i < $maxAttempts; $i++) {
@@ -278,7 +273,6 @@ class ReservasiController extends Controller
             }
         }
 
-        // Fallback terakhir: tambahkan random bytes agar praktis mustahil bentrok
         return 'FM-' . date('YmdHis') . '-' . strtoupper(bin2hex(random_bytes(4)));
     }
 
@@ -405,8 +399,6 @@ class ReservasiController extends Controller
 
     private function konfirmasiPembayaranSukses(Reservasi $reservasi, ?string $paymentType = null): void
     {
-        // Idempotency guard: cegah poin membership ditambahkan dobel jika
-        // fungsi ini terpanggil lebih dari sekali (mis. webhook + polling instan).
         if (in_array($reservasi->status, [self::STATUS_CONFIRMED, self::STATUS_COMPLETED])) {
             return;
         }
@@ -417,8 +409,6 @@ class ReservasiController extends Controller
             'expired_at'        => null,
         ]);
 
-        // Lock baris membership agar tidak ada race condition penjumlahan poin
-        // saat dua konfirmasi datang nyaris bersamaan (webhook vs polling instan).
         $membership = Membership::where('user_id', $reservasi->user_id)->lockForUpdate()->first();
 
         if (!$membership) {
@@ -463,8 +453,6 @@ class ReservasiController extends Controller
             return response()->json(['message' => 'Invalid Signature'], 403);
         }
 
-        // Lock baris reservasi agar webhook & polling instan yang datang
-        // hampir bersamaan tidak memproses pembayaran sukses dua kali.
         $reservasi = DB::transaction(function () use ($request) {
             return Reservasi::where('nomor_reservasi', $request->order_id)->lockForUpdate()->first();
         });
@@ -605,17 +593,13 @@ class ReservasiController extends Controller
         }
 
         $qrUrl = Storage::disk('public')->url($relative_path);
+        $qrCodeSvg = Storage::disk('public')->get($relative_path);
 
-        return view('reservasi.tiket', compact('reservasi', 'qrUrl'));
+        return view('reservasi.tiket', compact('reservasi', 'qrUrl', 'qrCodeSvg'));
     }
 
     /**
      * Endpoint ini dipanggil oleh petugas gate untuk verifikasi tiket via scan QR.
-     *
-     * PENTING: pastikan route ini dilindungi middleware otorisasi staff/admin
-     * (mis. ->middleware('role:staff')) di routes/web.php atau routes/api.php.
-     * Tanpa itu, siapa pun yang bisa menebak/mengetahui nomor_reservasi bisa
-     * memicu perubahan status Confirmed -> Completed.
      */
     public function processStaffCheckIn(Request $request): JsonResponse
     {
