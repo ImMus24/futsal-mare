@@ -45,9 +45,6 @@ class ReservasiController extends Controller
         return view('welcome', ['lapangans' => Lapangan::all()]);
     }
 
-    /**
-     * Detail Lapangan
-     */
     public function showLapangan(Request $request, $id)
     {
         $lapangan = Lapangan::findOrFail($id);
@@ -60,9 +57,6 @@ class ReservasiController extends Controller
         ]);
     }
 
-    /**
-     * Form Booking Lapangan
-     */
     public function create(Request $request, $id)
     {
         $lapangan = Lapangan::findOrFail($id);
