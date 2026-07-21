@@ -7,6 +7,7 @@ use App\Models\Reservasi;
 use App\Models\Lapangan;
 use App\Models\User;
 use App\Models\Membership;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, DB, Log};
 
@@ -50,12 +51,49 @@ class AdminDashboardController extends Controller
      */
     public function index()
     {
+        // 1. Ringkasan Statistik
         $totalPendapatan = Reservasi::whereIn('status', ['Confirmed', 'Completed'])->sum('total_harga');
         $matchTerkonfirmasi = Reservasi::where('status', 'Confirmed')->count();
         $totalMember = User::has('membership')->count();
         $reservasis = Reservasi::with(['lapangan', 'user.membership'])->latest()->paginate(10);
 
-        return view('admin.dashboard', compact('totalPendapatan', 'matchTerkonfirmasi', 'totalMember', 'reservasis'));
+        // 2. Kalkulasi Data Grafik Utilisasi 7 Hari Terakhir
+        $labelUtilisasi = [];
+        $dataUtilisasi = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i);
+            
+            // Format label tanggal (Contoh: "21 Jul")
+            $labelUtilisasi[] = $date->translatedFormat('d M'); 
+
+            // Hitung total durasi jam (atau total reservasi) per hari
+            // Catatan: Jika di database tidak ada kolom 'durasi', kita hitung selisih jam atau jumlah transaksi
+            $totalJam = Reservasi::whereDate('tanggal_main', $date->toDateString())
+                ->whereIn('status', ['Confirmed', 'Completed'])
+                ->get()
+                ->sum(function ($reservasi) {
+                    // Mengambil selisih jam_mulai dan jam_selesai secara dinamis
+                    if (!empty($reservasi->jam_mulai) && !empty($reservasi->jam_selesai)) {
+                        $start = Carbon::parse($reservasi->jam_mulai);
+                        $end = Carbon::parse($reservasi->jam_selesai);
+                        return $start->diffInHours($end);
+                    }
+                    return 1; // Default 1 jam jika jam tidak terdefinisi
+                });
+
+            $dataUtilisasi[] = (int) $totalJam;
+        }
+
+        // 3. Pass data ke view 'admin.dashboard'
+        return view('admin.dashboard', compact(
+            'totalPendapatan',
+            'matchTerkonfirmasi',
+            'totalMember',
+            'reservasis',
+            'labelUtilisasi',
+            'dataUtilisasi'
+        ));
     }
 
     /**
