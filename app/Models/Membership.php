@@ -14,16 +14,25 @@ class Membership extends Model
     ];
 
     /**
-     * Mendapatkan persentase diskon berdasarkan tier membership.
-     * Penggunaan: $membership->discount_percent
+     * Mendapatkan persentase diskon bulat (misal: 10 untuk 10%) berdasarkan tier.
+     * Penggunaan di Eloquent: $membership->discount_percent
      */
-    public function getDiscountPercentAttribute(): float
+    public function getDiscountPercentAttribute(): int
     {
-        return match ($this->membership_type) {
-            'Gold'   => 0.20, // 20%
-            'Silver' => 0.10, // 10%
-            'Bronze' => 0.05, // 5%
-            default  => 0.00,
+        return self::getDiskonByTier($this->membership_type);
+    }
+
+    /**
+     * Helper Static untuk mendapatkan persentase diskon langsung dari string tier.
+     * Penggunaan: Membership::getDiskonByTier('Gold') -> returns 10
+     */
+    public static function getDiskonByTier(?string $membershipType): int
+    {
+        return match ($membershipType) {
+            'Gold'   => 10, // Ubah sesuai standar bisnis kamu (misal 10 atau 20)
+            'Silver' => 5,  // Ubah sesuai standar bisnis kamu (misal 5 atau 10)
+            'Bronze' => 0,  // Bronze default 0%
+            default  => 0,
         };
     }
 
