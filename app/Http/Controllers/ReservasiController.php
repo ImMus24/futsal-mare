@@ -29,7 +29,7 @@ class ReservasiController extends Controller
     const STATUS_CONFIRMED = 'Confirmed';
     const STATUS_COMPLETED = 'Completed';
     const STATUS_CANCELLED = 'Cancelled';
-    const STATUS_EXPIRED   = 'Expired'; // Ditambahkan untuk pelacakan eksplisit
+    const STATUS_EXPIRED   = 'Expired';
 
     public function landingPage(): View
     {
@@ -171,7 +171,6 @@ class ReservasiController extends Controller
         try {
             $reservasi = DB::transaction(function () use ($request, $lapangan, $tanggal, $start_hour, $end_hour, $start_time, $end_time, $user) {
                 
-                // Mengunci baris lapangan untuk mencegah race condition
                 Lapangan::where('id', $request->lapangan_id)->lockForUpdate()->first();
 
                 if ($this->isSlotBentrok($request->lapangan_id, $request->tanggal_main, $start_time, $end_time)) {
@@ -594,6 +593,7 @@ class ReservasiController extends Controller
             return redirect()->route('dashboard')->with('error', 'Tiket tidak ditemukan atau belum lunas.');
         }
 
+        // Render QR SVG secara inline murni (bersih & aman tanpa menulis ke disk storage)
         $qrCodeSvg = QrCode::format('svg')
             ->size(300)
             ->margin(2)
@@ -638,7 +638,7 @@ class ReservasiController extends Controller
                 }
 
                 if ($reservasi->status === self::STATUS_CONFIRMED) {
-                    // Validasi tambahan: Pastikan tiket digunakan pada tanggal main yang sesuai (Hari ini)
+                    // Validasi tanggal main: pastikan tiket dipindai tepat pada hari pertandingan
                     $tanggalMain = Carbon::parse($reservasi->tanggal_main);
                     if (!$tanggalMain->isToday()) {
                         $pesanTanggal = $tanggalMain->isFuture() 
