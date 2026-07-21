@@ -177,7 +177,7 @@
                     </div>
                 @endif
 
-                <!-- midtrans gateway banner -->
+                <!-- MIDTRANS GATEWAY BANNER -->
                 <div style="background: rgba(245, 197, 24, 0.05); border: 1px solid rgba(245, 197, 24, 0.15); border-radius: 8px; padding: 14px; display: flex; gap: 12px; align-items: flex-start; font-size: 12px; color: var(--floodlight); font-weight: 500;">
                     <span style="font-size: 14px; line-height: 1;">🔒</span>
                     <div>
@@ -186,13 +186,13 @@
                     </div>
                 </div>
 
-                <!-- total price checkout widget -->
+                <!-- TOTAL PRICE CHECKOUT WIDGET -->
                 <div style="background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.06); border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
                     <div>
                         <span style="font-size: 12px; color: var(--muted); font-weight: 600; display: block;">Estimasi Total Tagihan</span>
                         <span id="rincian_surcharge" style="font-family: var(--mono); font-size: 10px; color: var(--muted-2); display: block; margin-top: 2px; font-weight: 700; text-transform: uppercase;"></span>
                     </div>
-                    <span id="live_total_harga" style="font-family: var(--mono); font-size: 26px; color: var(--floodlight); font-weight: 700; text-align: right;">Rp 0</span>
+                    <span id="live_total_harga" style="font-family: var(--mono); font-size: 26px; color: var(--floodlight); font-weight: 700;">Rp 0</span>
                 </div>
 
                 <button type="submit" id="btn_submit" class="btn-ui btn-ui-primary">
@@ -302,7 +302,7 @@
                     'X-CSRF-TOKEN': csrfToken(),
                 }
             })
-            .catch(() => {})
+            .catch(() => { /* diabaikan — pesan kegagalan sudah di-flash oleh controller */ })
             .finally(() => {
                 window.location.href = redirectUrl;
             });
@@ -360,7 +360,6 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            // Tampilkan pending toast dari reload sebelumnya jika ada
             const pendingToast = sessionStorage.getItem('pending_toast');
             if (pendingToast) {
                 const { type, msg } = JSON.parse(pendingToast);
@@ -423,7 +422,7 @@
             })
             .catch(error => {
                 setButtonLoading(false);
-                alert(error.message);
+                showToast('err', error.message || 'Terjadi kesalahan sistem.');
             });
         });
     </script>
