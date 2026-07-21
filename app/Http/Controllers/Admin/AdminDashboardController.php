@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Lapangan;
-use App\Models\Membership;
 use App\Models\Reservasi;
+use App\Models\Lapangan;
 use App\Models\User;
-use Carbon\Carbon;
+use App\Models\Membership;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class AdminDashboardController extends Controller
 {
@@ -26,11 +26,10 @@ class AdminDashboardController extends Controller
      */
     public function showLoginForm()
     {
-        // Jika sudah login dan memiliki akses admin, langsung bypass ke dashboard
-        if (Auth::check() && Auth::user()->is_admin) { 
+        // Jika sudah login dan memiliki status admin, langsung bypass ke dashboard
+        if (auth()->check() && auth()->user()->is_admin) { 
             return redirect()->route('admin.dashboard');
         }
-
         return view('admin.auth.login');
     }
 
@@ -45,15 +44,15 @@ class AdminDashboardController extends Controller
         ]);
 
         // Mencoba mencocokkan kredensial dengan database
-        if (Auth::attempt($credentials, $request->remember)) {
+        if (auth()->attempt($credentials, $request->remember)) {
             // Validasi hak akses flag admin di tabel user
-            if (Auth::user()->is_admin) {
+            if (auth()->user()->is_admin) {
                 $request->session()->regenerate();
                 return redirect()->route('admin.dashboard')->with('success', 'Selamat Datang Kembali di Panel Kontrol Utama!');
             }
 
             // Jika berhasil masuk tapi bukan admin, paksa keluar sesi demi keamanan
-            Auth::logout();
+            auth()->logout();
             return redirect()->back()->withErrors(['email' => 'Akses Ditolak. Akun Anda tidak memiliki otoritas Administrator.'])->withInput();
         }
 
@@ -67,19 +66,19 @@ class AdminDashboardController extends Controller
      */
     public function index()
     {
-        // 1. Ringkasan Statistik
+        // Ambil data statistik untuk metrik ringkasan (Stat Cards)
         $totalPendapatan = Reservasi::whereIn('status', ['Confirmed', 'Completed'])->sum('total_harga');
         $matchTerkonfirmasi = Reservasi::where('status', 'Confirmed')->count();
         $totalMember = User::has('membership')->count();
         $reservasis = Reservasi::with(['lapangan', 'user.membership'])->latest()->paginate(10);
 
-        // 2. Kalkulasi Grafik Utilisasi 7 Hari Terakhir
+        // Kalkulasi Grafik Utilisasi 7 Hari Terakhir
         $startDate = Carbon::now()->subDays(6)->startOfDay();
         $endDate = Carbon::now()->endOfDay();
 
         $reservasi7Hari = Reservasi::whereBetween('tanggal_main', [$startDate->toDateString(), $endDate->toDateString()])
             ->whereIn('status', ['Confirmed', 'Completed'])
-            ->get()
+            ->get(['tanggal_main', 'jam_mulai', 'jam_selesai'])
             ->groupBy(function ($item) {
                 return Carbon::parse($item->tanggal_main)->format('Y-m-d');
             });
@@ -97,9 +96,14 @@ class AdminDashboardController extends Controller
             if (isset($reservasi7Hari[$dateString])) {
                 $totalJam = $reservasi7Hari[$dateString]->sum(function ($reservasi) {
                     if (!empty($reservasi->jam_mulai) && !empty($reservasi->jam_selesai)) {
-                        $start = Carbon::parse($reservasi->jam_mulai);
-                        $end = Carbon::parse($reservasi->jam_selesai);
-                        return max(1, $start->diffInHours($end));
+                        try {
+                            $start = Carbon::parse($reservasi->jam_mulai);
+                            $end = Carbon::parse($reservasi->jam_selesai);
+                            $durasi = $start->diffInHours($end);
+                            return max(1, (int) $durasi);
+                        } catch (\Exception $e) {
+                            return 1;
+                        }
                     }
                     return 1;
                 });
@@ -108,11 +112,10 @@ class AdminDashboardController extends Controller
             $dataUtilisasi[] = (int) $totalJam;
         }
 
-        // 3. Pass data ke view 'admin.dashboard'
         return view('admin.dashboard', compact(
-            'totalPendapatan',
-            'matchTerkonfirmasi',
-            'totalMember',
+            'totalPendapatan', 
+            'matchTerkonfirmasi', 
+            'totalMember', 
             'reservasis',
             'labelUtilisasi',
             'dataUtilisasi'
@@ -133,7 +136,6 @@ class AdminDashboardController extends Controller
         if ($status && $status != '') {
             $query->where('status', $status);
         }
-
         $reservasis = $query->latest()->paginate(15);
 
         return view('admin.reservasi.index', compact('reservasis'));
@@ -151,11 +153,10 @@ class AdminDashboardController extends Controller
         if ($status && $status != '') {
             $query->where('status', $status);
         }
-
         $reservasis = $query->latest()->get();
 
         $filename = "Laporan_Reservasi_Futsal_Mare_" . date('Ymd_His') . ".xls";
-
+        
         header("Content-Type: application/vnd.ms-excel; charset=utf-8");
         header("Content-Disposition: attachment; filename=\"$filename\"");
         header("Pragma: no-cache");
@@ -164,9 +165,6 @@ class AdminDashboardController extends Controller
         return view('admin.reservasi.excel', compact('reservasis'));
     }
 
-    /**
-     * Mengubah Status Reservasi secara Manual
-     */
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
@@ -180,34 +178,28 @@ class AdminDashboardController extends Controller
             $reservasi = Reservasi::findOrFail($id);
             $reservasi->update(['status' => $request->status]);
 
-            return back()->with('success', "Status reservasi #{$reservasi->id} berhasil diubah menjadi {$request->status}.");
+            return back()->with('success', "Status reservasi #{$reservasi->id} (Nota: {$reservasi->nomor_reservasi}) berhasil diperbarui.");
+
         } catch (\Exception $e) {
             Log::error('Gagal update status reservasi ID ' . $id . ': ' . $e->getMessage());
             return back()->with('error', 'Terjadi kesalahan sistem saat mengubah status reservasi.');
         }
     }
 
-    /**
-     * Menghapus Single Data Reservasi
-     */
     public function deleteReservasi($id)
     {
         try {
             $reservasi = Reservasi::findOrFail($id);
             $reservasi->delete();
 
-            return redirect()->route('admin.reservasi.index')
-                ->with('success', 'Data reservasi #' . $id . ' berhasil dihapus dari sistem.');
+            return back()->with('success', 'Data reservasi #' . $id . ' berhasil dihapus dari sistem.');
+
         } catch (\Exception $e) {
             Log::error('Gagal hapus reservasi ID ' . $id . ': ' . $e->getMessage());
-            return redirect()->route('admin.reservasi.index')
-                ->with('error', 'Gagal menghapus data reservasi. Silakan coba lagi.');
+            return back()->with('error', 'Gagal menghapus data reservasi. Silakan coba lagi.');
         }
     }
 
-    /**
-     * Hapus Reservasi secara Massal (Bulk Delete)
-     */
     public function deleteReservasiMassal(Request $request)
     {
         $request->validate([
@@ -216,16 +208,16 @@ class AdminDashboardController extends Controller
         ], [
             'ids.required' => 'Pilih minimal satu data reservasi untuk dihapus.',
             'ids.array'    => 'Data yang dikirim tidak valid.',
-            'ids.*.exists' => 'Salah satu data yang dipilih tidak ditemukan.',
+            'ids.*.exists' => 'Salah satu data yang dipilih tidak ditemukan (mungkin sudah dihapus sebelumnya).',
         ]);
 
         try {
-            DB::transaction(function () use ($request) {
-                Reservasi::whereIn('id', $request->ids)->delete();
-            });
+            $jumlah = Reservasi::whereIn('id', $request->ids)->count();
+            Reservasi::whereIn('id', $request->ids)->delete();
 
             return redirect()->route('admin.reservasi.index')
-                ->with('success', count($request->ids) . ' data reservasi terpilih berhasil dihapus.');
+                ->with('success', $jumlah . ' data reservasi terpilih berhasil dihapus dari sistem.');
+
         } catch (\Exception $e) {
             Log::error('Gagal hapus massal reservasi: ' . $e->getMessage());
             return redirect()->route('admin.reservasi.index')
@@ -251,11 +243,26 @@ class AdminDashboardController extends Controller
      */
     public function member(Request $request)
     {
-        $members = User::with('membership')
-            ->leftJoin('memberships', 'users.id', '=', 'memberships.user_id')
-            ->select('users.*', 'memberships.points as total_points')
-            ->orderBy('total_points', 'desc')
-            ->paginate(10);
+        $query = User::where('is_admin', 0)
+            ->with('membership')
+            ->addSelect([
+                'total_points' => Membership::select('points')
+                    ->whereColumn('user_id', 'users.id')
+                    ->limit(1)
+            ]);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $members = $query->orderByRaw('COALESCE(total_points, 0) DESC')
+            ->latest('users.created_at')
+            ->paginate(10)
+            ->withQueryString();
 
         return view('admin.member.index', compact('members'));
     }
@@ -298,6 +305,7 @@ class AdminDashboardController extends Controller
 
             return redirect()->route('admin.member.index')
                 ->with('success', "Data member \"{$member->name}\" berhasil diperbarui.");
+
         } catch (\Exception $e) {
             Log::error('Gagal update member ID ' . $id . ': ' . $e->getMessage());
             return back()->withInput()
@@ -319,12 +327,14 @@ class AdminDashboardController extends Controller
 
         try {
             DB::transaction(function () use ($member) {
+                $member->reservasis()->delete();
                 $member->membership()->delete();
                 $member->delete();
             });
 
             return redirect()->route('admin.member.index')
                 ->with('success', "Member \"{$member->name}\" berhasil dihapus dari sistem.");
+
         } catch (\Exception $e) {
             Log::error('Gagal hapus member ID ' . $id . ': ' . $e->getMessage());
             return back()->with('error', 'Terjadi kesalahan sistem saat menghapus data member.');
