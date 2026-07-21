@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -89,9 +90,6 @@ class ReservasiController extends Controller
         return view('reservasi.create', compact('lapangan', 'tanggal_pilihan', 'jam_terpesan', 'membershipType', 'diskonPersen'));
     }
 
-    /**
-     * Simpan Reservasi & Request Snap Token Midtrans (Optimized DB Transaction)
-     */
     public function store(Request $request): JsonResponse
     {
         $request->validate([
@@ -136,7 +134,6 @@ class ReservasiController extends Controller
         $user = Auth::user();
 
         try {
-            // 1. Simpan ke DB terlebih dahulu untuk mempercepat rilis Lock DB
             $reservasi = DB::transaction(function () use ($request, $lapangan, $tanggal, $start_hour, $end_hour, $start_time, $end_time, $user) {
                 
                 Lapangan::where('id', $request->lapangan_id)->lockForUpdate()->first();
@@ -196,7 +193,6 @@ class ReservasiController extends Controller
                 ]);
             });
 
-            // 2. Request Snap Token di luar DB Transaction
             $params = [
                 'transaction_details' => [
                     'order_id'     => (string) $reservasi->nomor_reservasi,
@@ -543,9 +539,6 @@ class ReservasiController extends Controller
         return redirect()->route('dashboard')->with('success', 'Riwayat transaksi terpilih berhasil dihapus.');
     }
 
-    /**
-     * Cetak E-Tiket QR Code (Inline Optimization)
-     */
     public function cetakTiket(int $id)
     {
         $reservasi = Reservasi::where('id', $id)
@@ -557,14 +550,23 @@ class ReservasiController extends Controller
             return redirect()->route('dashboard')->with('error', 'Tiket tidak ditemukan atau belum lunas.');
         }
 
-        // Render QR SVG inline tanpa menulis ke disk
-        $qrCodeSvg = QrCode::format('svg')
-            ->size(300)
-            ->margin(2)
-            ->errorCorrection('H')
-            ->generate($reservasi->nomor_reservasi);
+        $nama_file = 'qr_' . $reservasi->nomor_reservasi . '.svg';
+        $relative_path = 'qrcodes/' . $nama_file;
 
-        return view('reservasi.tiket', compact('reservasi', 'qrCodeSvg'));
+        if (!Storage::disk('public')->exists($relative_path)) {
+            $svg = QrCode::format('svg')
+                ->size(300)
+                ->margin(2)
+                ->errorCorrection('H')
+                ->generate($reservasi->nomor_reservasi);
+
+            Storage::disk('public')->put($relative_path, $svg);
+            $reservasi->update(['qr_code_path' => $nama_file]);
+        }
+
+        $qrUrl = Storage::disk('public')->url($relative_path);
+
+        return view('reservasi.tiket', compact('reservasi', 'qrUrl'));
     }
 
     public function processStaffCheckIn(Request $request): JsonResponse
