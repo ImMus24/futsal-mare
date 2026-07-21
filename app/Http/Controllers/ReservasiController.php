@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -30,6 +29,7 @@ class ReservasiController extends Controller
     const STATUS_CONFIRMED = 'Confirmed';
     const STATUS_COMPLETED = 'Completed';
     const STATUS_CANCELLED = 'Cancelled';
+    const STATUS_EXPIRED   = 'Expired'; // Ditambahkan untuk pelacakan eksplisit
 
     public function landingPage(): View
     {
@@ -374,7 +374,11 @@ class ReservasiController extends Controller
             DB::transaction(function () use ($transactionStatus, $reservasi, $data) {
                 if ($transactionStatus === 'settlement' || $transactionStatus === 'capture') {
                     $this->konfirmasiPembayaranSukses($reservasi, $data['payment_type'] ?? null);
-                } elseif (in_array($transactionStatus, ['cancel', 'expire', 'deny'])) {
+                } elseif ($transactionStatus === 'expire') {
+                    if ($reservasi->status === self::STATUS_WAITING) {
+                        $reservasi->update(['status' => self::STATUS_EXPIRED]);
+                    }
+                } elseif (in_array($transactionStatus, ['cancel', 'deny'])) {
                     if ($reservasi->status === self::STATUS_WAITING) {
                         $reservasi->update(['status' => self::STATUS_CANCELLED]);
                     }
@@ -385,7 +389,7 @@ class ReservasiController extends Controller
 
             if ($statusAkhir === self::STATUS_CONFIRMED) {
                 session()->flash('success', 'Pembayaran berhasil dikonfirmasi! Jadwal Anda telah terkonfirmasi.');
-            } elseif ($statusAkhir === self::STATUS_CANCELLED && $transactionStatus !== null) {
+            } elseif (in_array($statusAkhir, [self::STATUS_CANCELLED, self::STATUS_EXPIRED]) && $transactionStatus !== null) {
                 session()->flash('error', 'Transaksi dibatalkan atau kadaluarsa.');
             }
 
@@ -476,7 +480,11 @@ class ReservasiController extends Controller
             $status = $request->transaction_status;
             if ($status === 'settlement' || $status === 'capture') {
                 $this->konfirmasiPembayaranSukses($reservasi, $request->payment_type);
-            } elseif (in_array($status, ['cancel', 'expire', 'deny'])) {
+            } elseif ($status === 'expire') {
+                if ($reservasi->status === self::STATUS_WAITING) {
+                    $reservasi->update(['status' => self::STATUS_EXPIRED]);
+                }
+            } elseif (in_array($status, ['cancel', 'deny'])) {
                 if ($reservasi->status === self::STATUS_WAITING) {
                     $reservasi->update(['status' => self::STATUS_CANCELLED]);
                 }
@@ -500,8 +508,8 @@ class ReservasiController extends Controller
             'points'          => 0,
         ];
 
-        $totalBooking    = $reservasis->count();
-        $lunasBooking    = $reservasis->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_COMPLETED])->count();
+        $totalBooking     = $reservasis->count();
+        $lunasBooking     = $reservasis->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_COMPLETED])->count();
         $totalPengeluaran = $reservasis->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_COMPLETED])->sum('total_harga');
 
         return view('dashboard', compact(
@@ -542,7 +550,7 @@ class ReservasiController extends Controller
     {
         $reservasi = Reservasi::where('id', $id)
             ->where('user_id', Auth::id())
-            ->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_COMPLETED, self::STATUS_CANCELLED])
+            ->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_COMPLETED, self::STATUS_CANCELLED, self::STATUS_EXPIRED])
             ->first();
 
         if (!$reservasi) {
@@ -565,7 +573,7 @@ class ReservasiController extends Controller
 
         $deleted = Reservasi::whereIn('id', $request->ids)
             ->where('user_id', Auth::id())
-            ->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_COMPLETED, self::STATUS_CANCELLED])
+            ->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_COMPLETED, self::STATUS_CANCELLED, self::STATUS_EXPIRED])
             ->delete();
 
         if ($deleted === 0) {
@@ -586,7 +594,6 @@ class ReservasiController extends Controller
             return redirect()->route('dashboard')->with('error', 'Tiket tidak ditemukan atau belum lunas.');
         }
 
-        // Render QR SVG secara inline tanpa menulis ke disk (aman & bersih)
         $qrCodeSvg = QrCode::format('svg')
             ->size(300)
             ->margin(2)
@@ -618,8 +625,8 @@ class ReservasiController extends Controller
                     return response()->json(['success' => false, 'message' => 'Kode QR tidak valid!'], 404);
                 }
 
-                if ($reservasi->status === self::STATUS_CANCELLED) {
-                    return response()->json(['success' => false, 'message' => 'Tiket ditolak! Reservasi ini telah dibatalkan.'], 422);
+                if (in_array($reservasi->status, [self::STATUS_CANCELLED, self::STATUS_EXPIRED])) {
+                    return response()->json(['success' => false, 'message' => 'Tiket ditolak! Reservasi ini telah dibatalkan atau kedaluwarsa.'], 422);
                 }
 
                 if ($reservasi->status === self::STATUS_WAITING) {
@@ -631,6 +638,16 @@ class ReservasiController extends Controller
                 }
 
                 if ($reservasi->status === self::STATUS_CONFIRMED) {
+                    // Validasi tambahan: Pastikan tiket digunakan pada tanggal main yang sesuai (Hari ini)
+                    $tanggalMain = Carbon::parse($reservasi->tanggal_main);
+                    if (!$tanggalMain->isToday()) {
+                        $pesanTanggal = $tanggalMain->isFuture() 
+                            ? 'Tiket ini dijadwalkan untuk bermain pada tanggal ' . $tanggalMain->format('d-m-Y') . '.' 
+                            : 'Tiket ini sudah kedaluwarsa karena jadwal mainnya pada tanggal ' . $tanggalMain->format('d-m-Y') . '.';
+                        
+                        return response()->json(['success' => false, 'message' => 'Tiket ditolak! ' . $pesanTanggal], 422);
+                    }
+
                     $reservasi->update(['status' => self::STATUS_COMPLETED]);
 
                     return response()->json([
