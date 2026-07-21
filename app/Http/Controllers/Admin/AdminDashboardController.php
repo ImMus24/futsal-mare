@@ -89,9 +89,14 @@ class AdminDashboardController extends Controller
             if (isset($reservasi7Hari[$dateString])) {
                 $totalJam = $reservasi7Hari[$dateString]->sum(function ($reservasi) {
                     if (!empty($reservasi->jam_mulai) && !empty($reservasi->jam_selesai)) {
-                        $start = (int) substr($reservasi->jam_mulai, 0, 2);
-                        $end = (int) substr($reservasi->jam_selesai, 0, 2);
-                        return max(1, $end - $start);
+                        try {
+                            $start = Carbon::parse($reservasi->jam_mulai);
+                            $end = Carbon::parse($reservasi->jam_selesai);
+                            $durasi = $start->diffInHours($end);
+                            return max(1, (int) $durasi);
+                        } catch (\Exception $e) {
+                            return 1;
+                        }
                     }
                     return 1;
                 });
@@ -334,7 +339,6 @@ class AdminDashboardController extends Controller
      */
     public function member(Request $request)
     {
-        // Menggunakan subquery Eloquent yang bersih tanpa resiko ID ter-overwrite
         $query = User::where('is_admin', 0)
             ->with('membership')
             ->addSelect([
@@ -418,7 +422,6 @@ class AdminDashboardController extends Controller
 
         try {
             DB::transaction(function () use ($member) {
-                // Hapus reservasi terkait terlebih dahulu agar tidak melempar Foreign Key Constraint Error
                 $member->reservasis()->delete();
                 $member->membership()->delete();
                 $member->delete();
