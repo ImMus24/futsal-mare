@@ -3,301 +3,483 @@
 @section('content')
 
 {{-- ============================================================
-     DESIGN SYSTEM — Futsal Mare (Konsistensi Seluruh Panel Admin)
+     DESIGN SYSTEM — Futsal Mare HQ (Ultra-Modern Admin Dashboard)
      ============================================================ --}}
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
     .fm-scope {
-        --color-primary:      #e2601f;
-        --color-primary-dark: #b8481a;
-        --color-secondary:    #f5c518;
-        --color-bg-main:      #121a23;
-        --color-bg-card:      #0a0f14;
-        --color-bg-raised:    #1a2431;
-        --color-text-main:    #ffffff;
-        --color-text-muted:   #94a3b8;
-        --color-text-meta:    #5c6979;
-        --line:               rgba(238, 241, 234, 0.08);
-        --line-2:             rgba(238, 241, 234, 0.14);
-        --ease: cubic-bezier(.22,1,.36,1);
+        --color-primary:        #e2601f;
+        --color-primary-dark:   #b8481a;
+        --color-primary-glow:   rgba(226, 96, 31, 0.25);
+        --color-secondary:      #f5c518;
+        --color-bg-main:        #0d131a;
+        --color-bg-card:        #121a24;
+        --color-bg-raised:      #1a2432;
+        --color-text-main:      #ffffff;
+        --color-text-muted:     #94a3b8;
+        --color-text-meta:      #64748b;
+        --line:                 rgba(255, 255, 255, 0.08);
+        --line-glow:            rgba(226, 96, 31, 0.3);
+        --ease:                 cubic-bezier(.22, 1, .36, 1);
 
-        --success: #22C55E; --success-bg: rgba(34, 197, 94, 0.1);
-        --pending: #F59E0B; --pending-bg: rgba(245, 158, 11, 0.1);
-        --danger:  #EF4444; --danger-bg:  rgba(239, 68, 68, 0.1);
-        --info:    #3B82F6; --info-bg:    rgba(59, 130, 246, 0.1);
+        --success: #22C55E; --success-bg: rgba(34, 197, 94, 0.12); --success-border: rgba(34, 197, 94, 0.25);
+        --pending: #F59E0B; --pending-bg: rgba(245, 158, 11, 0.12); --pending-border: rgba(245, 158, 11, 0.25);
+        --danger:  #EF4444; --danger-bg:  rgba(239, 68, 68, 0.12);  --danger-border:  rgba(239, 68, 68, 0.25);
+        --info:    #3B82F6; --info-bg:    rgba(59, 130, 246, 0.12);  --info-border:    rgba(59, 130, 246, 0.25);
 
         font-family: 'Work Sans', sans-serif;
         color: var(--color-text-main);
     }
-    .fm-scope .f-display { font-family: 'Anton', sans-serif; font-weight: 400; letter-spacing: .01em; }
+
+    .fm-scope .f-display { font-family: 'Anton', sans-serif; font-weight: 400; letter-spacing: .02em; }
     .fm-scope .f-mono { font-family: 'JetBrains Mono', monospace; }
+    
     .fm-scope .eyebrow {
-        font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
-        color: var(--color-primary); display: inline-flex; align-items: center; gap: 8px; font-weight: 500;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        letter-spacing: .15em;
+        text-transform: uppercase;
+        color: var(--color-primary);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
     }
-    @keyframes fm-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
-    @media (prefers-reduced-motion: reduce) { .fm-scope .fm-live-pip { animation: none; } }
-    .fm-scope a:focus-visible, .fm-scope button:focus-visible { outline: 2px solid var(--color-secondary); outline-offset: 2px; }
 
+    /* Soft Glow & Animations */
+    @keyframes fm-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(0.92); } }
+    .fm-scope .fm-live-pip { animation: fm-pulse 1.8s infinite ease-in-out; }
+    
+    /* Interactive Cards */
+    .fm-scope .fm-card {
+        background: var(--color-bg-card);
+        border: 1px solid var(--line);
+        transition: border-color .25s ease, transform .25s var(--ease), box-shadow .25s ease;
+    }
+    .fm-scope .fm-card:hover {
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .fm-scope .fm-metric-card {
+        background: radial-gradient(120% 120% at 0% 0%, var(--color-bg-raised) 0%, var(--color-bg-card) 100%);
+        border: 1px solid var(--line);
+        transition: all .25s var(--ease);
+    }
+    .fm-scope .fm-metric-card:hover {
+        transform: translateY(-3px);
+        border-color: var(--line-glow);
+        box-shadow: 0 12px 30px -10px var(--color-primary-glow);
+    }
+
+    /* Buttons & Nav Chips */
     .fm-scope .fm-nav-chip {
-        background: var(--color-bg-raised); color: var(--color-text-main); border: 1px solid var(--line);
-        transition: background .18s ease, transform .18s var(--ease);
+        background: var(--color-bg-raised);
+        color: var(--color-text-muted);
+        border: 1px solid var(--line);
+        transition: all .2s var(--ease);
     }
-    .fm-scope .fm-nav-chip:hover { background: var(--color-primary); transform: translateY(-1px); }
-
-    .fm-scope .fm-metric { transition: transform .2s var(--ease), border-color .2s ease; }
-    .fm-scope .fm-metric:hover { transform: translateY(-3px); border-color: var(--line-2); }
+    .fm-scope .fm-nav-chip:hover {
+        background: var(--color-primary);
+        color: #ffffff;
+        border-color: var(--color-primary);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px var(--color-primary-glow);
+    }
 
     .fm-scope .fm-quick-link {
-        background: var(--color-bg-main); border: 1px solid var(--line); transition: background .15s ease, border-color .15s ease;
+        background: var(--color-bg-main);
+        border: 1px solid var(--line);
+        transition: all .2s ease;
     }
-    .fm-scope .fm-quick-link:hover { background: var(--color-bg-raised); border-color: var(--line-2); }
+    .fm-scope .fm-quick-link:hover {
+        background: var(--color-bg-raised);
+        border-color: rgba(255, 255, 255, 0.18);
+        transform: translateX(3px);
+    }
 
-    .fm-scope .fm-row:hover { background: rgba(255,255,255,0.02); }
-    .fm-scope .fm-row { transition: background .15s ease; }
+    /* Table Styling */
+    .fm-scope .fm-table-row {
+        transition: background-color .15s ease;
+    }
+    .fm-scope .fm-table-row:hover {
+        background-color: rgba(255, 255, 255, 0.025);
+    }
+
+    /* Focus States */
+    .fm-scope a:focus-visible, .fm-scope button:focus-visible, .fm-scope input:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+    }
 </style>
 
-<div class="fm-scope space-y-6 animate-fade-in">
+<div class="fm-scope space-y-6">
 
     {{-- Notifikasi Toast Global --}}
     @include('partials.toast')
 
-    <!-- TOP BAR -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-5" style="border-color: var(--line);">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center f-display text-lg shadow-lg" style="background: var(--color-primary); color: #fff; transform: rotate(-2deg);">M</div>
+    <!-- HEADER NAVIGATION BAR -->
+    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-5" style="border-color: var(--line);">
+        <div class="flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-xl flex items-center justify-center f-display text-xl shadow-xl transition-transform hover:scale-105" 
+                 style="background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); color: #fff; transform: rotate(-2deg); box-shadow: 0 4px 14px var(--color-primary-glow);">
+                M
+            </div>
             <div>
-                <h2 class="f-display text-sm uppercase tracking-wide leading-tight" style="color: var(--color-text-main);">Futsal Mare HQ</h2>
-                <div class="f-mono text-[10px] font-semibold uppercase tracking-widest mt-0.5" style="color: var(--color-text-meta);">Workspace Pemrograman Web</div>
+                <h1 class="f-display text-lg uppercase tracking-wider leading-none" style="color: var(--color-text-main);">Futsal Mare HQ</h1>
+                <div class="f-mono text-[10px] font-semibold uppercase tracking-widest mt-1" style="color: var(--color-text-meta);">
+                    ⚡ Admin Management System
+                </div>
             </div>
         </div>
 
         <div class="flex items-center justify-between sm:justify-end gap-3">
-            <a href="{{ url('/') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wide transition"
+            <a href="{{ url('/') }}" 
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200"
                style="background: var(--color-bg-card); border: 1px solid var(--line); color: var(--color-text-muted);"
-               onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--color-text-muted)'">
-                ⬅️ Beranda Utama
+               onmouseover="this.style.color='#fff'; this.style.borderColor='rgba(255,255,255,0.2)'" 
+               onmouseout="this.style.color='var(--color-text-muted)'; this.style.borderColor='var(--line)'">
+               <span>🏠</span> Beranda Utama
             </a>
+            
             <form method="POST" action="{{ route('logout') }}" class="inline">
                 @csrf
-                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg uppercase tracking-wide transition cursor-pointer"
-                        style="background: var(--danger-bg); border: 1px solid rgba(239,68,68,0.3); color: var(--danger);">
-                    🚪 Keluar Sesi
+                <button type="submit" 
+                        class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl uppercase tracking-wider transition-all duration-200 cursor-pointer"
+                        style="background: var(--danger-bg); border: 1px solid var(--danger-border); color: var(--danger);"
+                        onmouseover="this.style.background='var(--danger)'; this.style.color='#fff'"
+                        onmouseout="this.style.background='var(--danger-bg)'; this.style.color='var(--danger)'">
+                    <span>🚪</span> Keluar
                 </button>
             </form>
         </div>
-    </div>
+    </header>
 
-    <!-- HERO BANNER -->
-    <div class="relative p-6 sm:p-8 rounded-2xl shadow-2xl overflow-hidden" style="background: var(--color-bg-card); border: 1px solid var(--line);">
-        <div class="absolute -right-16 -top-16 w-48 h-48 rounded-full pointer-events-none" style="background: radial-gradient(circle, rgba(226,96,31,0.18), transparent 70%);"></div>
+    <!-- HERO CONTROL BANNER -->
+    <div class="relative p-6 sm:p-8 rounded-2xl shadow-2xl overflow-hidden fm-card">
+        {{-- Background Glow Effect --}}
+        <div class="absolute -right-12 -top-12 w-64 h-64 rounded-full pointer-events-none" 
+             style="background: radial-gradient(circle, var(--color-primary-glow), transparent 70%);"></div>
 
         <div class="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div class="space-y-2">
                 <span class="eyebrow">
-                    <span class="w-1.5 h-1.5 rounded-full fm-live-pip" style="background: var(--color-primary); animation: fm-pulse 1.6s infinite;"></span>
+                    <span class="w-2 h-2 rounded-full fm-live-pip" style="background: var(--color-primary);"></span>
                     Konsol Kontrol Pusat
                 </span>
-                <h1 class="f-display text-2xl uppercase tracking-tight sm:text-3xl" style="color: var(--color-text-main);">Ringkasan Eksekutif Arena</h1>
+                <h2 class="f-display text-2xl uppercase tracking-wide sm:text-3xl" style="color: var(--color-text-main);">
+                    Ringkasan Eksekutif Arena
+                </h2>
                 <p class="text-xs font-medium max-w-2xl leading-relaxed" style="color: var(--color-text-muted);">
-                    Pantau grafik utilisasi lapangan, transaksi finansial, dan manajemen kasta loyalitas member dalam satu ruang kontrol pusat.
+                    Pantau statistik utilisasi lapangan, pendapatan riil terverifikasi, dan manajemen kasta member secara terintegrasi.
                 </p>
             </div>
 
-            <div class="flex flex-wrap lg:flex-nowrap gap-2 p-2 rounded-xl w-full lg:w-auto" style="background: var(--color-bg-main); border: 1px solid var(--line);">
-                <a href="{{ route('admin.reservasi.index') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-2.5 font-semibold text-[10px] rounded-lg uppercase tracking-wider">Log Reservasi</a>
-                <a href="{{ route('admin.lapangan.index') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-2.5 font-semibold text-[10px] rounded-lg uppercase tracking-wider">Kelola Arena</a>
-                <a href="{{ route('admin.member.index') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-2.5 font-semibold text-[10px] rounded-lg uppercase tracking-wider">Data Member</a>
+            <!-- QUICK NAVIGATION CHIPS -->
+            <div class="flex flex-wrap lg:flex-nowrap gap-2 p-2 rounded-xl w-full lg:w-auto" 
+                 style="background: var(--color-bg-main); border: 1px solid var(--line);">
+                <a href="{{ route('admin.reservasi.index') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-2.5 font-bold text-[10px] rounded-lg uppercase tracking-wider">
+                    📋 Log Reservasi
+                </a>
+                <a href="{{ route('admin.lapangan.index') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-2.5 font-bold text-[10px] rounded-lg uppercase tracking-wider">
+                    🏟️ Kelola Arena
+                </a>
+                <a href="{{ route('admin.member.index') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-2.5 font-bold text-[10px] rounded-lg uppercase tracking-wider">
+                    👥 Data Member
+                </a>
                 @if(Route::has('admin.staff.scan'))
-                    <a href="{{ route('admin.staff.scan') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-2.5 font-semibold text-[10px] rounded-lg uppercase tracking-wider">📷 Gate Scanner</a>
+                    <a href="{{ route('admin.staff.scan') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-2.5 font-bold text-[10px] rounded-lg uppercase tracking-wider">
+                        📷 QR Gate
+                    </a>
                 @endif
                 @if(auth()->user()->is_admin == 1 && Route::has('admin.role.index'))
-                    <a href="{{ route('admin.role.index') }}" class="flex-1 lg:flex-none text-center px-4 py-2.5 font-semibold text-[10px] rounded-lg uppercase tracking-wider transition"
-                       style="background: rgba(245,197,24,0.1); border: 1px solid rgba(245,197,24,0.35); color: var(--color-secondary);"
-                       onmouseover="this.style.background='var(--color-secondary)'; this.style.color='var(--color-bg-main)'"
-                       onmouseout="this.style.background='rgba(245,197,24,0.1)'; this.style.color='var(--color-secondary)'">
-                        Manajemen Akses
+                    <a href="{{ route('admin.role.index') }}" 
+                       class="flex-1 lg:flex-none text-center px-4 py-2.5 font-bold text-[10px] rounded-lg uppercase tracking-wider transition-all"
+                       style="background: rgba(245,197,24,0.12); border: 1px solid rgba(245,197,24,0.3); color: var(--color-secondary);"
+                       onmouseover="this.style.background='var(--color-secondary)'; this.style.color='#0d131a'"
+                       onmouseout="this.style.background='rgba(245,197,24,0.12)'; this.style.color='var(--color-secondary)'">
+                       🛡️ Akses Admin
                     </a>
                 @endif
             </div>
         </div>
     </div>
 
-    <!-- METRICS -->
+    <!-- METRICS CARDS GRID -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div class="fm-metric p-6 rounded-xl shadow-xl flex items-center justify-between" style="background: var(--color-bg-card); border: 1px solid var(--line);">
-            <div class="space-y-1.5">
-                <p class="f-mono text-[10px] font-semibold uppercase tracking-widest" style="color: var(--color-text-meta);">Akumulasi Omset Lunas</p>
-                <p class="f-mono text-2xl font-bold tracking-tight" style="color: var(--success);">Rp {{ number_format($totalPendapatan, 0, ',', '.') }}</p>
-                <span class="inline-flex text-[9px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded" style="background: var(--success-bg); color: var(--success); border: 1px solid rgba(34,197,94,0.25);">⚡ Terverifikasi System</span>
+        <!-- METRIC 1: PENDAPATAN -->
+        <div class="fm-metric-card p-6 rounded-2xl shadow-xl flex items-center justify-between">
+            <div class="space-y-2">
+                <p class="f-mono text-[10px] font-bold uppercase tracking-widest" style="color: var(--color-text-meta);">
+                    Total Omset Lunas
+                </p>
+                <p class="f-mono text-2xl font-bold tracking-tight" style="color: var(--success);">
+                    Rp {{ number_format($totalPendapatan, 0, ',', '.') }}
+                </p>
+                <span class="inline-flex text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md" 
+                      style="background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border);">
+                    ⚡ Terkonfirmasi System
+                </span>
             </div>
-            <div class="p-4 rounded-xl text-xl" style="background: var(--color-bg-main); border: 1px solid var(--line);">🪙</div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-inner" 
+                 style="background: var(--color-bg-main); border: 1px solid var(--line);">
+                🪙
+            </div>
         </div>
 
-        <div class="fm-metric p-6 rounded-xl shadow-xl flex items-center justify-between" style="background: var(--color-bg-card); border: 1px solid var(--line);">
-            <div class="space-y-1.5">
-                <p class="f-mono text-[10px] font-semibold uppercase tracking-widest" style="color: var(--color-text-meta);">Slot Jadwal Aktif</p>
-                <p class="f-mono text-2xl font-bold tracking-tight" style="color: var(--info);">{{ $matchTerkonfirmasi }} <span class="text-xs font-semibold uppercase" style="color: var(--color-text-meta);">Jadwal</span></p>
-                <span class="inline-flex text-[9px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded" style="background: var(--info-bg); color: var(--info); border: 1px solid rgba(59,130,246,0.25);">📅 Status Confirmed</span>
+        <!-- METRIC 2: JADWAL AKTIF -->
+        <div class="fm-metric-card p-6 rounded-2xl shadow-xl flex items-center justify-between">
+            <div class="space-y-2">
+                <p class="f-mono text-[10px] font-bold uppercase tracking-widest" style="color: var(--color-text-meta);">
+                    Slot Match Confirmed
+                </p>
+                <p class="f-mono text-2xl font-bold tracking-tight" style="color: var(--info);">
+                    {{ $matchTerkonfirmasi }} <span class="text-xs font-semibold uppercase" style="color: var(--color-text-meta);">Jadwal</span>
+                </p>
+                <span class="inline-flex text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md" 
+                      style="background: var(--info-bg); color: var(--info); border: 1px solid var(--info-border);">
+                    📅 Siap Bertanding
+                </span>
             </div>
-            <div class="p-4 rounded-xl text-xl" style="background: var(--color-bg-main); border: 1px solid var(--line);">🎮</div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-inner" 
+                 style="background: var(--color-bg-main); border: 1px solid var(--line);">
+                ⚽
+            </div>
         </div>
 
-        <div class="fm-metric p-6 rounded-xl shadow-xl flex items-center justify-between" style="background: var(--color-bg-card); border: 1px solid var(--line);">
-            <div class="space-y-1.5">
-                <p class="f-mono text-[10px] font-semibold uppercase tracking-widest" style="color: var(--color-text-meta);">Database Pelanggan</p>
-                <p class="f-mono text-2xl font-bold tracking-tight" style="color: var(--color-text-main);">{{ $totalMember }} <span class="text-xs font-semibold uppercase" style="color: var(--color-text-meta);">Akun</span></p>
-                <span class="inline-flex text-[9px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded" style="background: rgba(226,96,31,0.1); color: var(--color-primary); border: 1px solid rgba(226,96,31,0.25);">🏆 Member Berkasta</span>
+        <!-- METRIC 3: MEMBER -->
+        <div class="fm-metric-card p-6 rounded-2xl shadow-xl flex items-center justify-between">
+            <div class="space-y-2">
+                <p class="f-mono text-[10px] font-bold uppercase tracking-widest" style="color: var(--color-text-meta);">
+                    Total Pelanggan Aktif
+                </p>
+                <p class="f-mono text-2xl font-bold tracking-tight" style="color: var(--color-text-main);">
+                    {{ $totalMember }} <span class="text-xs font-semibold uppercase" style="color: var(--color-text-meta);">Akun</span>
+                </p>
+                <span class="inline-flex text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md" 
+                      style="background: rgba(226,96,31,0.12); color: var(--color-primary); border: 1px solid rgba(226,96,31,0.25);">
+                    🏆 Member Tier Loyalty
+                </span>
             </div>
-            <div class="p-4 rounded-xl text-xl" style="background: var(--color-bg-main); border: 1px solid var(--line);">👥</div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-inner" 
+                 style="background: var(--color-bg-main); border: 1px solid var(--line);">
+                👥
+            </div>
         </div>
     </div>
 
-    <!-- CHART & QUICK ACTIONS -->
+    <!-- CHART & QUICK ACTIONS SECTION -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div class="lg:col-span-8 rounded-2xl p-6 shadow-2xl flex flex-col justify-between" style="background: var(--color-bg-card); border: 1px solid var(--line);">
+        <!-- PERFORMANCE CHART -->
+        <div class="lg:col-span-8 rounded-2xl p-6 shadow-2xl flex flex-col justify-between fm-card">
             <div class="flex items-center justify-between border-b pb-4 mb-4" style="border-color: var(--line);">
                 <div>
-                    <h3 class="f-display text-xs uppercase tracking-wider" style="color: var(--color-text-main);">Utilisasi Lapangan — 7 Hari Terakhir</h3>
-                    <p class="text-[10px] font-semibold mt-0.5 uppercase tracking-wide" style="color: var(--color-text-meta);">Total jam booking Confirmed/Completed per hari</p>
+                    <h3 class="f-display text-sm uppercase tracking-wider" style="color: var(--color-text-main);">
+                        Utilisasi Lapangan — 7 Hari Terakhir
+                    </h3>
+                    <p class="text-[10px] font-medium mt-0.5 uppercase tracking-wide" style="color: var(--color-text-meta);">
+                        Akumulasi durasi booking (Jam) status Confirmed & Completed
+                    </p>
                 </div>
-                <div class="w-2.5 h-2.5 rounded-full fm-live-pip" style="background: var(--success); animation: fm-pulse 1.6s infinite;"></div>
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full fm-live-pip" style="background: var(--success);"></span>
+                    <span class="f-mono text-[9px] font-bold uppercase tracking-wider" style="color: var(--success);">Live Analytics</span>
+                </div>
             </div>
-            <div class="relative w-full h-64 flex items-center justify-center rounded-xl p-4" style="background: var(--color-bg-main); border: 1px solid var(--line);">
+
+            <div class="relative w-full h-72 rounded-xl p-4 flex items-center justify-center" 
+                 style="background: var(--color-bg-main); border: 1px solid var(--line);">
                 <canvas id="dashboardPerformanceChart" class="w-full h-full"></canvas>
             </div>
         </div>
 
-        <div class="lg:col-span-4 rounded-2xl p-6 shadow-2xl flex flex-col justify-between space-y-4" style="background: var(--color-bg-card); border: 1px solid var(--line);">
+        <!-- QUICK OPERATIONAL ACTIONS -->
+        <div class="lg:col-span-4 rounded-2xl p-6 shadow-2xl flex flex-col justify-between space-y-4 fm-card">
             <div class="border-b pb-4" style="border-color: var(--line);">
-                <h3 class="f-display text-xs uppercase tracking-wider" style="color: var(--color-text-main);">Aksi Cepat Gerbang</h3>
-                <p class="text-[10px] font-semibold mt-0.5 uppercase tracking-wide" style="color: var(--color-text-meta);">Pintas penanganan operasional</p>
+                <h3 class="f-display text-sm uppercase tracking-wider" style="color: var(--color-text-main);">
+                    Aksi Cepat Gerbang
+                </h3>
+                <p class="text-[10px] font-medium mt-0.5 uppercase tracking-wide" style="color: var(--color-text-meta);">
+                    Pintas penanganan operasional harian
+                </p>
             </div>
 
-            <div class="flex-1 grid grid-cols-1 gap-2.5">
-                <a href="{{ route('admin.reservasi.index', ['status' => 'Waiting Payment']) }}" class="fm-quick-link flex items-center justify-between p-3.5 rounded-xl transition group">
+            <div class="flex-1 space-y-2.5">
+                <a href="{{ route('admin.reservasi.index', ['status' => 'Waiting Payment']) }}" 
+                   class="fm-quick-link flex items-center justify-between p-3.5 rounded-xl group">
                     <span class="text-xs font-semibold" style="color: var(--color-text-muted);">⏳ Tinjau Nota Pending</span>
-                    <span class="f-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase" style="background: var(--pending-bg); color: var(--pending); border: 1px solid rgba(245,158,11,0.25);">Cek</span>
+                    <span class="f-mono text-[9px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider" 
+                          style="background: var(--pending-bg); color: var(--pending); border: 1px solid var(--pending-border);">
+                        Periksa
+                    </span>
                 </a>
 
-                <a href="{{ route('admin.reservasi.exportExcel') }}" class="fm-quick-link flex items-center justify-between p-3.5 rounded-xl transition group">
-                    <span class="text-xs font-semibold" style="color: var(--color-text-muted);">📊 Unduh Laporan Excel</span>
-                    <span class="f-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase" style="background: var(--success-bg); color: var(--success); border: 1px solid rgba(34,197,94,0.25);">Unduh</span>
+                <a href="{{ route('admin.reservasi.exportExcel') }}" 
+                   class="fm-quick-link flex items-center justify-between p-3.5 rounded-xl group">
+                    <span class="text-xs font-semibold" style="color: var(--color-text-muted);">📊 Export Laporan (Excel)</span>
+                    <span class="f-mono text-[9px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider" 
+                          style="background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border);">
+                        Unduh
+                    </span>
                 </a>
 
                 @if(Route::has('admin.staff.scan'))
-                    <a href="{{ route('admin.staff.scan') }}" class="fm-quick-link flex items-center justify-between p-3.5 rounded-xl transition group">
-                        <span class="text-xs font-semibold" style="color: var(--color-text-muted);">📷 Buka Konsol Scanner QR</span>
-                        <span class="f-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase" style="background: var(--info-bg); color: var(--info); border: 1px solid rgba(59,130,246,0.25);">Terminal</span>
+                    <a href="{{ route('admin.staff.scan') }}" 
+                       class="fm-quick-link flex items-center justify-between p-3.5 rounded-xl group">
+                        <span class="text-xs font-semibold" style="color: var(--color-text-muted);">📷 Scanner QR Gate Check-in</span>
+                        <span class="f-mono text-[9px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider" 
+                              style="background: var(--info-bg); color: var(--info); border: 1px solid var(--info-border);">
+                            Terminal
+                        </span>
                     </a>
                 @endif
             </div>
 
-            <div class="p-3 rounded-lg text-[9px] font-bold text-center uppercase tracking-wider f-mono" style="background: var(--color-bg-main); border: 1px solid var(--line); color: var(--color-text-meta);">
-                🔒 Keamanan Enkripsi Data SSL Aktif
+            <div class="p-3 rounded-xl text-[9px] font-bold text-center uppercase tracking-widest f-mono" 
+                 style="background: var(--color-bg-main); border: 1px solid var(--line); color: var(--color-text-meta);">
+                🔒 System Encrypted & Synchronized
             </div>
         </div>
     </div>
 
-    <!-- RECENT TRANSACTIONS -->
-    <div class="rounded-2xl shadow-2xl overflow-hidden" style="background: var(--color-bg-card); border: 1px solid var(--line);">
-        <div class="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" style="background: var(--color-bg-main); border-bottom: 1px solid var(--line);">
+    <!-- RECENT TRANSACTIONS TABLE -->
+    <div class="rounded-2xl shadow-2xl overflow-hidden fm-card">
+        <div class="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" 
+             style="background: var(--color-bg-main); border-bottom: 1px solid var(--line);">
             <div>
-                <h2 class="f-display text-xs uppercase tracking-wider flex items-center gap-1.5" style="color: var(--color-text-main);">
-                    <span class="w-2 h-2 rounded-full fm-live-pip" style="background: var(--color-primary); animation: fm-pulse 1.6s infinite;"></span> Aliran Data Transaksi Terakhir
-                </h2>
-                <p class="text-[10px] font-semibold mt-0.5 uppercase tracking-wide" style="color: var(--color-text-meta);">Log pemantauan entri data booking terbaru</p>
+                <h3 class="f-display text-sm uppercase tracking-wider flex items-center gap-2" style="color: var(--color-text-main);">
+                    <span class="w-2 h-2 rounded-full fm-live-pip" style="background: var(--color-primary);"></span> 
+                    Log Transaksi Terbaru
+                </h3>
+                <p class="text-[10px] font-medium mt-0.5 uppercase tracking-wide" style="color: var(--color-text-meta);">
+                    Pantau entri reservasi dan riwayat pembayaran pelanggan secara aktual
+                </p>
             </div>
             
             <div class="flex items-center gap-3">
-                <!-- Search Box Cepat -->
                 <form method="GET" action="{{ route('admin.reservasi.index') }}" class="relative">
-                    <input type="text" name="search" placeholder="Cari Kode / Nama..." 
-                           class="f-mono text-[10px] px-3 py-1.5 rounded-lg bg-[#0a0f14] border text-white placeholder-gray-500 focus:outline-none focus:border-[#e2601f]"
-                           style="border-color: var(--line);">
+                    <input type="text" name="search" placeholder="Cari Kode / Member..." 
+                           class="f-mono text-[11px] px-3.5 py-1.5 rounded-xl bg-[#0a0f14] border text-white placeholder-slate-500 focus:outline-none transition-all"
+                           style="border-color: var(--line);"
+                           onfocus="this.style.borderColor='var(--color-primary)'" 
+                           onblur="this.style.borderColor='var(--line)'">
                 </form>
-                <span class="hidden sm:inline-block f-mono text-[9px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider" style="background: var(--color-bg-card); color: var(--color-text-muted); border: 1px solid var(--line);">Live Stream Ready</span>
             </div>
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse whitespace-nowrap">
                 <thead>
-                    <tr class="text-[10px] font-semibold uppercase tracking-wider" style="border-bottom: 1px solid var(--line); color: var(--color-text-meta); background: var(--color-bg-main);">
+                    <tr class="text-[10px] font-bold uppercase tracking-wider" 
+                        style="border-bottom: 1px solid var(--line); color: var(--color-text-meta); background: rgba(0, 0, 0, 0.2);">
                         <th class="p-5">Detail Arena</th>
-                        <th class="p-5">Nomor Order</th>
-                        <th class="p-5">Identitas Pelanggan</th>
-                        <th class="p-5">Waktu Slot</th>
-                        <th class="p-5">Total Bayar</th>
-                        <th class="p-5">Status</th>
-                        <th class="p-5 text-center">Aksi</th>
+                        <th class="p-5">Kode Order</th>
+                        <th class="p-5">Pelanggan & Tier</th>
+                        <th class="p-5">Jadwal Main</th>
+                        <th class="p-5">Total Harga</th>
+                        <th class="p-5">Status Order</th>
+                        <th class="p-5 text-center">Tindakan</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y text-xs font-medium" style="border-color: var(--line); color: var(--color-text-muted);">
                     @forelse($reservasis as $reservasi)
-                    <tr class="fm-row">
+                    <tr class="fm-table-row">
+                        {{-- Lapangan --}}
                         <td class="p-5">
-                            <div class="font-bold text-sm uppercase tracking-tight" style="color: var(--color-text-main);">{{ $reservasi->lapangan->nama_lapangan ?? 'N/A' }}</div>
-                            <div class="f-mono text-[10px] font-semibold uppercase tracking-wider mt-0.5" style="color: var(--color-text-meta);">Rumput {{ $reservasi->lapangan->jenis_rumput ?? 'Sintetis' }}</div>
+                            <div class="font-bold text-sm uppercase tracking-tight" style="color: var(--color-text-main);">
+                                {{ $reservasi->lapangan->nama_lapangan ?? 'Lapangan N/A' }}
+                            </div>
+                            <div class="f-mono text-[10px] font-semibold uppercase tracking-wider mt-0.5" style="color: var(--color-text-meta);">
+                                🏟️ {{ $reservasi->lapangan->jenis_rumput ?? 'Sintetis Standard' }}
+                            </div>
                         </td>
 
-                        <td class="p-5 f-mono uppercase tracking-wider" style="color: var(--color-text-muted);">{{ $reservasi->nomor_reservasi ?? '#' . $reservasi->id }}</td>
+                        {{-- Order ID --}}
+                        <td class="p-5 f-mono font-bold uppercase tracking-wider" style="color: var(--color-text-main);">
+                            {{ $reservasi->nomor_reservasi ?? '#' . $reservasi->id }}
+                        </td>
 
+                        {{-- Customer --}}
                         <td class="p-5">
-                            <div class="text-sm font-semibold tracking-tight" style="color: var(--color-text-main);">{{ $reservasi->user->name ?? 'Guest User' }}</div>
+                            <div class="text-sm font-semibold tracking-tight" style="color: var(--color-text-main);">
+                                {{ $reservasi->user->name ?? 'Guest User' }}
+                            </div>
                             @if($reservasi->user && $reservasi->user->membership)
                                 @php $tier = strtoupper($reservasi->user->membership->membership_type); @endphp
                                 @if($tier === 'GOLD')
-                                    <span class="inline-block mt-1 f-mono text-[8px] font-bold tracking-widest px-2 py-0.5 rounded uppercase" style="background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3);">🏆 Gold</span>
+                                    <span class="inline-block mt-1 f-mono text-[8px] font-bold tracking-widest px-2 py-0.5 rounded uppercase" 
+                                          style="background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3);">
+                                        🏆 Gold Member
+                                    </span>
                                 @elseif($tier === 'SILVER')
-                                    <span class="inline-block mt-1 f-mono text-[8px] font-bold tracking-widest px-2 py-0.5 rounded uppercase" style="background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3);">🥈 Silver</span>
+                                    <span class="inline-block mt-1 f-mono text-[8px] font-bold tracking-widest px-2 py-0.5 rounded uppercase" 
+                                          style="background: rgba(148,163,184,0.15); color: #cbd5e1; border: 1px solid rgba(148,163,184,0.3);">
+                                        🥈 Silver Member
+                                    </span>
                                 @else
-                                    <span class="inline-block mt-1 f-mono text-[8px] font-bold tracking-widest px-2 py-0.5 rounded uppercase" style="background: rgba(180,83,9,0.15); color: #b45309; border: 1px solid rgba(180,83,9,0.3);">🥉 Bronze</span>
+                                    <span class="inline-block mt-1 f-mono text-[8px] font-bold tracking-widest px-2 py-0.5 rounded uppercase" 
+                                          style="background: rgba(180,83,9,0.15); color: #d97706; border: 1px solid rgba(180,83,9,0.3);">
+                                        🥉 Bronze Member
+                                    </span>
                                 @endif
                             @else
-                                <span class="inline-block mt-1 f-mono text-[8px] font-semibold tracking-widest px-2 py-0.5 rounded uppercase" style="background: var(--color-bg-main); color: var(--color-text-meta); border: 1px solid var(--line);">Non-Member</span>
+                                <span class="inline-block mt-1 f-mono text-[8px] font-semibold tracking-widest px-2 py-0.5 rounded uppercase" 
+                                      style="background: var(--color-bg-main); color: var(--color-text-meta); border: 1px solid var(--line);">
+                                    Non-Member
+                                </span>
                             @endif
                         </td>
 
+                        {{-- Waktu Slot --}}
                         <td class="p-5">
-                            <div style="color: var(--color-text-main);">{{ \Carbon\Carbon::parse($reservasi->tanggal_main)->translatedFormat('d M Y') }}</div>
-                            <div class="f-mono text-[10px] mt-0.5 uppercase tracking-wide" style="color: var(--info);">
+                            <div class="font-medium" style="color: var(--color-text-main);">
+                                {{ $reservasi->tanggal_main ? \Carbon\Carbon::parse($reservasi->tanggal_main)->translatedFormat('d M Y') : '-' }}
+                            </div>
+                            <div class="f-mono text-[10px] font-semibold mt-0.5 uppercase tracking-wide" style="color: var(--info);">
                                 ⏱️ {{ substr($reservasi->jam_mulai ?? '00:00', 0, 5) }} - {{ substr($reservasi->jam_selesai ?? '00:00', 0, 5) }} WITA
                             </div>
                         </td>
 
-                        <td class="p-5 font-bold f-mono text-sm" style="color: var(--color-text-main);">Rp {{ number_format($reservasi->total_harga, 0, ',', '.') }}</td>
+                        {{-- Total Harga --}}
+                        <td class="p-5 font-bold f-mono text-sm" style="color: var(--color-text-main);">
+                            Rp {{ number_format($reservasi->total_harga, 0, ',', '.') }}
+                        </td>
 
+                        {{-- Status Badge --}}
                         <td class="p-5">
                             @if(in_array($reservasi->status, ['Confirmed', 'Completed']))
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-semibold uppercase tracking-wider" style="background: var(--success-bg); color: var(--success); border: 1px solid rgba(34,197,94,0.25);">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider" 
+                                      style="background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border);">
                                     <span class="w-1.5 h-1.5 rounded-full" style="background: var(--success);"></span> {{ $reservasi->status }}
                                 </span>
                             @elseif($reservasi->status === 'Cancelled')
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-semibold uppercase tracking-wider" style="background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(239,68,68,0.25);">
-                                    <span class="w-1.5 h-1.5 rounded-full" style="background: var(--danger);"></span> Cancelled
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider" 
+                                      style="background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border);">
+                                    <span class="w-1.5 h-1.5 rounded-full" style="background: var(--danger);"></span> Batal
                                 </span>
                             @else
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-semibold uppercase tracking-wider" style="background: var(--pending-bg); color: var(--pending); border: 1px solid rgba(245,158,11,0.25);">
-                                    <span class="w-1.5 h-1.5 rounded-full fm-live-pip" style="background: var(--pending); animation: fm-pulse 1.6s infinite;"></span> {{ $reservasi->status ?? 'Pending' }}
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider" 
+                                      style="background: var(--pending-bg); color: var(--pending); border: 1px solid var(--pending-border);">
+                                    <span class="w-1.5 h-1.5 rounded-full fm-live-pip" style="background: var(--pending);"></span> {{ $reservasi->status ?? 'Pending' }}
                                 </span>
                             @endif
                         </td>
 
+                        {{-- Action Button --}}
                         <td class="p-5 text-center">
                             <a href="{{ route('admin.reservasi.index', ['status' => $reservasi->status]) }}"
-                               class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition f-mono"
+                               class="inline-flex items-center justify-center px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all f-mono"
                                style="background: var(--color-bg-main); border: 1px solid var(--line); color: var(--color-text-muted);"
-                               onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--color-text-muted)'">
-                                Periksa
+                               onmouseover="this.style.color='#fff'; this.style.borderColor='var(--color-primary)'" 
+                               onmouseout="this.style.color='var(--color-text-muted)'; this.style.borderColor='var(--line)'">
+                                Detail
                             </a>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="p-12 text-center font-semibold uppercase tracking-wider text-xs" style="color: var(--color-text-meta);">
-                            ⚽ Belum ada entri log reservasi yang tercatat di sistem database.
+                        <td colspan="7" class="p-12 text-center font-bold uppercase tracking-wider text-xs" style="color: var(--color-text-meta);">
+                            ⚽ Belum ada log transaksi reservasi yang tercatat dalam sistem.
                         </td>
                     </tr>
                     @endforelse
@@ -305,21 +487,23 @@
             </table>
         </div>
 
+        {{-- Pagination --}}
         @if($reservasis->hasPages())
-            <div class="p-6 data-dark-pagination" style="background: var(--color-bg-main); border-top: 1px solid var(--line);">
+            <div class="p-5 border-t" style="background: var(--color-bg-main); border-color: var(--line);">
                 {{ $reservasis->links() }}
             </div>
         @endif
     </div>
 </div>
 
+<!-- CHART.JS INTEGRATION -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const canvas = document.getElementById('dashboardPerformanceChart');
         if (!canvas) return;
 
-        // Cegah re-initialization chart jika canvas sudah terpakai
+        // Reset instance jika sudah di-render sebelumnya
         const existingChart = Chart.getChart(canvas);
         if (existingChart) {
             existingChart.destroy();
@@ -329,24 +513,29 @@
         const labelUtilisasi = @json($labelUtilisasi ?? []);
         const dataUtilisasi = @json($dataUtilisasi ?? []);
 
+        // Gradient Fill untuk area grafik
+        const gradientFill = ctx.createLinearGradient(0, 0, 0, 300);
+        gradientFill.addColorStop(0, 'rgba(226, 96, 31, 0.28)');
+        gradientFill.addColorStop(1, 'rgba(226, 96, 31, 0.0)');
+
         new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labelUtilisasi,
                 datasets: [{
-                    label: 'Utilisasi Lapangan (Jam)',
+                    label: 'Utilisasi Arena (Jam)',
                     data: dataUtilisasi,
                     borderColor: '#e2601f',
-                    backgroundColor: 'rgba(226, 96, 31, 0.08)',
-                    borderWidth: 2,
+                    backgroundColor: gradientFill,
+                    borderWidth: 2.5,
                     fill: true,
-                    tension: 0.35,
+                    tension: 0.38,
                     pointBackgroundColor: '#ffffff',
                     pointBorderColor: '#e2601f',
                     pointHoverBackgroundColor: '#e2601f',
                     pointHoverBorderColor: '#ffffff',
                     pointRadius: 4,
-                    pointHoverRadius: 6
+                    pointHoverRadius: 7
                 }]
             },
             options: {
@@ -355,16 +544,19 @@
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: '#0a0f14',
+                        backgroundColor: '#0d131a',
                         titleColor: '#ffffff',
                         bodyColor: '#e2601f',
-                        borderColor: 'rgba(238, 241, 234, 0.14)',
+                        borderColor: 'rgba(255, 255, 255, 0.15)',
                         borderWidth: 1,
-                        padding: 10,
+                        padding: 12,
+                        cornerRadius: 10,
                         displayColors: false,
+                        bodyFont: { family: 'JetBrains Mono', weight: 'bold', size: 12 },
+                        titleFont: { family: 'Work Sans', weight: 'bold', size: 11 },
                         callbacks: {
                             label: function(context) {
-                                return `Utilisasi: ${context.parsed.y} Jam`;
+                                return `Utilisasi: ${context.parsed.y} Jam Booking`;
                             }
                         }
                     }
@@ -372,12 +564,19 @@
                 scales: {
                     x: {
                         grid: { color: 'rgba(255, 255, 255, 0.03)' },
-                        ticks: { color: '#5c6979', font: { size: 9, weight: 'bold', family: 'JetBrains Mono' } }
+                        ticks: { 
+                            color: '#64748b', 
+                            font: { size: 10, weight: '600', family: 'JetBrains Mono' } 
+                        }
                     },
                     y: {
                         beginAtZero: true,
                         grid: { color: 'rgba(255, 255, 255, 0.03)' },
-                        ticks: { color: '#5c6979', font: { size: 9, weight: 'bold', family: 'JetBrains Mono' }, precision: 0 }
+                        ticks: { 
+                            color: '#64748b', 
+                            font: { size: 10, weight: '600', family: 'JetBrains Mono' }, 
+                            precision: 0 
+                        }
                     }
                 }
             }

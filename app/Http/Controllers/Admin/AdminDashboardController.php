@@ -116,6 +116,52 @@ class AdminDashboardController extends Controller
 
     /**
      * ==========================================
+     * 🔑 MODUL 1.5: KELOLA HAK AKSES / ROLE
+     * ==========================================
+     */
+    public function role(Request $request)
+    {
+        $query = User::query();
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $query->orderBy('is_admin', 'desc')
+                       ->orderBy('name', 'asc')
+                       ->paginate(10)
+                       ->withQueryString();
+
+        return view('admin.role.index', compact('users'));
+    }
+
+    public function updateRole(Request $request, $id)
+    {
+        $request->validate([
+            'is_admin' => 'required|in:0,1',
+        ], [
+            'is_admin.required' => 'Status hak akses wajib dipilih.',
+            'is_admin.in'       => 'Pilihan hak akses tidak valid.',
+        ]);
+
+        $user = User::findOrFail($id);
+
+        if ($user->id === Auth::id()) {
+            return back()->with('error', 'Anda tidak dapat mengubah status role akun Anda sendiri.');
+        }
+
+        $user->update(['is_admin' => $request->is_admin]);
+
+        $statusRole = $user->is_admin == 1 ? 'Administrator' : 'Pengguna Biasa';
+        return back()->with('success', "Akses untuk \"{$user->name}\" berhasil diperbarui menjadi {$statusRole}.");
+    }
+
+    /**
+     * ==========================================
      * 📅 MODUL 2: LOG & PENGELOLAAN RESERVASI
      * ==========================================
      */
@@ -306,6 +352,7 @@ class AdminDashboardController extends Controller
         }
 
         $members = $query->orderByRaw('COALESCE(total_points, 0) DESC')
+            ->latest('users.created_at')
             ->paginate(10)
             ->withQueryString();
 
