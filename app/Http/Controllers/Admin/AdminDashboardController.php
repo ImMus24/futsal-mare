@@ -26,6 +26,7 @@ class AdminDashboardController extends Controller
      */
     public function showLoginForm()
     {
+        // Jika sudah login dan memiliki status admin, langsung bypass ke dashboard
         if (Auth::check() && Auth::user()->is_admin) { 
             return redirect()->route('admin.dashboard');
         }
@@ -50,7 +51,7 @@ class AdminDashboardController extends Controller
                     ->with('success', 'Selamat Datang Kembali di Panel Kontrol Utama!');
             }
 
-            // Jika bukan admin, paksa logout
+            // Jika berhasil masuk tapi bukan admin, paksa keluar demi keamanan
             Auth::logout();
             return redirect()->back()
                 ->withErrors(['email' => 'Akses Ditolak. Akun Anda tidak memiliki otoritas Administrator.'])
@@ -79,7 +80,7 @@ class AdminDashboardController extends Controller
             ->latest()
             ->paginate(10);
 
-        // Grafik Utilisasi 7 Hari Terakhir
+        // Kalkulasi Grafik Utilisasi 7 Hari Terakhir
         $startDate = Carbon::now()->subDays(6)->startOfDay();
         $endDate = Carbon::now()->endOfDay();
 
@@ -152,7 +153,7 @@ class AdminDashboardController extends Controller
             ->latest()
             ->get();
 
-        $filename = "Laporan_Reservasi_Futsal_" . now()->format('Ymd_His') . ".xls";
+        $filename = "Laporan_Reservasi_Futsal_Mare_" . now()->format('Ymd_His') . ".xls";
 
         return response()
             ->view('admin.reservasi.excel', compact('reservasis'))
@@ -205,7 +206,7 @@ class AdminDashboardController extends Controller
         ], [
             'ids.required' => 'Pilih minimal satu data reservasi untuk dihapus.',
             'ids.array'    => 'Data yang dikirim tidak valid.',
-            'ids.*.exists' => 'Salah satu data yang dipilih tidak ditemukan.',
+            'ids.*.exists' => 'Salah satu data yang dipilih tidak ditemukan (mungkin sudah dihapus sebelumnya).',
         ]);
 
         try {
