@@ -3,90 +3,170 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Reservasi;
 use App\Models\Lapangan;
-use App\Models\User;
 use App\Models\Membership;
+use App\Models\Reservasi;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\{Auth, DB, Log};
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AdminDashboardController extends Controller
 {
     /**
-     * MODUL 0: AUTENTIKASI ADMIN
+     * ==========================================
+     * 🛡️ MODUL KHUSUS: AUTENTIKASI PORTAL ADMIN
+     * ==========================================
+     */
+
+    /**
+     * Menampilkan Form Login Khusus Portal Admin
      */
     public function showLoginForm()
     {
-        if (Auth::check() && Auth::user()->is_admin == 1) {
+        // Jika sudah login dan memiliki akses admin, langsung bypass ke dashboard
+        if (Auth::check() && Auth::user()->is_admin) { 
             return redirect()->route('admin.dashboard');
         }
-        return view('admin.login');
-    }
 
-    public function login(Request $request)
-    {
-        $credentials = $request->validate([
-            'email'    => ['required', 'email'],
-            'password' => ['required'],
-        ], [
-            'email.required'    => 'Email wajib diisi.',
-            'email.email'       => 'Format email tidak valid.',
-            'password.required' => 'Password wajib diisi.',
-        ]);
-
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
-            $request->session()->regenerate();
-            if (Auth::user()->is_admin == 1) {
-                return redirect()->route('admin.dashboard')->with('success', 'Selamat datang Admin!');
-            }
-            Auth::logout();
-            return back()->with('error', 'Anda tidak memiliki akses sebagai admin.');
-        }
-        return back()->with('error', 'Email atau password salah.');
+        return view('admin.auth.login');
     }
 
     /**
-     * MODUL 1: DASHBOARD OVERVIEW
+     * Memproses Autentikasi Login Masuk Admin
+     */
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'email'    => 'required|email',
+            'password' => 'required|string',
+        ]);
+
+        // Mencoba mencocokkan kredensial dengan database
+        if (Auth::attempt($credentials, $request->remember)) {
+            // Validasi hak akses flag admin di tabel user
+            if (Auth::user()->is_admin) {
+                $request->session()->regenerate();
+                return redirect()->route('admin.dashboard')->with('success', 'Selamat Datang Kembali di Panel Kontrol Utama!');
+            }
+
+            // Jika berhasil masuk tapi bukan admin, paksa keluar sesi demi keamanan
+            Auth::logout();
+            return redirect()->back()->withErrors(['email' => 'Akses Ditolak. Akun Anda tidak memiliki otoritas Administrator.'])->withInput();
+        }
+
+        return redirect()->back()->withErrors(['email' => 'Kredensial atau kata sandi yang Anda masukkan salah.'])->withInput();
+    }
+
+    /**
+     * ==========================================
+     * 📊 MODUL 1: DASHBOARD OVERVIEW ADMIN
+     * ==========================================
      */
     public function index()
     {
+        // 1. Ringkasan Statistik
         $totalPendapatan = Reservasi::whereIn('status', ['Confirmed', 'Completed'])->sum('total_harga');
         $matchTerkonfirmasi = Reservasi::where('status', 'Confirmed')->count();
         $totalMember = User::has('membership')->count();
         $reservasis = Reservasi::with(['lapangan', 'user.membership'])->latest()->paginate(10);
 
-        return view('admin.dashboard', compact('totalPendapatan', 'matchTerkonfirmasi', 'totalMember', 'reservasis'));
+        // 2. Kalkulasi Grafik Utilisasi 7 Hari Terakhir
+        $startDate = Carbon::now()->subDays(6)->startOfDay();
+        $endDate = Carbon::now()->endOfDay();
+
+        $reservasi7Hari = Reservasi::whereBetween('tanggal_main', [$startDate->toDateString(), $endDate->toDateString()])
+            ->whereIn('status', ['Confirmed', 'Completed'])
+            ->get()
+            ->groupBy(function ($item) {
+                return Carbon::parse($item->tanggal_main)->format('Y-m-d');
+            });
+
+        $labelUtilisasi = [];
+        $dataUtilisasi = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i);
+            $dateString = $date->format('Y-m-d');
+
+            $labelUtilisasi[] = $date->translatedFormat('d M');
+
+            $totalJam = 0;
+            if (isset($reservasi7Hari[$dateString])) {
+                $totalJam = $reservasi7Hari[$dateString]->sum(function ($reservasi) {
+                    if (!empty($reservasi->jam_mulai) && !empty($reservasi->jam_selesai)) {
+                        $start = Carbon::parse($reservasi->jam_mulai);
+                        $end = Carbon::parse($reservasi->jam_selesai);
+                        return max(1, $start->diffInHours($end));
+                    }
+                    return 1;
+                });
+            }
+
+            $dataUtilisasi[] = (int) $totalJam;
+        }
+
+        // 3. Pass data ke view 'admin.dashboard'
+        return view('admin.dashboard', compact(
+            'totalPendapatan',
+            'matchTerkonfirmasi',
+            'totalMember',
+            'reservasis',
+            'labelUtilisasi',
+            'dataUtilisasi'
+        ));
     }
 
     /**
-     * MODUL 2: LOG RESERVASI
+     * ==========================================
+     * 📅 MODUL 2: LOG & PENGELOLAAN RESERVASI
+     * ==========================================
      */
     public function reservasi(Request $request)
     {
+        $status = $request->get('status');
+        
         $query = Reservasi::with(['lapangan', 'user']);
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+
+        if ($status && $status != '') {
+            $query->where('status', $status);
         }
+
         $reservasis = $query->latest()->paginate(15);
+
         return view('admin.reservasi.index', compact('reservasis'));
     }
 
+    /**
+     * Fitur Ekspor Excel Data Reservasi Dinamis
+     */
     public function exportExcel(Request $request)
     {
+        $status = $request->get('status');
+        
         $query = Reservasi::with(['lapangan', 'user']);
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+
+        if ($status && $status != '') {
+            $query->where('status', $status);
         }
+
         $reservasis = $query->latest()->get();
 
+        $filename = "Laporan_Reservasi_Futsal_Mare_" . date('Ymd_His') . ".xls";
+
         header("Content-Type: application/vnd.ms-excel; charset=utf-8");
-        header("Content-Disposition: attachment; filename=Laporan_Reservasi_" . date('Ymd_His') . ".xls");
+        header("Content-Disposition: attachment; filename=\"$filename\"");
         header("Pragma: no-cache");
         header("Expires: 0");
 
         return view('admin.reservasi.excel', compact('reservasis'));
     }
 
+    /**
+     * Mengubah Status Reservasi secara Manual
+     */
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
@@ -101,13 +181,15 @@ class AdminDashboardController extends Controller
             $reservasi->update(['status' => $request->status]);
 
             return back()->with('success', "Status reservasi #{$reservasi->id} berhasil diubah menjadi {$request->status}.");
-
         } catch (\Exception $e) {
             Log::error('Gagal update status reservasi ID ' . $id . ': ' . $e->getMessage());
             return back()->with('error', 'Terjadi kesalahan sistem saat mengubah status reservasi.');
         }
     }
 
+    /**
+     * Menghapus Single Data Reservasi
+     */
     public function deleteReservasi($id)
     {
         try {
@@ -116,7 +198,6 @@ class AdminDashboardController extends Controller
 
             return redirect()->route('admin.reservasi.index')
                 ->with('success', 'Data reservasi #' . $id . ' berhasil dihapus dari sistem.');
-
         } catch (\Exception $e) {
             Log::error('Gagal hapus reservasi ID ' . $id . ': ' . $e->getMessage());
             return redirect()->route('admin.reservasi.index')
@@ -124,6 +205,9 @@ class AdminDashboardController extends Controller
         }
     }
 
+    /**
+     * Hapus Reservasi secara Massal (Bulk Delete)
+     */
     public function deleteReservasiMassal(Request $request)
     {
         $request->validate([
@@ -132,16 +216,16 @@ class AdminDashboardController extends Controller
         ], [
             'ids.required' => 'Pilih minimal satu data reservasi untuk dihapus.',
             'ids.array'    => 'Data yang dikirim tidak valid.',
-            'ids.*.exists' => 'Salah satu data yang dipilih tidak ditemukan (mungkin sudah dihapus sebelumnya).',
+            'ids.*.exists' => 'Salah satu data yang dipilih tidak ditemukan.',
         ]);
 
         try {
-            $jumlah = Reservasi::whereIn('id', $request->ids)->count();
-            Reservasi::whereIn('id', $request->ids)->delete();
+            DB::transaction(function () use ($request) {
+                Reservasi::whereIn('id', $request->ids)->delete();
+            });
 
             return redirect()->route('admin.reservasi.index')
-                ->with('success', $jumlah . ' data reservasi terpilih berhasil dihapus dari sistem.');
-
+                ->with('success', count($request->ids) . ' data reservasi terpilih berhasil dihapus.');
         } catch (\Exception $e) {
             Log::error('Gagal hapus massal reservasi: ' . $e->getMessage());
             return redirect()->route('admin.reservasi.index')
@@ -150,7 +234,9 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * MODUL 3: KELOLA ARENA
+     * ==========================================
+     * 🌱 MODUL 3: KELOLA ARENA LAPANGAN
+     * ==========================================
      */
     public function lapangan()
     {
@@ -159,14 +245,18 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * MODUL 4: DATA MEMBER
+     * ==========================================
+     * 👥 MODUL 4: LOYALITAS & DATA MEMBER
+     * ==========================================
      */
-    public function member()
+    public function member(Request $request)
     {
-        $members = User::select('users.*', 'memberships.points as total_points')
+        $members = User::with('membership')
             ->leftJoin('memberships', 'users.id', '=', 'memberships.user_id')
-            ->orderByRaw('total_points IS NULL, total_points DESC')
+            ->select('users.*', 'memberships.points as total_points')
+            ->orderBy('total_points', 'desc')
             ->paginate(10);
+
         return view('admin.member.index', compact('members'));
     }
 
@@ -195,22 +285,19 @@ class AdminDashboardController extends Controller
             DB::transaction(function () use ($member, $request) {
                 $member->update(['name' => $request->name]);
 
-                $membership = Membership::firstOrCreate(
-                    ['user_id' => $member->id],
-                    ['membership_type' => 'Bronze', 'points' => 0]
-                );
-
                 $tierBaru = $request->points >= 300 ? 'Gold' : ($request->points >= 100 ? 'Silver' : 'Bronze');
 
-                $membership->update([
-                    'points'          => $request->points,
-                    'membership_type' => $tierBaru,
-                ]);
+                $member->membership()->updateOrCreate(
+                    ['user_id' => $member->id],
+                    [
+                        'points'          => $request->points,
+                        'membership_type' => $tierBaru,
+                    ]
+                );
             });
 
             return redirect()->route('admin.member.index')
                 ->with('success', "Data member \"{$member->name}\" berhasil diperbarui.");
-
         } catch (\Exception $e) {
             Log::error('Gagal update member ID ' . $id . ': ' . $e->getMessage());
             return back()->withInput()
@@ -238,52 +325,9 @@ class AdminDashboardController extends Controller
 
             return redirect()->route('admin.member.index')
                 ->with('success', "Member \"{$member->name}\" berhasil dihapus dari sistem.");
-
         } catch (\Exception $e) {
             Log::error('Gagal hapus member ID ' . $id . ': ' . $e->getMessage());
             return back()->with('error', 'Terjadi kesalahan sistem saat menghapus data member.');
-        }
-    }
-
-    /**
-     * MODUL 5: MANAJEMEN ROLE
-     */
-    public function role(Request $request)
-    {
-        $query = User::query();
-
-        if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
-        }
-
-        $users = $query->paginate(10);
-        return view('admin.role.index', compact('users'));
-    }
-
-    public function updateRole(Request $request, $id)
-    {
-        $request->validate([
-            'is_admin' => 'required|in:0,1',
-        ], [
-            'is_admin.required' => 'Status akses wajib dipilih.',
-            'is_admin.in'       => 'Status akses tidak valid.',
-        ]);
-
-        $user = User::findOrFail($id);
-
-        if ($user->id === Auth::id()) {
-            return back()->with('error', 'Anda tidak dapat mengubah status akses sendiri!');
-        }
-
-        try {
-            DB::transaction(function () use ($user, $request) {
-                $user->update(['is_admin' => $request->is_admin]);
-            });
-            return back()->with('success', "Status akses {$user->name} berhasil diperbarui.");
-        } catch (\Exception $e) {
-            Log::error('Gagal update role ID ' . $id . ': ' . $e->getMessage());
-            return back()->with('error', 'Terjadi kesalahan sistem saat mengubah status akses.');
         }
     }
 }

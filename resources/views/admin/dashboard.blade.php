@@ -68,8 +68,8 @@
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-lg flex items-center justify-center f-display text-lg shadow-lg" style="background: var(--color-primary); color: #fff; transform: rotate(-2deg);">M</div>
             <div>
-                <h2 class="f-display text-sm uppercase tracking-wide leading-tight" style="color: var(--color-text-main);">Futsal Mare HQ</h2>
-                <div class="f-mono text-[10px] font-semibold uppercase tracking-widest mt-0.5" style="color: var(--color-text-meta);">Workspace Pemrograman Web</div>
+                <h2 class="f-display text-base uppercase tracking-wide leading-tight" style="color: var(--color-text-main);">Futsal Mare HQ</h2>
+                <div class="eyebrow mt-1">Workspace Operasional</div>
             </div>
         </div>
 
@@ -109,8 +109,10 @@
                 <a href="{{ route('admin.reservasi.index') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-2.5 font-semibold text-[10px] rounded-lg uppercase tracking-wider">Log Reservasi</a>
                 <a href="{{ route('admin.lapangan.index') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-2.5 font-semibold text-[10px] rounded-lg uppercase tracking-wider">Kelola Arena</a>
                 <a href="{{ route('admin.member.index') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-2.5 font-semibold text-[10px] rounded-lg uppercase tracking-wider">Data Member</a>
-                <a href="{{ route('admin.staff.scan') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-2.5 font-semibold text-[10px] rounded-lg uppercase tracking-wider">📷 Gate Scanner</a>
-                @if(auth()->user()->is_admin == 1)
+                @if(Route::has('admin.staff.scan'))
+                    <a href="{{ route('admin.staff.scan') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-2.5 font-semibold text-[10px] rounded-lg uppercase tracking-wider">📷 Gate Scanner</a>
+                @endif
+                @if(auth()->user()->is_admin == 1 && Route::has('admin.role.index'))
                     <a href="{{ route('admin.role.index') }}" class="flex-1 lg:flex-none text-center px-4 py-2.5 font-semibold text-[10px] rounded-lg uppercase tracking-wider transition"
                        style="background: rgba(245,197,24,0.1); border: 1px solid rgba(245,197,24,0.35); color: var(--color-secondary);"
                        onmouseover="this.style.background='var(--color-secondary)'; this.style.color='var(--color-bg-main)'"
@@ -128,7 +130,7 @@
             <div class="space-y-1.5">
                 <p class="f-mono text-[10px] font-semibold uppercase tracking-widest" style="color: var(--color-text-meta);">Akumulasi Omset Lunas</p>
                 <p class="f-mono text-2xl font-bold tracking-tight" style="color: var(--success);">Rp {{ number_format($totalPendapatan, 0, ',', '.') }}</p>
-                <span class="inline-flex text-[9px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded" style="background: var(--success-bg); color: var(--success); border: 1px solid rgba(34,197,94,0.25);">⚡ Terverifikasi Midtrans</span>
+                <span class="inline-flex text-[9px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded" style="background: var(--success-bg); color: var(--success); border: 1px solid rgba(34,197,94,0.25);">⚡ Terverifikasi System</span>
             </div>
             <div class="p-4 rounded-xl text-xl" style="background: var(--color-bg-main); border: 1px solid var(--line);">🪙</div>
         </div>
@@ -157,8 +159,8 @@
         <div class="lg:col-span-8 rounded-2xl p-6 shadow-2xl flex flex-col justify-between" style="background: var(--color-bg-card); border: 1px solid var(--line);">
             <div class="flex items-center justify-between border-b pb-4 mb-4" style="border-color: var(--line);">
                 <div>
-                    <h3 class="f-display text-xs uppercase tracking-wider" style="color: var(--color-text-main);">Utilisasi Lapangan — 7 Hari Terakhir</h3>
-                    <p class="text-[10px] font-semibold mt-0.5 uppercase tracking-wide" style="color: var(--color-text-meta);">Total jam booking Confirmed/Completed per hari</p>
+                    <p class="text-[10px] font-semibold uppercase tracking-widest" style="color: var(--color-text-meta);">{{ $metric['label'] }}</p>
+                    <p class="f-mono text-2xl font-bold mt-2" style="color: var(--color-text-main);">{{ $metric['value'] }}</p>
                 </div>
                 <div class="w-2.5 h-2.5 rounded-full fm-live-pip" style="background: var(--success); animation: fm-pulse 1.6s infinite;"></div>
             </div>
@@ -184,10 +186,12 @@
                     <span class="f-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase" style="background: var(--success-bg); color: var(--success); border: 1px solid rgba(34,197,94,0.25);">Unduh</span>
                 </a>
 
-                <a href="{{ route('admin.staff.scan') }}" class="fm-quick-link flex items-center justify-between p-3.5 rounded-xl transition group">
-                    <span class="text-xs font-semibold" style="color: var(--color-text-muted);">📷 Buka Konsol Scanner QR</span>
-                    <span class="f-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase" style="background: var(--info-bg); color: var(--info); border: 1px solid rgba(59,130,246,0.25);">Terminal</span>
-                </a>
+                @if(Route::has('admin.staff.scan'))
+                    <a href="{{ route('admin.staff.scan') }}" class="fm-quick-link flex items-center justify-between p-3.5 rounded-xl transition group">
+                        <span class="text-xs font-semibold" style="color: var(--color-text-muted);">📷 Buka Konsol Scanner QR</span>
+                        <span class="f-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase" style="background: var(--info-bg); color: var(--info); border: 1px solid rgba(59,130,246,0.25);">Terminal</span>
+                    </a>
+                @endif
             </div>
 
             <div class="p-3 rounded-lg text-[9px] font-bold text-center uppercase tracking-wider f-mono" style="background: var(--color-bg-main); border: 1px solid var(--line); color: var(--color-text-meta);">
@@ -203,7 +207,7 @@
                 <h2 class="f-display text-xs uppercase tracking-wider flex items-center gap-1.5" style="color: var(--color-text-main);">
                     <span class="w-2 h-2 rounded-full fm-live-pip" style="background: var(--color-primary); animation: fm-pulse 1.6s infinite;"></span> Aliran Data Transaksi Terakhir
                 </h2>
-                <p class="text-[10px] font-semibold mt-0.5 uppercase tracking-wide" style="color: var(--color-text-meta);">Log pemantauan 10 entri data booking terbaru</p>
+                <p class="text-[10px] font-semibold mt-0.5 uppercase tracking-wide" style="color: var(--color-text-meta);">Log pemantauan entri data booking terbaru</p>
             </div>
             <span class="self-start sm:self-auto f-mono text-[9px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider" style="background: var(--color-bg-card); color: var(--color-text-muted); border: 1px solid var(--line);">Live Stream Ready</span>
         </div>
@@ -229,14 +233,15 @@
                             <div class="f-mono text-[10px] font-semibold uppercase tracking-wider mt-0.5" style="color: var(--color-text-meta);">Rumput {{ $reservasi->lapangan->jenis_rumput ?? 'Sintetis' }}</div>
                         </td>
 
-                        <td class="p-5 f-mono uppercase tracking-wider" style="color: var(--color-text-muted);">{{ $reservasi->nomor_reservasi }}</td>
+                        <td class="p-5 f-mono uppercase tracking-wider" style="color: var(--color-text-muted);">{{ $reservasi->nomor_reservasi ?? '#' . $reservasi->id }}</td>
 
                         <td class="p-5">
                             <div class="text-sm font-semibold tracking-tight" style="color: var(--color-text-main);">{{ $reservasi->user->name ?? 'Guest User' }}</div>
                             @if($reservasi->user && $reservasi->user->membership)
-                                @if($reservasi->user->membership->membership_type == 'Gold')
+                                @php $tier = strtoupper($reservasi->user->membership->membership_type); @endphp
+                                @if($tier === 'GOLD')
                                     <span class="inline-block mt-1 f-mono text-[8px] font-bold tracking-widest px-2 py-0.5 rounded uppercase" style="background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3);">🏆 Gold</span>
-                                @elseif($reservasi->user->membership->membership_type == 'Silver')
+                                @elseif($tier === 'SILVER')
                                     <span class="inline-block mt-1 f-mono text-[8px] font-bold tracking-widest px-2 py-0.5 rounded uppercase" style="background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3);">🥈 Silver</span>
                                 @else
                                     <span class="inline-block mt-1 f-mono text-[8px] font-bold tracking-widest px-2 py-0.5 rounded uppercase" style="background: rgba(180,83,9,0.15); color: #b45309; border: 1px solid rgba(180,83,9,0.3);">🥉 Bronze</span>
@@ -248,23 +253,25 @@
 
                         <td class="p-5">
                             <div style="color: var(--color-text-main);">{{ \Carbon\Carbon::parse($reservasi->tanggal_main)->translatedFormat('d M Y') }}</div>
-                            <div class="f-mono text-[10px] mt-0.5 uppercase tracking-wide" style="color: var(--info);">⏱️ {{ substr($reservasi->jam_mulai, 0, 5) }} - {{ substr($reservasi->jam_selesai, 0, 5) }} WITA</div>
+                            <div class="f-mono text-[10px] mt-0.5 uppercase tracking-wide" style="color: var(--info);">
+                                ⏱️ {{ substr($reservasi->jam_mulai ?? '00:00', 0, 5) }} - {{ substr($reservasi->jam_selesai ?? '00:00', 0, 5) }} WITA
+                            </div>
                         </td>
 
                         <td class="p-5 font-bold f-mono text-sm" style="color: var(--color-text-main);">Rp {{ number_format($reservasi->total_harga, 0, ',', '.') }}</td>
 
                         <td class="p-5">
-                            @if($reservasi->status == 'Confirmed' || $reservasi->status == 'Completed')
+                            @if(in_array($reservasi->status, ['Confirmed', 'Completed']))
                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-semibold uppercase tracking-wider" style="background: var(--success-bg); color: var(--success); border: 1px solid rgba(34,197,94,0.25);">
                                     <span class="w-1.5 h-1.5 rounded-full" style="background: var(--success);"></span> {{ $reservasi->status }}
                                 </span>
-                            @elseif($reservasi->status == 'Cancelled')
+                            @elseif($reservasi->status === 'Cancelled')
                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-semibold uppercase tracking-wider" style="background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(239,68,68,0.25);">
                                     <span class="w-1.5 h-1.5 rounded-full" style="background: var(--danger);"></span> Cancelled
                                 </span>
                             @else
                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-semibold uppercase tracking-wider" style="background: var(--pending-bg); color: var(--pending); border: 1px solid rgba(245,158,11,0.25);">
-                                    <span class="w-1.5 h-1.5 rounded-full fm-live-pip" style="background: var(--pending); animation: fm-pulse 1.6s infinite;"></span> Pending
+                                    <span class="w-1.5 h-1.5 rounded-full fm-live-pip" style="background: var(--pending); animation: fm-pulse 1.6s infinite;"></span> {{ $reservasi->status ?? 'Pending' }}
                                 </span>
                             @endif
                         </td>
@@ -300,11 +307,10 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const ctx = document.getElementById('dashboardPerformanceChart').getContext('2d');
+        const canvas = document.getElementById('dashboardPerformanceChart');
+        if (!canvas) return;
 
-        // Data ASLI dari controller (AdminDashboardController::index()) —
-        // bukan angka hardcode. Dihitung dari total jam booking Confirmed/
-        // Completed per hari, 7 hari terakhir.
+        const ctx = canvas.getContext('2d');
         const labelUtilisasi = @json($labelUtilisasi);
         const dataUtilisasi = @json($dataUtilisasi);
 
@@ -316,19 +322,38 @@
                     label: 'Utilisasi Lapangan (Jam)',
                     data: dataUtilisasi,
                     borderColor: '#e2601f',
-                    backgroundColor: 'rgba(226, 96, 31, 0.06)',
+                    backgroundColor: 'rgba(226, 96, 31, 0.08)',
                     borderWidth: 2,
                     fill: true,
-                    tension: 0.2,
+                    tension: 0.35,
                     pointBackgroundColor: '#ffffff',
                     pointBorderColor: '#e2601f',
-                    pointRadius: 3
+                    pointHoverBackgroundColor: '#e2601f',
+                    pointHoverBorderColor: '#ffffff',
+                    pointRadius: 4,
+                    pointHoverRadius: 6
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0a0f14',
+                        titleColor: '#ffffff',
+                        bodyColor: '#e2601f',
+                        borderColor: 'rgba(238, 241, 234, 0.14)',
+                        borderWidth: 1,
+                        padding: 10,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `Utilisasi: ${context.parsed.y} Jam`;
+                            }
+                        }
+                    }
+                },
                 scales: {
                     x: {
                         grid: { color: 'rgba(255, 255, 255, 0.03)' },
