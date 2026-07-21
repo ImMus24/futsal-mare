@@ -19,17 +19,15 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ReservasiController extends Controller
 {
-    const MENIT_KEDALUARSA_PEMBAYARAN = 10;
+    public const MENIT_KEDALUARSA_PEMBAYARAN = 10;
 
-    // Jam operasional venue — dipakai berulang kali, jadi dijadikan konstanta
-    const JAM_BUKA = 8;
-    const JAM_TUTUP = 22;
+    public const JAM_BUKA = 8;
+    public const JAM_TUTUP = 22;
 
-    // Status reservasi sebagai konstanta agar tidak ada typo string yang tersebar
-    const STATUS_WAITING   = 'Waiting Payment';
-    const STATUS_CONFIRMED = 'Confirmed';
-    const STATUS_COMPLETED = 'Completed';
-    const STATUS_CANCELLED = 'Cancelled';
+    public const STATUS_WAITING   = 'Waiting Payment';
+    public const STATUS_CONFIRMED = 'Confirmed';
+    public const STATUS_COMPLETED = 'Completed';
+    public const STATUS_CANCELLED = 'Cancelled';
 
     public function landingPage(): View
     {
@@ -46,17 +44,25 @@ class ReservasiController extends Controller
         };
     }
 
+    /**
+     * Scope query helper untuk menyaring reservasi aktif yang mengunci slot waktu.
+     */
+    private function scopeSlotAktif($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_COMPLETED])
+              ->orWhere(function ($q2) {
+                  $q2->where('status', self::STATUS_WAITING)
+                     ->where('expired_at', '>', now());
+              });
+        });
+    }
+
     private function getJamTerpesan(int $lapangan_id, string $tanggal): array
     {
         $jam_terpesan = Reservasi::where('lapangan_id', $lapangan_id)
             ->where('tanggal_main', $tanggal)
-            ->where(function ($q) {
-                $q->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_COMPLETED])
-                  ->orWhere(function ($q2) {
-                      $q2->where('status', self::STATUS_WAITING)
-                         ->where('expired_at', '>', now());
-                  });
-            })
+            ->pipe(fn($q) => $this->scopeSlotAktif($q))
             ->get(['jam_mulai', 'jam_selesai'])
             ->flatMap(function ($booking) {
                 $mulai = (int) substr($booking->jam_mulai, 0, 2);
@@ -145,20 +151,12 @@ class ReservasiController extends Controller
 
         try {
             $reservasi = DB::transaction(function () use ($request, $lapangan, $tanggal, $start_hour, $end_hour, $start_time, $end_time, $user) {
-
-                // Kunci baris lapangan supaya percobaan booking konkuren pada lapangan
-                // yang sama diserialisasi — mencegah race condition double-booking.
+                
                 Lapangan::where('id', $request->lapangan_id)->lockForUpdate()->first();
 
                 $bentrok = Reservasi::where('lapangan_id', $request->lapangan_id)
                     ->where('tanggal_main', $request->tanggal_main)
-                    ->where(function ($q) {
-                        $q->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_COMPLETED])
-                          ->orWhere(function ($q2) {
-                              $q2->where('status', self::STATUS_WAITING)
-                                 ->where('expired_at', '>', now());
-                          });
-                    })
+                    ->pipe(fn($q) => $this->scopeSlotAktif($q))
                     ->where(function ($query) use ($start_time, $end_time) {
                         $query->where(function ($q) use ($start_time, $end_time) {
                             $q->where('jam_mulai', '>=', $start_time)
@@ -192,16 +190,16 @@ class ReservasiController extends Controller
 
                 return Reservasi::create([
                     'user_id'                 => $user->id,
-                    'lapangan_id'              => $request->lapangan_id,
-                    'nomor_reservasi'          => $nomor_reservasi,
-                    'tanggal_main'             => $request->tanggal_main,
-                    'jam_mulai'                => $start_time,
-                    'jam_selesai'              => $end_time,
-                    'subtotal_sebelum_diskon'  => $subtotal,
-                    'diskon_persen'            => $diskonPersen,
-                    'total_harga'              => (int) $total_harga,
-                    'status'                   => self::STATUS_WAITING,
-                    'expired_at'               => now()->addMinutes(self::MENIT_KEDALUARSA_PEMBAYARAN),
+                    'lapangan_id'             => $request->lapangan_id,
+                    'nomor_reservasi'         => $nomor_reservasi,
+                    'tanggal_main'            => $request->tanggal_main,
+                    'jam_mulai'               => $start_time,
+                    'jam_selesai'             => $end_time,
+                    'subtotal_sebelum_diskon' => $subtotal,
+                    'diskon_persen'           => $diskonPersen,
+                    'total_harga'             => (int) $total_harga,
+                    'status'                  => self::STATUS_WAITING,
+                    'expired_at'              => now()->addMinutes(self::MENIT_KEDALUARSA_PEMBAYARAN),
                 ]);
             });
 
@@ -263,11 +261,6 @@ class ReservasiController extends Controller
         }
     }
 
-    /**
-     * Bangun nomor reservasi unik. uniqid() saja secara teoritis bisa bentrok
-     * pada request yang sangat rapat, jadi ditambahkan pengecekan ke DB dengan
-     * beberapa kali percobaan sebelum menyerah.
-     */
     private function generateNomorReservasiUnik(int $maxAttempts = 5): string
     {
         for ($i = 0; $i < $maxAttempts; $i++) {
@@ -278,7 +271,6 @@ class ReservasiController extends Controller
             }
         }
 
-        // Fallback terakhir: tambahkan random bytes agar praktis mustahil bentrok
         return 'FM-' . date('YmdHis') . '-' . strtoupper(bin2hex(random_bytes(4)));
     }
 
@@ -405,8 +397,6 @@ class ReservasiController extends Controller
 
     private function konfirmasiPembayaranSukses(Reservasi $reservasi, ?string $paymentType = null): void
     {
-        // Idempotency guard: cegah poin membership ditambahkan dobel jika
-        // fungsi ini terpanggil lebih dari sekali (mis. webhook + polling instan).
         if (in_array($reservasi->status, [self::STATUS_CONFIRMED, self::STATUS_COMPLETED])) {
             return;
         }
@@ -417,8 +407,6 @@ class ReservasiController extends Controller
             'expired_at'        => null,
         ]);
 
-        // Lock baris membership agar tidak ada race condition penjumlahan poin
-        // saat dua konfirmasi datang nyaris bersamaan (webhook vs polling instan).
         $membership = Membership::where('user_id', $reservasi->user_id)->lockForUpdate()->first();
 
         if (!$membership) {
@@ -463,8 +451,6 @@ class ReservasiController extends Controller
             return response()->json(['message' => 'Invalid Signature'], 403);
         }
 
-        // Lock baris reservasi agar webhook & polling instan yang datang
-        // hampir bersamaan tidak memproses pembayaran sukses dua kali.
         $reservasi = DB::transaction(function () use ($request) {
             return Reservasi::where('nomor_reservasi', $request->order_id)->lockForUpdate()->first();
         });
@@ -507,8 +493,8 @@ class ReservasiController extends Controller
             'points'          => 0,
         ];
 
-        $totalBooking     = $reservasis->count();
-        $lunasBooking     = $reservasis->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_COMPLETED])->count();
+        $totalBooking    = $reservasis->count();
+        $lunasBooking    = $reservasis->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_COMPLETED])->count();
         $totalPengeluaran = $reservasis->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_COMPLETED])->sum('total_harga');
 
         return view('dashboard', compact(
@@ -612,14 +598,6 @@ class ReservasiController extends Controller
         return view('reservasi.tiket', compact('reservasi', 'qrUrl'));
     }
 
-    /**
-     * Endpoint ini dipanggil oleh petugas gate untuk verifikasi tiket via scan QR.
-     *
-     * PENTING: pastikan route ini dilindungi middleware otorisasi staff/admin
-     * (mis. ->middleware('role:staff')) di routes/web.php atau routes/api.php.
-     * Tanpa itu, siapa pun yang bisa menebak/mengetahui nomor_reservasi bisa
-     * memicu perubahan status Confirmed -> Completed.
-     */
     public function processStaffCheckIn(Request $request): JsonResponse
     {
         $request->validate([
