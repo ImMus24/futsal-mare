@@ -51,10 +51,14 @@ class User extends Authenticatable
 
     /**
      * 🏆 Relasi One-to-One ke Model Membership
+     * Menggunakan withDefault() agar tidak bertabrakan dengan null pointer jika data belum ada.
      */
     public function membership(): HasOne
     {
-        return $this->hasOne(Membership::class);
+        return $this->hasOne(Membership::class)->withDefault([
+            'membership_type' => Membership::TIER_BRONZE,
+            'points'          => 0,
+        ]);
     }
 
     /**
@@ -63,5 +67,35 @@ class User extends Authenticatable
     public function reservasis(): HasMany
     {
         return $this->hasMany(Reservasi::class);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Helper Methods & Accessors (Kemudahan Integrasi)
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Mendapatkan persentase diskon user secara langsung.
+     * Contoh: $user->discount_percent (menghasilkan 10, 5, atau 0)
+     */
+    public function getDiscountPercentAttribute(): int
+    {
+        return $this->membership->discount_percent;
+    }
+
+    /**
+     * Mendapatkan instance membership aktif, atau membuat baru jika belum ada di database.
+     * Sangat berguna di Controller saat memproses poin pembayaran.
+     */
+    public function getOrCreateMembership(): Membership
+    {
+        return $this->membership()->firstOrCreate(
+            ['user_id' => $this->id],
+            [
+                'membership_type' => Membership::TIER_BRONZE,
+                'points'          => 0,
+            ]
+        );
     }
 }
