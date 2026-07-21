@@ -7,30 +7,38 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\LapanganController;
 use Illuminate\Support\Facades\Route;
 
-// 1. PUBLIC ROUTES
-Route::get('/', [ReservasiController::class, 'landingPage'])->name('landingPage');
-// 🏟️ Rute Publik Detail Lapangan
-Route::get('/lapangan/{id}', [ReservasiController::class, 'showLapangan'])->name('lapangan.detail');
+/*
+|--------------------------------------------------------------------------
+| Web Routes - Futsal Mare Application
+|--------------------------------------------------------------------------
+*/
 
 // ==========================================
-// 🛡️ 1b. PORTAL AUTHENTICATION ADMIN GATEWAY
+// 1. PUBLIC ROUTES
 // ==========================================
-// Diletakkan secara publik agar halaman login admin bisa diakses sebelum masuk dashboard
+Route::get('/', [ReservasiController::class, 'landingPage'])->name('landingPage');
+Route::get('/lapangan/{id}', [ReservasiController::class, 'showLapangan'])->name('lapangan.detail');
+
+// Portal Auth Admin Gateway (Publik agar form login bisa diakses)
 Route::get('/admin/login', [AdminDashboardController::class, 'showLoginForm'])->name('admin.login');
 Route::post('/admin/login', [AdminDashboardController::class, 'login'])->name('admin.login.submit');
 
-// 2. GOOGLE OAUTH
+// ==========================================
+// 2. GOOGLE OAUTH ROUTES
+// ==========================================
 Route::get('auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
 
-// 3. PROTECTED ROUTES (Member)
+// ==========================================
+// 3. PROTECTED ROUTES (Member & User Verified)
+// ==========================================
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // Pembatalan & konfirmasi pembayaran instan
+    // Pembatalan & Konfirmasi Pembayaran Instan (Snap Gateway)
     Route::post('/reservasi/{nomor_reservasi}/batal-instan', [ReservasiController::class, 'cancelPendingInstant'])->name('reservasi.cancelInstant');
     Route::post('/reservasi/confirm-payment/{nomor_reservasi}', [ReservasiController::class, 'confirmPayment'])->name('reservasi.confirmPayment');
 
-    // Dashboard & Reservasi
+    // Dashboard & Manajemen Reservasi User
     Route::get('/dashboard', [ReservasiController::class, 'dashboard'])->name('dashboard');
     Route::get('/reservasi/lapangan/{id}', [ReservasiController::class, 'create'])->name('reservasi.create');
     Route::post('/reservasi/store', [ReservasiController::class, 'store'])->name('reservasi.store');
@@ -40,42 +48,53 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/reservasi/destroy-massal', [ReservasiController::class, 'destroyMassal'])->name('reservasi.destroyMassal');
     Route::delete('/reservasi/{id}', [ReservasiController::class, 'destroy'])->name('reservasi.destroy');
 
-    // Profile
+    // User Profile Management
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// 4. ADMIN PANEL ROUTES
+// ==========================================
+// 4. ADMIN PANEL & GATEWAY ROUTES
+// ==========================================
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+    
+    // Admin Dashboard Main
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
-    // Reservasi Admin
+    // Manajemen Reservasi
     Route::get('/reservasi', [AdminDashboardController::class, 'reservasi'])->name('reservasi.index');
     Route::get('/reservasi/export-excel', [AdminDashboardController::class, 'exportExcel'])->name('reservasi.exportExcel');
     Route::patch('/reservasi/{id}/update-status', [AdminDashboardController::class, 'updateStatus'])->name('reservasi.updateStatus');
     Route::delete('/reservasi/{id}/delete', [AdminDashboardController::class, 'deleteReservasi'])->name('reservasi.delete');
     Route::delete('/reservasi/delete-massal', [AdminDashboardController::class, 'deleteReservasiMassal'])->name('reservasi.deleteMassal');
 
-    // Lapangan
+    // Kelola Data Lapangan (Resource Route)
     Route::resource('kelola-lapangan', LapanganController::class)->names([
-        'index' => 'lapangan.index', 'create' => 'lapangan.create', 'store' => 'lapangan.store',
-        'edit' => 'lapangan.edit', 'update' => 'lapangan.update', 'destroy' => 'lapangan.destroy',
+        'index'   => 'lapangan.index',
+        'create'  => 'lapangan.create',
+        'store'   => 'lapangan.store',
+        'edit'    => 'lapangan.edit',
+        'update'  => 'lapangan.update',
+        'destroy' => 'lapangan.destroy',
     ])->parameters(['kelola-lapangan' => 'lapangan']);
 
-    // Member
+    // Manajemen Member / User
     Route::get('/member', [AdminDashboardController::class, 'member'])->name('member.index');
     Route::get('/member/{id}/edit', [AdminDashboardController::class, 'editMember'])->name('member.edit');
     Route::put('/member/{id}/update', [AdminDashboardController::class, 'updateMember'])->name('member.update');
     Route::delete('/member/{id}/delete', [AdminDashboardController::class, 'deleteMember'])->name('member.delete');
 
-    // Role
+    // Manajemen Role
     Route::get('/role', [AdminDashboardController::class, 'role'])->name('role.index');
     Route::put('/role/{id}', [AdminDashboardController::class, 'updateRole'])->name('role.update');
 
-    // 🛡️ Terminal Gate Scanner — sengaja di grup admin (bukan grup member biasa),
-    // supaya hanya admin yang login yang bisa memicu check-in tiket.
-    Route::get('/staff/scan', function () { return view('staff.scan'); })->name('staff.scan');
+    // 🛡️ Terminal Gate Scanner & Check-in Request
+    // Terdaftar otomatis sebagai: 'admin.staff.scan' & 'admin.staff.checkin'
+    Route::get('/staff/scan', function () { 
+        return view('staff.scan'); 
+    })->name('staff.scan');
+    
     Route::post('/staff/checkin', [ReservasiController::class, 'processStaffCheckIn'])->name('staff.checkin');
 });
 

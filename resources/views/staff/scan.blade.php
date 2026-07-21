@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <!-- HTML5 Qrcode Scanner Library Library -->
+    <!-- HTML5 Qrcode Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         :root {
@@ -27,12 +27,12 @@
         h1 { font-family: var(--display); letter-spacing: .01em; text-transform: uppercase; }
         .scanner-frame::after { content: ""; position: absolute; inset: 16px; border: 2px solid rgba(238, 241, 234, 0.2); border-radius: 8px; pointer-events: none; }
         
-        /* Custom styling override untuk mencocokkan tombol brutal GOLA */
+        /* Custom styling override untuk tombol brutal Futsal Mare */
         .btn-brutal {
             display: inline-flex; align-items: center; justify-content: center; gap: 8px;
             padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 13px;
             cursor: pointer; border: 1px solid transparent; text-transform: uppercase; 
-            letter-spacing: .05em; transition: all 0.15s ease; font-family: var(--body);
+            letter-spacing: .05em; transition: all 0.15s ease; font-family: inherit;
         }
         .btn-brutal-primary { background: var(--turf); color: white; }
         .btn-brutal-primary:hover { background: #cb5119; }
@@ -88,13 +88,8 @@
             <div style="background: rgba(245, 197, 24, 0.05); border: 1px solid rgba(245, 197, 24, 0.15); border-radius: 8px; padding: 16px; display: flex; gap: 12px; align-items: flex-start; font-size: 12px; color: var(--floodlight); font-weight: 500;">
                 <span style="font-size: 14px; line-height: 1;">🛡️</span>
                 <div>
-<<<<<<< HEAD
-                    <b class="f-mono" style="text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 2px;">Otoritas Validasi Petugas</b>
-                    Halaman ini hanya bisa diakses oleh admin yang login. Jangan membagikan tautan endpoint scanner ini kepada pihak luar.
-=======
                     <b style="text-transform: uppercase; font-family: var(--mono); letter-spacing: 0.05em; display: block; margin-bottom: 2px;">Otoritas Validasi Petugas</b>
                     Halaman ini diamankan menggunakan middleware enkripsi rute internal. Jangan membagikan tautan endpoint scanner ini kepada pihak luar.
->>>>>>> main
                 </div>
             </div>
         </div>
@@ -115,24 +110,15 @@
 
             function initScanner() {
                 // Kembalikan status indikator kamera ke mode aktif
-                streamDot.style.background = "var(--turf)";
-                streamDot.style.animation = "pulse 1.6s infinite";
-                streamText.innerText = "STREAMING";
+                if (streamDot && streamText) {
+                    streamDot.style.background = "var(--turf)";
+                    streamDot.style.animation = "pulse 1.6s infinite";
+                    streamText.innerText = "STREAMING";
+                }
 
                 // Render ulang pembaca QR Code html5-qrcode
                 html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false);
-<<<<<<< HEAD
-                html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-            }
-
-            function onScanFailure(error) {
-                // SENGAJA DIBIARKAN KOSONG.
-                // Dipanggil setiap frame kamera TIDAK menemukan QR code — kondisi
-                // normal yang terjadi puluhan kali per detik selama kamera aktif.
-                // Bukan error nyata, jadi tidak perlu ditampilkan di UI/console.
-=======
                 html5QrcodeScanner.render(onScanSuccess);
->>>>>>> main
             }
 
             function onScanSuccess(decodedText, decodedResult) {
@@ -140,9 +126,11 @@
                 html5QrcodeScanner.clear();
                 
                 // Ubah status indikator kamera menjadi pause/berhenti sementara
-                streamDot.style.background = "var(--muted-2)";
-                streamDot.style.animation = "none";
-                streamText.innerText = "STANDBY";
+                if (streamDot && streamText) {
+                    streamDot.style.background = "var(--muted-2)";
+                    streamDot.style.animation = "none";
+                    streamText.innerText = "STANDBY";
+                }
                 
                 resultConsole.innerHTML = `
                     <div style="font-family: var(--mono); font-size: 12px; color: var(--floodlight); font-weight: 700; text-transform: uppercase;">
@@ -150,8 +138,8 @@
                     </div>
                 `;
 
-                // Jalankan AJAX tunnel request check-in ke server hq
-                fetch("{{ route('staff.checkin') }}", {
+                // ✅ FIX: Memanggil route dengan prefix 'admin.' yang sesuai dengan routes/web.php
+                fetch("{{ route('admin.staff.checkin') }}", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -161,7 +149,12 @@
                     },
                     body: JSON.stringify({ nomor_reservasi: decodedText })
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP Error status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
                         resultConsole.innerHTML = `
@@ -180,25 +173,27 @@
                     }
                     
                     // Daftarkan event listener interaktif pada tombol reset manual baru
-                    document.getElementById('btn_reset_scanner').addEventListener('click', function() {
-                        resultConsole.innerHTML = `
-                            <span style="font-size: 32px;">📷</span>
-                            <span style="font-family: var(--mono); font-size: 11px; color: var(--muted-2); font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em;">Menunggu Input Scanner...</span>
-                        `;
-                        initScanner();
-                    });
+                    document.getElementById('btn_reset_scanner')?.addEventListener('click', resetConsoleAndRestart);
                 })
                 .catch(err => {
                     resultConsole.innerHTML = `
                         <span style="font-size: 32px;">⚠️</span>
                         <b style="font-family: var(--mono); font-size: 13px; color: #e2574c; text-transform: uppercase;">Tunnel API Terputus!</b>
                         <p style="font-size: 12px; color: var(--muted); font-weight: 500; margin-bottom: 8px;">Gagal berkomunikasi dengan server master.</p>
-                        <button id="btn_reset_scanner" class="btn-brutal btn-brutal-primary mt-2">🔄 Hubungkan Ulang Kamera</button>
+                        <button id="btn_reload_scanner" class="btn-brutal btn-brutal-primary mt-2">🔄 Hubungkan Ulang Kamera</button>
                     `;
-                    document.getElementById('btn_reset_scanner').addEventListener('click', function() {
+                    document.getElementById('btn_reload_scanner')?.addEventListener('click', function() {
                         location.reload();
                     });
                 });
+            }
+
+            function resetConsoleAndRestart() {
+                resultConsole.innerHTML = `
+                    <span style="font-size: 32px;">📷</span>
+                    <span style="font-family: var(--mono); font-size: 11px; color: var(--muted-2); font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em;">Menunggu Input Scanner...</span>
+                `;
+                initScanner();
             }
 
             // Jalankan inisialisasi scanner pertama saat DOM siap dimuat
