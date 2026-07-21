@@ -586,21 +586,14 @@ class ReservasiController extends Controller
             return redirect()->route('dashboard')->with('error', 'Tiket tidak ditemukan atau belum lunas.');
         }
 
-        // Render QR SVG inline tanpa menulis ke disk
+        // Render QR SVG secara inline tanpa menulis ke disk (aman & bersih)
         $qrCodeSvg = QrCode::format('svg')
             ->size(300)
             ->margin(2)
             ->errorCorrection('H')
             ->generate($reservasi->nomor_reservasi);
 
-            Storage::disk('public')->put($relative_path, $svg);
-            $reservasi->update(['qr_code_path' => $nama_file]);
-        }
-
-        $qrUrl = Storage::disk('public')->url($relative_path);
-        $qrCodeSvg = Storage::disk('public')->get($relative_path);
-
-        return view('reservasi.tiket', compact('reservasi', 'qrUrl', 'qrCodeSvg'));
+        return view('reservasi.tiket', compact('reservasi', 'qrCodeSvg'));
     }
 
     /**
