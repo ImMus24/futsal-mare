@@ -33,12 +33,8 @@ class AdminDashboardController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email'    => ['required', 'email'],
-            'password' => ['required'],
-        ], [
-            'email.required'    => 'Email wajib diisi.',
-            'email.email'       => 'Format email tidak valid.',
-            'password.required' => 'Password wajib diisi.',
+            'email'    => 'required|email',
+            'password' => 'required|string',
         ]);
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
@@ -50,10 +46,10 @@ class AdminDashboardController extends Controller
             }
 
             Auth::logout();
-            return back()->with('error', 'Akses ditolak. Anda tidak memiliki otoritas Administrator.');
+            return redirect()->back()->withErrors(['email' => 'Akses Ditolak. Akun Anda tidak memiliki otoritas Administrator.'])->withInput();
         }
 
-        return back()->with('error', 'Email atau password yang Anda masukkan salah.')->withInput();
+        return redirect()->back()->withErrors(['email' => 'Kredensial atau kata sandi yang Anda masukkan salah.'])->withInput();
     }
 
     /**
@@ -167,10 +163,12 @@ class AdminDashboardController extends Controller
      */
     public function reservasi(Request $request)
     {
+        $status = $request->get('status');
+        
         $query = Reservasi::with(['lapangan', 'user']);
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+        if ($status && $status != '') {
+            $query->where('status', $status);
         }
 
         if ($request->filled('search')) {
@@ -193,10 +191,12 @@ class AdminDashboardController extends Controller
      */
     public function exportExcel(Request $request)
     {
+        $status = $request->get('status');
+        
         $query = Reservasi::with(['lapangan', 'user']);
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+        if ($status && $status != '') {
+            $query->where('status', $status);
         }
 
         $reservasis = $query->latest()->get();

@@ -21,8 +21,10 @@ Route::get('/lapangan/{id}', [ReservasiController::class, 'showLapangan'])->name
 |--------------------------------------------------------------------------
 | Diletakkan publik agar halaman login admin bisa diakses sebelum masuk ke dashboard.
 */
-Route::get('/admin/login', [AdminDashboardController::class, 'showLoginForm'])->name('admin.login');
-Route::post('/admin/login', [AdminDashboardController::class, 'login'])->name('admin.login.submit');
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/login', [AdminDashboardController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AdminDashboardController::class, 'login'])->name('login.submit');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -54,7 +56,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/reservasi/destroy-massal', [ReservasiController::class, 'destroyMassal'])->name('reservasi.destroyMassal');
     Route::delete('/reservasi/{id}', [ReservasiController::class, 'destroy'])->name('reservasi.destroy');
 
-    // Pengaturan Profil
+    // Pengaturan Profil User
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -67,15 +69,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
 */
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     
+    // Auth Admin Logout
+    Route::post('/logout', [AdminDashboardController::class, 'logout'])->name('logout');
+
     // Overview Dashboard
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
     // Modul Log & Pengelolaan Reservasi
-    Route::get('/reservasi', [AdminDashboardController::class, 'reservasi'])->name('reservasi.index');
-    Route::get('/reservasi/export-excel', [AdminDashboardController::class, 'exportExcel'])->name('reservasi.exportExcel');
-    Route::patch('/reservasi/{id}/update-status', [AdminDashboardController::class, 'updateStatus'])->name('reservasi.updateStatus');
-    Route::delete('/reservasi/{id}/delete', [AdminDashboardController::class, 'deleteReservasi'])->name('reservasi.delete');
-    Route::delete('/reservasi/delete-massal', [AdminDashboardController::class, 'deleteReservasiMassal'])->name('reservasi.deleteMassal');
+    Route::prefix('reservasi')->name('reservasi.')->group(function () {
+        Route::get('/', [AdminDashboardController::class, 'reservasi'])->name('index');
+        Route::get('/export-excel', [AdminDashboardController::class, 'exportExcel'])->name('exportExcel');
+        Route::patch('/{id}/update-status', [AdminDashboardController::class, 'updateStatus'])->name('updateStatus');
+        Route::delete('/delete-massal', [AdminDashboardController::class, 'deleteReservasiMassal'])->name('deleteMassal');
+        Route::delete('/{id}/delete', [AdminDashboardController::class, 'deleteReservasi'])->name('delete');
+    });
 
     // Modul Arena Lapangan
     Route::resource('kelola-lapangan', LapanganController::class)->names([
@@ -88,16 +95,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     ])->parameters(['kelola-lapangan' => 'lapangan']);
 
     // Modul Data Member
-    Route::get('/member', [AdminDashboardController::class, 'member'])->name('member.index');
-    Route::get('/member/{id}/edit', [AdminDashboardController::class, 'editMember'])->name('member.edit');
-    Route::put('/member/{id}/update', [AdminDashboardController::class, 'updateMember'])->name('member.update');
-    Route::delete('/member/{id}/delete', [AdminDashboardController::class, 'deleteMember'])->name('member.delete');
+    Route::prefix('member')->name('member.')->group(function () {
+        Route::get('/', [AdminDashboardController::class, 'member'])->name('index');
+        Route::get('/{id}/edit', [AdminDashboardController::class, 'editMember'])->name('edit');
+        Route::put('/{id}/update', [AdminDashboardController::class, 'updateMember'])->name('update');
+        Route::delete('/{id}/delete', [AdminDashboardController::class, 'deleteMember'])->name('delete');
+    });
 
     // Modul Hak Akses / Role Admin
     Route::get('/role', [AdminDashboardController::class, 'role'])->name('role.index');
     Route::put('/role/{id}', [AdminDashboardController::class, 'updateRole'])->name('role.update');
 
-    // 🛡️ Terminal Gate Scanner (Sudah terproteksi middleware 'admin')
+    // 🛡️ Terminal Gate Scanner
     Route::get('/staff/scan', function () { 
         return view('staff.scan'); 
     })->name('staff.scan');

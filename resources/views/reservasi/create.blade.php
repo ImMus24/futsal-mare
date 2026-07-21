@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
-    <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
+    <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('services.midtrans.client_key', env('MIDTRANS_CLIENT_KEY')) }}"></script>
     <style>
         :root {
             --ink: #0a0f14;
@@ -51,7 +51,6 @@
         .hero-brutal-media img { width: 100%; height: 100%; object-fit: cover; }
         .hero-brutal-media::after { content: ""; position: absolute; inset: 10px; border: 2px solid rgba(238,241,234,.25); border-radius: 4px; pointer-events: none; }
 
-        /* Toast Container & Overlay Styling */
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
         .toast { padding: 12px 20px; border-radius: 8px; font-family: var(--mono); font-size: 12px; color: white; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
         .toast.ok { background: #2f9e58; }
@@ -187,7 +186,7 @@
                 <!-- BANNER INFO MEMBERSHIP -->
                 @if(Auth::check() && Auth::user()->membership)
                     @php
-                        $discVal = Auth::user()->membership->discount_percent;
+                        $discVal = (float) Auth::user()->membership->discount_percent;
                         $displayPercent = ($discVal <= 1) ? ($discVal * 100) : $discVal;
                     @endphp
                     <div style="background: rgba(47, 158, 88, 0.08); border: 1px solid rgba(47, 158, 88, 0.2); padding: 16px; border-radius: 8px; display: flex; gap: 12px; align-items: center; margin-top: 10px;">
@@ -202,6 +201,15 @@
                         </div>
                     </div>
                 @endif
+
+                <!-- midtrans gateway banner -->
+                <div style="background: rgba(245, 197, 24, 0.05); border: 1px solid rgba(245, 197, 24, 0.15); border-radius: 8px; padding: 14px; display: flex; gap: 12px; align-items: flex-start; font-size: 12px; color: var(--floodlight); font-weight: 500;">
+                    <span style="font-size: 14px; line-height: 1;">🔒</span>
+                    <div>
+                        <b style="text-transform: uppercase; font-family: var(--mono); letter-spacing: 0.05em; display: block; margin-bottom: 2px;">Automated Gateway Active</b>
+                        Penyelesaian transaksi fiksasi aman terenkripsi via Midtrans. Mendukung QRIS instan, Virtual Account Bank otomatis, tanpa verifikasi slip manual.
+                    </div>
+                </div>
 
                 <!-- total price checkout widget -->
                 <div style="background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.06); border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
@@ -219,18 +227,16 @@
         </div>
     </main>
 
-    <!-- CALCULATION & INTERACTIVE INTEGRATION ENGINE SCRIPT -->
+    <!-- JS SCRIPT ENGINE -->
     <script>
-        // Memastikan rate diskon dalam skala desimal (0 - 1)
-        let rawDiscount = {{ Auth::check() && Auth::user()->membership ? Auth::user()->membership->discount_percent : 0 }};
+        const rawDiscount = parseFloat("{{ Auth::check() && Auth::user()->membership ? Auth::user()->membership->discount_percent : 0 }}") || 0;
         const userDiscount = rawDiscount > 1 ? (rawDiscount / 100) : rawDiscount;
-
-        const hargaPerJam = {{ $lapangan->harga_per_jam }};
+        const hargaPerJam = parseFloat("{{ $lapangan->harga_per_jam }}") || 0;
         const jamTerpesan = @json($jam_terpesan);
+
         const BTN_LABEL_DEFAULT = 'Kunci Jadwal Arena →';
         const BTN_LABEL_LOADING = 'MEMPROSES KONTRAK SLOT...';
 
-        const CANCEL_INSTANT_URL_TEMPLATE  = "{{ route('reservasi.cancelInstant', ['nomor_reservasi' => 'GANTI_NOMOR']) }}";
         const CONFIRM_PAYMENT_URL_TEMPLATE = "{{ route('reservasi.confirmPayment', ['nomor_reservasi' => 'GANTI_NOMOR']) }}";
 
         function csrfToken(){
@@ -239,35 +245,31 @@
 
         function setButtonLoading(isLoading) {
             const btnSubmit = document.getElementById('btn_submit');
-            btnSubmit.disabled = isLoading;
-            btnSubmit.innerText = isLoading ? BTN_LABEL_LOADING : BTN_LABEL_DEFAULT;
+            if (btnSubmit) {
+                btnSubmit.disabled = isLoading;
+                btnSubmit.innerText = isLoading ? BTN_LABEL_LOADING : BTN_LABEL_DEFAULT;
+            }
         }
 
         function gantiTanggal(tanggal) {
-            const url = new URL(window.location.href);
-            url.searchParams.set('tanggal_main', tanggal);
-            window.location.href = url.toString();
+            window.location.href = "?tanggal_main=" + tanggal;
         }
 
-        function showToast(type, msg){
-            const box = document.createElement('div');
-            box.className = 'toast ' + type;
-            box.innerHTML = `<span class="t-ic">${type === 'ok' ? '✓' : '✕'}</span><span></span>`;
-            box.querySelector('span:last-child').textContent = msg;
-            document.getElementById('toast-container').appendChild(box);
-            setTimeout(() => {
-                box.style.opacity = '0';
-                box.style.transition = 'opacity .3s';
-                setTimeout(() => box.remove(), 300);
-            }, 4000);
+        function showToast(type, msg) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerText = msg;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
         }
 
-        function queueToastAfterReload(type, msg){
-            sessionStorage.setItem('pending_toast', JSON.stringify({ type, msg }));
-        }
-
-        function showVerifyOverlay(show){
-            document.getElementById('verify-overlay').classList.toggle('show', show);
+        function showVerifyOverlay(show) {
+            let overlay = document.getElementById('verify-overlay');
+            if (overlay) {
+                overlay.style.display = show ? 'flex' : 'none';
+            }
         }
 
         function konfirmasiPembayaranLaluRedirect(nomorReservasi, redirectUrl) {
@@ -307,10 +309,9 @@
                 return;
             }
 
-            // Validasi: Apakah jam pilihan + durasi melompati slot terpesan?
             for (let i = 0; i < durasi; i++) {
                 let currentHour = startHour + i;
-                if (jamTerpesan.includes(currentHour) || currentHour > 21) {
+                if (jamTerpesan.includes(currentHour) || currentHour >= 22) {
                     hasConflict = true;
                     break;
                 }
@@ -318,16 +319,15 @@
 
             if (hasConflict) {
                 document.getElementById('live_total_harga').innerText = "Slot Bentrok";
-                document.getElementById('rincian_surcharge').innerText = "Durasi melewati slot terisi";
+                document.getElementById('rincian_surcharge').innerText = "Durasi melewati slot terisi / jam operasional";
                 if (errJam) {
-                    errJam.innerText = "Durasi yang dipilih melompati slot yang sudah terisi. Pilih jam atau durasi lain.";
+                    errJam.innerText = "Durasi yang dipilih melebihi jam operasional atau slot terisi. Pilih jam/durasi lain.";
                     errJam.classList.add('show');
                 }
                 btnSubmit.disabled = true;
                 return;
             }
 
-            // Clear error state jika slot valid
             if (errJam) errJam.classList.remove('show');
             btnSubmit.disabled = false;
 
@@ -355,7 +355,7 @@
 
             let displayHtml = "Rp " + Math.round(totalFinal).toLocaleString('id-ID');
             if (userDiscount > 0) {
-                displayHtml += `<br><span style="font-size: 10px; color: var(--turf);">Diskon ${(userDiscount * 100)}% Applied</span>`;
+                displayHtml += `<br><span style="font-size: 10px; color: var(--turf);">Diskon ${Math.round(userDiscount * 100)}% Applied</span>`;
             }
 
             document.getElementById('live_total_harga').innerHTML = displayHtml;
@@ -364,21 +364,11 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             hitungTotal();
-
-            const pending = sessionStorage.getItem('pending_toast');
-            if (pending) {
-                sessionStorage.removeItem('pending_toast');
-                try {
-                    const { type, msg } = JSON.parse(pending);
-                    showToast(type, msg);
-                } catch (e) {}
-            }
         });
 
-        // ASYNC FORM SUBMISSION CONTROL
         document.getElementById('form_reservasi').addEventListener('submit', function(e) {
-            e.preventDefault();
-
+            e.preventDefault(); 
+            
             const radioJam = document.querySelector('input[name="jam_mulai"]:checked');
             if (!radioJam) {
                 const errJam = document.getElementById('err_jam');
@@ -389,12 +379,12 @@
                 }
                 return;
             }
-            
+
             setButtonLoading(true);
             const formData = new FormData(this);
 
             fetch(this.action, {
-                method: 'POST',
+                method: "POST",
                 body: formData,
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
@@ -405,67 +395,38 @@
             .then(async response => {
                 const isJson = response.headers.get('content-type')?.includes('application/json');
                 const data = isJson ? await response.json() : null;
+
                 if (!response.ok) {
                     throw new Error(data?.message || `Kendala Koneksi Server (Status: ${response.status})`);
                 }
                 return data;
             })
             .then(data => {
-                if (!data.success) {
-                    alert("Gagal mengamankan alokasi slot: " + data.message);
-                    setButtonLoading(false);
-                    return;
-                }
-
-                const currentOrder = data.nomor_reservasi;
-
-                window.snap.pay(data.snap_token, {
-                    onSuccess: (result) => {
-                        konfirmasiPembayaranLaluRedirect(currentOrder, data.redirect);
-                    },
-                    onPending: (result) => {
-                        konfirmasiPembayaranLaluRedirect(currentOrder, data.redirect);
-                    },
-                    onError: (result) => {
-                        showToast('err', 'Pembayaran gagal diproses, silakan coba lagi.');
-                        setButtonLoading(false);
-                    },
-                    onClose: () => {
-                        const cancelUrl = CANCEL_INSTANT_URL_TEMPLATE.replace('GANTI_NOMOR', currentOrder);
-
-                        fetch(cancelUrl, {
-                            method: 'POST',
-                            headers: {
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': csrfToken(),
-                            }
-                        })
-                        .then(res => res.json())
-                        .then(result => {
-                            if (!result.success) {
-                                setButtonLoading(false);
-                                showToast('err', result.message || 'Gagal memproses pembatalan, periksa status booking di dashboard.');
-                                return;
-                            }
-
-                            if (result.already_confirmed) {
-                                konfirmasiPembayaranLaluRedirect(currentOrder, data.redirect);
-                                return;
-                            }
-
-                            queueToastAfterReload('err', 'Pembayaran dibatalkan, slot jam dilepas kembali.');
-                            location.reload();
-                        })
-                        .catch(() => {
+                if (data && data.success) {
+                    const currentOrder = data.nomor_reservasi || '';
+                    window.snap.pay(data.snap_token, {
+                        onSuccess: function(result) {
+                            konfirmasiPembayaranLaluRedirect(currentOrder, data.redirect);
+                        },
+                        onPending: function(result) {
+                            konfirmasiPembayaranLaluRedirect(currentOrder, data.redirect);
+                        },
+                        onError: function(result) {
+                            showToast('err', 'Pembayaran gagal.');
                             setButtonLoading(false);
-                            showToast('err', 'Gagal menghubungi server. Periksa status booking di dashboard sebelum mencoba lagi.');
-                        });
-                    }
-                });
+                        },
+                        onClose: function() {
+                            window.location.href = data.redirect;
+                        }
+                    });
+                } else {
+                    alert("Gagal mengamankan alokasi slot: " + (data?.message || "Terjadi kesalahan."));
+                    setButtonLoading(false);
+                }
             })
             .catch(error => {
-                setButtonLoading(false);
                 alert(error.message);
+                setButtonLoading(false);
             });
         });
     </script>
