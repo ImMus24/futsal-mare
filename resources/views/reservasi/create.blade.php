@@ -186,6 +186,10 @@
 
                 <!-- BANNER INFO MEMBERSHIP -->
                 @if(Auth::check() && Auth::user()->membership)
+                    @php
+                        $discVal = Auth::user()->membership->discount_percent;
+                        $displayPercent = ($discVal <= 1) ? ($discVal * 100) : $discVal;
+                    @endphp
                     <div style="background: rgba(47, 158, 88, 0.08); border: 1px solid rgba(47, 158, 88, 0.2); padding: 16px; border-radius: 8px; display: flex; gap: 12px; align-items: center; margin-top: 10px;">
                         <div style="font-size: 24px;">🏆</div>
                         <div>
@@ -193,7 +197,7 @@
                                 {{ Auth::user()->membership->membership_type }} Member
                             </b>
                             <span style="color: var(--line); font-size: 12px; font-weight: 500;">
-                                Diskon otomatis <b>{{ Auth::user()->membership->discount_percent * 100 }}%</b> telah diterapkan pada total tagihan Anda.
+                                Diskon otomatis <b>{{ $displayPercent }}%</b> telah diterapkan pada total tagihan Anda.
                             </span>
                         </div>
                     </div>
@@ -217,7 +221,10 @@
 
     <!-- CALCULATION & INTERACTIVE INTEGRATION ENGINE SCRIPT -->
     <script>
-        const userDiscount = {{ Auth::check() && Auth::user()->membership ? Auth::user()->membership->discount_percent : 0 }};
+        // Memastikan rate diskon dalam skala desimal (0 - 1)
+        let rawDiscount = {{ Auth::check() && Auth::user()->membership ? Auth::user()->membership->discount_percent : 0 }};
+        const userDiscount = rawDiscount > 1 ? (rawDiscount / 100) : rawDiscount;
+
         const hargaPerJam = {{ $lapangan->harga_per_jam }};
         const jamTerpesan = @json($jam_terpesan);
         const BTN_LABEL_DEFAULT = 'Kunci Jadwal Arena →';
@@ -340,7 +347,7 @@
             }
 
             let diskonNominal = total * userDiscount;
-            let totalFinal = total - diskonNominal;
+            let totalFinal = Math.max(0, total - diskonNominal);
 
             let infoSurcharge = [];
             if (isWeekend) infoSurcharge.push("Weekend Rate");
