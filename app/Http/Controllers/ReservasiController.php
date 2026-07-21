@@ -6,6 +6,9 @@ use App\Models\Lapangan;
 use App\Models\Reservasi;
 use App\Models\Membership;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,7 +20,7 @@ class ReservasiController extends Controller
 {
     const MENIT_KEDALUARSA_PEMBAYARAN = 10;
 
-    public function landingPage()
+    public function landingPage(): View
     {
         $lapangans = Lapangan::all();
         return view('welcome', compact('lapangans'));
@@ -32,7 +35,7 @@ class ReservasiController extends Controller
         };
     }
 
-    private function getJamTerpesan($lapangan_id, $tanggal)
+    private function getJamTerpesan(int $lapangan_id, string $tanggal): array
     {
         $jam_terpesan = Reservasi::where('lapangan_id', $lapangan_id)
             ->where('tanggal_main', $tanggal)
@@ -64,7 +67,7 @@ class ReservasiController extends Controller
         return array_values($jam_terpesan);
     }
 
-    public function showLapangan(Request $request, $id)
+    public function showLapangan(Request $request, int $id): View
     {
         $lapangan = Lapangan::findOrFail($id);
         $tanggal_pilihan = $request->get('tanggal_main', Carbon::today()->toDateString());
@@ -73,13 +76,14 @@ class ReservasiController extends Controller
         return view('admin.lapangan.detail', compact('lapangan', 'tanggal_pilihan', 'jam_terpesan'));
     }
 
-    public function create(Request $request, $id)
+    public function create(Request $request, int $id): View
     {
         $lapangan = Lapangan::findOrFail($id);
         $tanggal_pilihan = $request->get('tanggal_main', Carbon::today()->toDateString());
         $jam_terpesan = $this->getJamTerpesan($id, $tanggal_pilihan);
 
-        $membershipType = optional(Auth::user()->membership)->membership_type ?? 'Bronze';
+        $user = Auth::user();
+        $membershipType = optional($user->membership)->membership_type ?? 'Bronze';
         $diskonPersen = $this->getDiskonPersen($membershipType);
 
         return view('reservasi.create', compact('lapangan', 'tanggal_pilihan', 'jam_terpesan', 'membershipType', 'diskonPersen'));
@@ -88,7 +92,7 @@ class ReservasiController extends Controller
     /**
      * Simpan Reservasi & Request Snap Token Midtrans (Optimized DB Transaction)
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $request->validate([
             'lapangan_id'  => 'required|exists:lapangans,id',
@@ -96,15 +100,15 @@ class ReservasiController extends Controller
             'jam_mulai'    => 'required|integer|between:8,21',
             'durasi'       => 'required|integer|between:1,3',
         ], [
-            'lapangan_id.required'  => 'Lapangan tidak valid.',
-            'lapangan_id.exists'    => 'Data lapangan tidak ditemukan.',
-            'tanggal_main.required' => 'Tanggal main wajib diisi.',
-            'tanggal_main.date'     => 'Format tanggal tidak valid.',
+            'lapangan_id.required'        => 'Lapangan tidak valid.',
+            'lapangan_id.exists'          => 'Data lapangan tidak ditemukan.',
+            'tanggal_main.required'       => 'Tanggal main wajib diisi.',
+            'tanggal_main.date'           => 'Format tanggal tidak valid.',
             'tanggal_main.after_or_equal' => 'Tanggal main tidak boleh sebelum hari ini.',
-            'jam_mulai.required'    => 'Jam mulai wajib dipilih.',
-            'jam_mulai.between'     => 'Jam mulai harus antara pukul 08.00 - 21.00.',
-            'durasi.required'       => 'Durasi wajib dipilih.',
-            'durasi.between'        => 'Durasi hanya boleh 1-3 jam.',
+            'jam_mulai.required'          => 'Jam mulai wajib dipilih.',
+            'jam_mulai.between'           => 'Jam mulai harus antara pukul 08.00 - 21.00.',
+            'durasi.required'             => 'Durasi wajib dipilih.',
+            'durasi.between'              => 'Durasi hanya boleh 1-3 jam.',
         ]);
 
         $lapangan = Lapangan::findOrFail($request->lapangan_id);
@@ -132,7 +136,7 @@ class ReservasiController extends Controller
         $user = Auth::user();
 
         try {
-            // 1. Simpan Ke DB terlebih dahulu untuk mempercepat rilis Lock DB
+            // 1. Simpan ke DB terlebih dahulu untuk mempercepat rilis Lock DB
             $reservasi = DB::transaction(function () use ($request, $lapangan, $tanggal, $start_hour, $end_hour, $start_time, $end_time, $user) {
                 
                 Lapangan::where('id', $request->lapangan_id)->lockForUpdate()->first();
@@ -274,7 +278,7 @@ class ReservasiController extends Controller
         }
     }
 
-    public function cancelPendingInstant(Request $request, $nomor_reservasi)
+    public function cancelPendingInstant(Request $request, string $nomor_reservasi): JsonResponse
     {
         $reservasi = Reservasi::where('nomor_reservasi', $nomor_reservasi)
             ->where('user_id', Auth::id())
@@ -301,7 +305,7 @@ class ReservasiController extends Controller
         ]);
     }
 
-    public function confirmPayment($nomor_reservasi)
+    public function confirmPayment(string $nomor_reservasi): JsonResponse
     {
         $reservasi = Reservasi::where('nomor_reservasi', $nomor_reservasi)
             ->where('user_id', Auth::id())
@@ -406,7 +410,7 @@ class ReservasiController extends Controller
         ]);
     }
 
-    public function handleNotification(Request $request)
+    public function handleNotification(Request $request): JsonResponse
     {
         $request->validate([
             'order_id'           => 'required|string',
@@ -450,7 +454,7 @@ class ReservasiController extends Controller
         return response()->json(['message' => 'Callback berhasil diproses']);
     }
 
-    public function dashboard()
+    public function dashboard(): View
     {
         $user = Auth::user();
 
@@ -473,7 +477,7 @@ class ReservasiController extends Controller
         ));
     }
 
-    public function checkStatus($nomor_reservasi)
+    public function checkStatus(string $nomor_reservasi): JsonResponse
     {
         $reservasi = Reservasi::where('nomor_reservasi', $nomor_reservasi)
             ->where('user_id', Auth::id())
@@ -482,7 +486,7 @@ class ReservasiController extends Controller
         return response()->json(['status' => $reservasi->status]);
     }
 
-    public function batalkanReservasi($id)
+    public function batalkanReservasi(int $id): RedirectResponse
     {
         $reservasi = Reservasi::where('id', $id)
             ->where('user_id', Auth::id())
@@ -502,7 +506,7 @@ class ReservasiController extends Controller
         return redirect()->route('dashboard')->with('success', 'Jadwal reservasi Anda berhasil dibatalkan.');
     }
 
-    public function destroy($id)
+    public function destroy(int $id): RedirectResponse
     {
         $reservasi = Reservasi::where('id', $id)
             ->where('user_id', Auth::id())
@@ -517,7 +521,7 @@ class ReservasiController extends Controller
         return redirect()->route('dashboard')->with('success', 'Riwayat transaksi berhasil dihapus.');
     }
 
-    public function destroyMassal(Request $request)
+    public function destroyMassal(Request $request): RedirectResponse
     {
         $request->validate([
             'ids'   => 'required|array',
@@ -542,7 +546,7 @@ class ReservasiController extends Controller
     /**
      * Cetak E-Tiket QR Code (Inline Optimization)
      */
-    public function cetakTiket($id)
+    public function cetakTiket(int $id)
     {
         $reservasi = Reservasi::where('id', $id)
             ->where('user_id', Auth::id())
@@ -563,7 +567,7 @@ class ReservasiController extends Controller
         return view('reservasi.tiket', compact('reservasi', 'qrCodeSvg'));
     }
 
-    public function processStaffCheckIn(Request $request)
+    public function processStaffCheckIn(Request $request): JsonResponse
     {
         $request->validate([
             'nomor_reservasi' => 'required|string',
@@ -572,34 +576,39 @@ class ReservasiController extends Controller
         ]);
 
         try {
-            $reservasi = Reservasi::with('user')->where('nomor_reservasi', $request->nomor_reservasi)->first();
+            return DB::transaction(function () use ($request) {
+                $reservasi = Reservasi::with('user')
+                    ->where('nomor_reservasi', $request->nomor_reservasi)
+                    ->lockForUpdate()
+                    ->first();
 
-            if (!$reservasi) {
-                return response()->json(['success' => false, 'message' => 'Kode QR tidak valid!'], 404);
-            }
+                if (!$reservasi) {
+                    return response()->json(['success' => false, 'message' => 'Kode QR tidak valid!'], 404);
+                }
 
-            if ($reservasi->status === 'Cancelled') {
-                return response()->json(['success' => false, 'message' => 'Tiket ditolak! Reservasi ini telah dibatalkan.'], 422);
-            }
+                if ($reservasi->status === 'Cancelled') {
+                    return response()->json(['success' => false, 'message' => 'Tiket ditolak! Reservasi ini telah dibatalkan.'], 422);
+                }
 
-            if ($reservasi->status === 'Waiting Payment') {
-                return response()->json(['success' => false, 'message' => 'Tiket ditolak! Tagihan belum dilunasi.'], 422);
-            }
+                if ($reservasi->status === 'Waiting Payment') {
+                    return response()->json(['success' => false, 'message' => 'Tiket ditolak! Tagihan belum dilunasi.'], 422);
+                }
 
-            if ($reservasi->status === 'Completed') {
-                return response()->json(['success' => false, 'message' => 'Peringatan! Tiket ini sudah pernah digunakan.'], 422);
-            }
+                if ($reservasi->status === 'Completed') {
+                    return response()->json(['success' => false, 'message' => 'Peringatan! Tiket ini sudah pernah digunakan.'], 422);
+                }
 
-            if ($reservasi->status === 'Confirmed') {
-                $reservasi->update(['status' => 'Completed']);
+                if ($reservasi->status === 'Confirmed') {
+                    $reservasi->update(['status' => 'Completed']);
 
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Verifikasi berhasil! Selamat bertanding tim ' . ($reservasi->user->name ?? 'Pelanggan') . '.'
-                ], 200);
-            }
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Verifikasi berhasil! Selamat bertanding tim ' . ($reservasi->user->name ?? 'Pelanggan') . '.'
+                    ], 200);
+                }
 
-            return response()->json(['success' => false, 'message' => 'Status transaksi tidak valid: ' . $reservasi->status], 400);
+                return response()->json(['success' => false, 'message' => 'Status transaksi tidak valid: ' . $reservasi->status], 400);
+            });
 
         } catch (\Exception $e) {
             Log::error('Gagal memproses Gate Check-In: ' . $e->getMessage());
