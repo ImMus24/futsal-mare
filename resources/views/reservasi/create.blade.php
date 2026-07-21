@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
-    <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
+    <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('services.midtrans.client_key', env('MIDTRANS_CLIENT_KEY')) }}"></script>
     <style>
         :root {
             --ink: #0a0f14;
@@ -51,7 +51,6 @@
         .hero-brutal-media img { width: 100%; height: 100%; object-fit: cover; }
         .hero-brutal-media::after { content: ""; position: absolute; inset: 10px; border: 2px solid rgba(238,241,234,.25); border-radius: 4px; pointer-events: none; }
 
-        /* Toast Container & Overlay Styling */
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
         .toast { padding: 12px 20px; border-radius: 8px; font-family: var(--mono); font-size: 12px; color: white; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
         .toast.ok { background: #2f9e58; }
@@ -187,7 +186,7 @@
                 <!-- BANNER INFO MEMBERSHIP -->
                 @if(Auth::check() && Auth::user()->membership)
                     @php
-                        $discVal = Auth::user()->membership->discount_percent;
+                        $discVal = (float) Auth::user()->membership->discount_percent;
                         $displayPercent = ($discVal <= 1) ? ($discVal * 100) : $discVal;
                     @endphp
                     <div style="background: rgba(47, 158, 88, 0.08); border: 1px solid rgba(47, 158, 88, 0.2); padding: 16px; border-radius: 8px; display: flex; gap: 12px; align-items: center; margin-top: 10px;">
@@ -221,11 +220,11 @@
 
     <!-- CALCULATION & INTERACTIVE INTEGRATION ENGINE SCRIPT -->
     <script>
-        // Memastikan rate diskon dalam skala desimal (0 - 1)
-        let rawDiscount = {{ Auth::check() && Auth::user()->membership ? Auth::user()->membership->discount_percent : 0 }};
+        // Nilai diskon yang aman (di-parse ke float)
+        const rawDiscount = parseFloat("{{ Auth::check() && Auth::user()->membership ? Auth::user()->membership->discount_percent : 0 }}") || 0;
         const userDiscount = rawDiscount > 1 ? (rawDiscount / 100) : rawDiscount;
 
-        const hargaPerJam = {{ $lapangan->harga_per_jam }};
+        const hargaPerJam = parseFloat("{{ $lapangan->harga_per_jam }}") || 0;
         const jamTerpesan = @json($jam_terpesan);
         const BTN_LABEL_DEFAULT = 'Kunci Jadwal Arena →';
         const BTN_LABEL_LOADING = 'MEMPROSES KONTRAK SLOT...';
@@ -307,10 +306,10 @@
                 return;
             }
 
-            // Validasi: Apakah jam pilihan + durasi melompati slot terpesan?
+            // Validasi: Apakah jam pilihan + durasi melompati slot terpesan atau lewat batas operational (22:00)?
             for (let i = 0; i < durasi; i++) {
                 let currentHour = startHour + i;
-                if (jamTerpesan.includes(currentHour) || currentHour > 21) {
+                if (jamTerpesan.includes(currentHour) || currentHour >= 22) {
                     hasConflict = true;
                     break;
                 }
@@ -318,9 +317,9 @@
 
             if (hasConflict) {
                 document.getElementById('live_total_harga').innerText = "Slot Bentrok";
-                document.getElementById('rincian_surcharge').innerText = "Durasi melewati slot terisi";
+                document.getElementById('rincian_surcharge').innerText = "Durasi melewati slot terisi / jam operasional";
                 if (errJam) {
-                    errJam.innerText = "Durasi yang dipilih melompati slot yang sudah terisi. Pilih jam atau durasi lain.";
+                    errJam.innerText = "Durasi yang dipilih melebihi jam operasional atau slot terisi. Pilih jam/durasi lain.";
                     errJam.classList.add('show');
                 }
                 btnSubmit.disabled = true;
@@ -331,6 +330,7 @@
             if (errJam) errJam.classList.remove('show');
             btnSubmit.disabled = false;
 
+            // Parsing tanggal secara lokal agar tidak bergeser karena Timezone UTC
             const parts = inputTanggal.split('-');
             const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
             const isWeekend = (dateObj.getDay() === 0 || dateObj.getDay() === 6);
@@ -355,7 +355,7 @@
 
             let displayHtml = "Rp " + Math.round(totalFinal).toLocaleString('id-ID');
             if (userDiscount > 0) {
-                displayHtml += `<br><span style="font-size: 10px; color: var(--turf);">Diskon ${(userDiscount * 100)}% Applied</span>`;
+                displayHtml += `<br><span style="font-size: 10px; color: var(--turf);">Diskon ${Math.round(userDiscount * 100)}% Applied</span>`;
             }
 
             document.getElementById('live_total_harga').innerHTML = displayHtml;
@@ -411,8 +411,8 @@
                 return data;
             })
             .then(data => {
-                if (!data.success) {
-                    alert("Gagal mengamankan alokasi slot: " + data.message);
+                if (!data || !data.success) {
+                    alert("Gagal mengamankan alokasi slot: " + (data?.message || "Terjadi kesalahan."));
                     setButtonLoading(false);
                     return;
                 }
@@ -458,7 +458,7 @@
                         })
                         .catch(() => {
                             setButtonLoading(false);
-                            showToast('err', 'Gagal menghubungi server. Periksa status booking di dashboard sebelum mencoba lagi.');
+                            showToast('err', 'Gagal menghubungi server. Periksa status booking di dashboard.');
                         });
                     }
                 });
