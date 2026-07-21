@@ -3,7 +3,7 @@
 @section('content')
 
 {{-- ============================================================
-     DESIGN SYSTEM — Futsal Mare (selaras seluruh panel admin)
+     DESIGN SYSTEM — Futsal Mare (Konsistensi Seluruh Panel Admin)
      ============================================================ --}}
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
@@ -60,7 +60,7 @@
 
 <div class="fm-scope space-y-6 animate-fade-in">
 
-    {{-- Notifikasi Global --}}
+    {{-- Notifikasi Toast Global --}}
     @include('partials.toast')
 
     <!-- TOP BAR -->
@@ -74,14 +74,14 @@
         </div>
 
         <div class="flex items-center justify-between sm:justify-end gap-3">
-            <a href="/" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wide transition"
+            <a href="{{ url('/') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wide transition"
                style="background: var(--color-bg-card); border: 1px solid var(--line); color: var(--color-text-muted);"
                onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--color-text-muted)'">
                 ⬅️ Beranda Utama
             </a>
             <form method="POST" action="{{ route('logout') }}" class="inline">
                 @csrf
-                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg uppercase tracking-wide transition"
+                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg uppercase tracking-wide transition cursor-pointer"
                         style="background: var(--danger-bg); border: 1px solid rgba(239,68,68,0.3); color: var(--danger);">
                     🚪 Keluar Sesi
                 </button>
@@ -195,7 +195,7 @@
             </div>
 
             <div class="p-3 rounded-lg text-[9px] font-bold text-center uppercase tracking-wider f-mono" style="background: var(--color-bg-main); border: 1px solid var(--line); color: var(--color-text-meta);">
-                Keamanan enkripsi data SSL aktif
+                🔒 Keamanan Enkripsi Data SSL Aktif
             </div>
         </div>
     </div>
@@ -209,7 +209,16 @@
                 </h2>
                 <p class="text-[10px] font-semibold mt-0.5 uppercase tracking-wide" style="color: var(--color-text-meta);">Log pemantauan entri data booking terbaru</p>
             </div>
-            <span class="self-start sm:self-auto f-mono text-[9px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider" style="background: var(--color-bg-card); color: var(--color-text-muted); border: 1px solid var(--line);">Live Stream Ready</span>
+            
+            <div class="flex items-center gap-3">
+                <!-- Search Box Cepat -->
+                <form method="GET" action="{{ route('admin.reservasi.index') }}" class="relative">
+                    <input type="text" name="search" placeholder="Cari Kode / Nama..." 
+                           class="f-mono text-[10px] px-3 py-1.5 rounded-lg bg-[#0a0f14] border text-white placeholder-gray-500 focus:outline-none focus:border-[#e2601f]"
+                           style="border-color: var(--line);">
+                </form>
+                <span class="hidden sm:inline-block f-mono text-[9px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider" style="background: var(--color-bg-card); color: var(--color-text-muted); border: 1px solid var(--line);">Live Stream Ready</span>
+            </div>
         </div>
 
         <div class="overflow-x-auto">
@@ -310,9 +319,15 @@
         const canvas = document.getElementById('dashboardPerformanceChart');
         if (!canvas) return;
 
+        // Cegah re-initialization chart jika canvas sudah terpakai
+        const existingChart = Chart.getChart(canvas);
+        if (existingChart) {
+            existingChart.destroy();
+        }
+
         const ctx = canvas.getContext('2d');
-        const labelUtilisasi = @json($labelUtilisasi);
-        const dataUtilisasi = @json($dataUtilisasi);
+        const labelUtilisasi = @json($labelUtilisasi ?? []);
+        const dataUtilisasi = @json($dataUtilisasi ?? []);
 
         new Chart(ctx, {
             type: 'line',

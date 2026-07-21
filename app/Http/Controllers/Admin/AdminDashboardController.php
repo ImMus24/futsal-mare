@@ -21,12 +21,8 @@ class AdminDashboardController extends Controller
      * ==========================================
      */
 
-    /**
-     * Menampilkan Form Login Khusus Portal Admin
-     */
     public function showLoginForm()
     {
-        // Jika sudah login dan memiliki akses admin, langsung bypass ke dashboard
         if (Auth::check() && Auth::user()->is_admin) { 
             return redirect()->route('admin.dashboard');
         }
@@ -34,9 +30,6 @@ class AdminDashboardController extends Controller
         return view('admin.auth.login');
     }
 
-    /**
-     * Memproses Autentikasi Login Masuk Admin
-     */
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -52,10 +45,10 @@ class AdminDashboardController extends Controller
             $request->session()->regenerate();
 
             if (Auth::user()->is_admin == 1) {
-                return redirect()->route('admin.dashboard')->with('success', 'Selamat datang kembali di Panel Kontrol Utama!');
+                return redirect()->intended(route('admin.dashboard'))
+                    ->with('success', 'Selamat datang kembali di Panel Kontrol Utama!');
             }
 
-            // Jika berhasil login tapi bukan admin, keluarkan sesi
             Auth::logout();
             return back()->with('error', 'Akses ditolak. Anda tidak memiliki otoritas Administrator.');
         }
@@ -70,10 +63,10 @@ class AdminDashboardController extends Controller
      */
     public function index()
     {
-        // 1. Ringkasan Statistik
+        // 1. Ringkasan Statistik Utama
         $totalPendapatan = Reservasi::whereIn('status', ['Confirmed', 'Completed'])->sum('total_harga');
         $matchTerkonfirmasi = Reservasi::where('status', 'Confirmed')->count();
-        $totalMember = User::has('membership')->count();
+        $totalMember = User::has('membership')->where('is_admin', 0)->count();
         $reservasis = Reservasi::with(['lapangan', 'user.membership'])->latest()->paginate(10);
 
         // 2. Kalkulasi Grafik Utilisasi 7 Hari Terakhir
@@ -82,7 +75,7 @@ class AdminDashboardController extends Controller
 
         $reservasi7Hari = Reservasi::whereBetween('tanggal_main', [$startDate->toDateString(), $endDate->toDateString()])
             ->whereIn('status', ['Confirmed', 'Completed'])
-            ->get()
+            ->get(['tanggal_main', 'jam_mulai', 'jam_selesai'])
             ->groupBy(function ($item) {
                 return Carbon::parse($item->tanggal_main)->format('Y-m-d');
             });
@@ -100,9 +93,9 @@ class AdminDashboardController extends Controller
             if (isset($reservasi7Hari[$dateString])) {
                 $totalJam = $reservasi7Hari[$dateString]->sum(function ($reservasi) {
                     if (!empty($reservasi->jam_mulai) && !empty($reservasi->jam_selesai)) {
-                        $start = Carbon::parse($reservasi->jam_mulai);
-                        $end = Carbon::parse($reservasi->jam_selesai);
-                        return max(1, $start->diffInHours($end));
+                        $start = (int) substr($reservasi->jam_mulai, 0, 2);
+                        $end = (int) substr($reservasi->jam_selesai, 0, 2);
+                        return max(1, $end - $start);
                     }
                     return 1;
                 });
@@ -111,7 +104,6 @@ class AdminDashboardController extends Controller
             $dataUtilisasi[] = (int) $totalJam;
         }
 
-        // 3. Pass data ke view 'admin.dashboard'
         return view('admin.dashboard', compact(
             'totalPendapatan',
             'matchTerkonfirmasi',
@@ -135,7 +127,17 @@ class AdminDashboardController extends Controller
             $query->where('status', $request->status);
         }
 
-        $reservasis = $query->latest()->paginate(15);
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor_reservasi', 'like', "%{$search}%")
+                  ->orWhereHas('user', function ($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $reservasis = $query->latest()->paginate(15)->withQueryString();
 
         return view('admin.reservasi.index', compact('reservasis'));
     }
@@ -157,10 +159,10 @@ class AdminDashboardController extends Controller
             ob_end_clean();
         }
 
-        $filename = "Laporan_Reservasi_Futsal_Mare_" . date('Ymd_His') . ".xls";
+        $filename = "Laporan_Reservasi_Futsal_" . date('Ymd_His') . ".xls";
 
         header("Content-Type: application/vnd.ms-excel; charset=utf-8");
-        header("Content-Disposition: attachment; filename=\"$filename\"");
+        header("Content-Disposition: attachment; filename=\"{$filename}\"");
         header("Pragma: no-cache");
         header("Expires: 0");
 
@@ -168,7 +170,7 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * Mengubah Status Reservasi secara Manual
+     * Mengubah Status Reservasi secara Manual (+ Sinkronisasi Poin Member)
      */
     public function updateStatus(Request $request, $id)
     {
@@ -180,10 +182,20 @@ class AdminDashboardController extends Controller
         ]);
 
         try {
-            $reservasi = Reservasi::findOrFail($id);
-            $reservasi->update(['status' => $request->status]);
+            DB::transaction(function () use ($id, $request) {
+                $reservasi = Reservasi::findOrFail($id);
+                $statusLama = $reservasi->status;
+                $statusBaru = $request->status;
 
-            return back()->with('success', "Status reservasi #{$reservasi->id} berhasil diubah menjadi {$request->status}.");
+                $reservasi->update(['status' => $statusBaru]);
+
+                // Jika diubah manual menjadi Confirmed / Completed dari Waiting Payment, hitung poin member
+                if (!in_array($statusLama, ['Confirmed', 'Completed']) && in_array($statusBaru, ['Confirmed', 'Completed'])) {
+                    $this->tambahPoinMember($reservasi);
+                }
+            });
+
+            return back()->with('success', "Status reservasi #{$id} berhasil diperbarui menjadi {$request->status}.");
         } catch (\Exception $e) {
             Log::error('Gagal update status reservasi ID ' . $id . ': ' . $e->getMessage());
             return back()->with('error', 'Terjadi kesalahan sistem saat mengubah status reservasi.');
@@ -191,8 +203,33 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * Menghapus Single Data Reservasi
+     * Helper Internal: Tambah Poin & Update Tier Member
      */
+    private function tambahPoinMember(Reservasi $reservasi): void
+    {
+        if (!$reservasi->user_id) return;
+
+        $membership = Membership::firstOrCreate(
+            ['user_id' => $reservasi->user_id],
+            ['membership_type' => 'Bronze', 'points' => 0]
+        );
+
+        $poinBaru = (int) floor($reservasi->total_harga / 10000);
+        $totalPoinAkhir = $membership->points + $poinBaru;
+
+        $tierEvaluasi = 'Bronze';
+        if ($totalPoinAkhir >= 300) {
+            $tierEvaluasi = 'Gold';
+        } elseif ($totalPoinAkhir >= 100) {
+            $tierEvaluasi = 'Silver';
+        }
+
+        $membership->update([
+            'points'          => $totalPoinAkhir,
+            'membership_type' => $tierEvaluasi,
+        ]);
+    }
+
     public function deleteReservasi($id)
     {
         try {
@@ -208,9 +245,6 @@ class AdminDashboardController extends Controller
         }
     }
 
-    /**
-     * Hapus Reservasi secara Massal (Bulk Delete)
-     */
     public function deleteReservasiMassal(Request $request)
     {
         $request->validate([
@@ -254,11 +288,26 @@ class AdminDashboardController extends Controller
      */
     public function member(Request $request)
     {
-        $members = User::with('membership')
-            ->leftJoin('memberships', 'users.id', '=', 'memberships.user_id')
-            ->select('users.*', 'memberships.points as total_points')
-            ->orderBy('total_points', 'desc')
-            ->paginate(10);
+        // Menggunakan subquery Eloquent yang bersih tanpa resiko ID ter-overwrite
+        $query = User::where('is_admin', 0)
+            ->with('membership')
+            ->addSelect([
+                'total_points' => Membership::select('points')
+                    ->whereColumn('user_id', 'users.id')
+                    ->limit(1)
+            ]);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $members = $query->orderByRaw('COALESCE(total_points, 0) DESC')
+            ->paginate(10)
+            ->withQueryString();
 
         return view('admin.member.index', compact('members'));
     }
@@ -322,12 +371,14 @@ class AdminDashboardController extends Controller
 
         try {
             DB::transaction(function () use ($member) {
+                // Hapus reservasi terkait terlebih dahulu agar tidak melempar Foreign Key Constraint Error
+                $member->reservasis()->delete();
                 $member->membership()->delete();
                 $member->delete();
             });
 
             return redirect()->route('admin.member.index')
-                ->with('success', "Member \"{$member->name}\" berhasil dihapus dari sistem.");
+                ->with('success', "Member \"{$member->name}\" dan seluruh riwayat ikatannya berhasil dihapus dari sistem.");
         } catch (\Exception $e) {
             Log::error('Gagal hapus member ID ' . $id . ': ' . $e->getMessage());
             return back()->with('error', 'Terjadi kesalahan sistem saat menghapus data member.');
