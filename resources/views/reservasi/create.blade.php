@@ -40,8 +40,8 @@
             cursor: pointer; border: 1px solid transparent; text-transform: uppercase; letter-spacing: .05em; width: 100%; transition: all 0.15s ease;
         }
         .btn-ui-primary { background: var(--turf); color: white; }
-        .btn-ui-primary:hover { background: var(--turf-dark); }
-        .btn-ui-primary:disabled { background: var(--surface-3); color: var(--muted-2); cursor: not-allowed; }
+        .btn-ui-primary:hover:not(:disabled) { background: var(--turf-dark); }
+        .btn-ui-primary:disabled { background: var(--surface-3); color: var(--muted-2); cursor: not-allowed; opacity: 0.7; }
 
         .hero-brutal-media {
             height: 200px; border-radius: 8px; position: relative; overflow: hidden;
@@ -50,17 +50,37 @@
         }
         .hero-brutal-media img { width: 100%; height: 100%; object-fit: cover; }
         .hero-brutal-media::after { content: ""; position: absolute; inset: 10px; border: 2px solid rgba(238,241,234,.25); border-radius: 4px; pointer-events: none; }
+
+        /* Toast Container & Overlay Styling */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { padding: 12px 20px; border-radius: 8px; font-family: var(--mono); font-size: 12px; color: white; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .toast.ok { background: #2f9e58; }
+        .toast.err { background: #e25e20; }
+        
+        #verify-overlay { position: fixed; inset: 0; background: rgba(10,15,20,0.85); backdrop-filter: blur(5px); z-index: 9998; display: none; align-items: center; justify-content: center; flex-direction: column; color: white; font-family: var(--mono); }
+        #verify-overlay.show { display: flex; }
+        .error-msg { color: #e25e20; font-size: 11px; font-family: var(--mono); margin-top: 6px; display: none; }
+        .error-msg.show { display: block; }
     </style>
 </head>
 <body class="antialiased min-h-screen">
 
+    <!-- Toast Notifications -->
+    <div id="toast-container"></div>
+
+    <!-- Loading Overlay saat verifikasi pembayaran -->
+    <div id="verify-overlay">
+        <div style="font-size: 14px; font-weight: 700; text-transform: uppercase;">Memverifikasi Pembayaran...</div>
+        <div style="font-size: 11px; color: var(--muted); margin-top: 6px;">Mohon jangan tutup halaman ini.</div>
+    </div>
+
     <!-- HEADER NAVIGATION -->
     <header style="background: rgba(10, 15, 20, 0.85); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(238,241,234,0.08); position: sticky; top: 0; z-index: 50;">
         <div style="max-width: 1180px; margin: 0 auto; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;">
-            <a href="{{ route('landingPage') }}" style="display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 22px; color: white;">
+            <a href="{{ route('landingPage') }}" style="display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 22px; color: white; text-decoration: none;">
                 <span style="width: 10px; height: 10px; background: var(--turf); border-radius: 2px; transform: rotate(45deg);"></span>FUTSAL MARE
             </a>
-            <a href="{{ route('landingPage') }}" style="font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 700;">
+            <a href="{{ route('landingPage') }}" style="font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 700; text-decoration: none;">
                 &larr; Kembali
             </a>
         </div>
@@ -76,7 +96,7 @@
                     <span style="font-family: var(--mono); font-size: 11px; color: var(--turf); font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 8px;">
                         Permukaan: {{ $lapangan->jenis_rumput ?? 'Sintetis' }}
                     </span>
-                    <h2 style="font-size: 32px; color: white; line-height: 1;">{{ $lapangan->nama_lapangan }}</h2>
+                    <h2 style="font-size: 32px; color: white; line-height: 1; margin: 0;">{{ $lapangan->nama_lapangan }}</h2>
                     <p style="color: var(--muted); font-size: 13px; font-weight: 500; margin-top: 12px; line-height: 1.6;">
                         Sistem manajemen jadwal murni fiksasi. Dilengkapi dengan papan skor digital premium serta fiksasi pencahayaan lampu sorot LED terarah bebas silau malam hari.
                     </p>
@@ -88,6 +108,8 @@
                             @else
                                 <img src="{{ asset('images/' . $lapangan->foto_lapangan) }}" alt="{{ $lapangan->nama_lapangan }}">
                             @endif
+                        @else
+                            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color: var(--muted); font-family: var(--mono); font-size: 12px;">FOTO LAPANGAN</div>
                         @endif
                     </div>
 
@@ -114,101 +136,104 @@
             </div>
 
             <!-- RIGHT PANEL: FORM RESERVASI -->
-            <!-- RIGHT PANEL: FORM RESERVASI -->
-<form id="form_reservasi" action="{{ route('reservasi.store') }}" method="POST" style="padding: 32px; display: flex; flex-direction: column; gap: 24px;">
-    @csrf
-    <input type="hidden" name="lapangan_id" value="{{ $lapangan->id }}">
+            <form id="form_reservasi" action="{{ route('reservasi.store') }}" method="POST" style="padding: 32px; display: flex; flex-direction: column; gap: 24px;">
+                @csrf
+                <input type="hidden" name="lapangan_id" value="{{ $lapangan->id }}">
 
-    <!-- step 1: tanggal main -->
-    <div>
-        <label class="label-title">1. Tentukan Tanggal Pertandingan</label>
-        <input type="date" id="input_tanggal" name="tanggal_main" value="{{ $tanggal_pilihan }}" min="{{ date('Y-m-d') }}" onchange="gantiTanggal(this.value)">
-    </div>
+                <!-- step 1: tanggal main -->
+                <div>
+                    <label class="label-title">1. Tentukan Tanggal Pertandingan</label>
+                    <input type="date" id="input_tanggal" name="tanggal_main" value="{{ $tanggal_pilihan }}" min="{{ date('Y-m-d') }}" onchange="gantiTanggal(this.value)">
+                </div>
 
-    <!-- step 2: slot jam tanding -->
-    <div>
-        <label class="label-title">2. Pilih Jam Mulai Tanding (Slot Waktu WITA)</label>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px;">
-            @php $hasChecked = false; @endphp
-            @for ($jam = 8; $jam <= 21; $jam++)
-                @php
-                    $isBooked = in_array($jam, $jam_terpesan);
-                    $jam_format = sprintf('%02d:00', $jam);
-                    $shouldCheck = (!$isBooked && !$hasChecked);
-                    if ($shouldCheck) { $hasChecked = true; }
-                @endphp
-                <label style="position: relative; cursor: pointer;">
-                    <input type="radio" name="jam_mulai" value="{{ $jam }}" class="peer sr-only"
-                        {{ $isBooked ? 'disabled' : '' }} onchange="hitungTotal()" {{ $shouldCheck ? 'checked' : '' }}>
-                    
-                    <div class="w-full text-center py-3 rounded-md font-mono text-xs font-bold border transition-all duration-150 select-none
-                        peer-disabled:bg-[#0B131F]/30 peer-disabled:border-slate-800 peer-disabled:text-slate-600 peer-disabled:cursor-not-allowed peer-disabled:line-through
-                        peer-checked:bg-[#e25e20] peer-checked:text-white peer-checked:border-transparent peer-checked:scale-105 peer-checked:shadow-lg
-                        bg-[#212d3c] border-transparent text-slate-300 hover:border-slate-600">
-                        {{ $jam_format }}
+                <!-- step 2: slot jam tanding -->
+                <div>
+                    <label class="label-title">2. Pilih Jam Mulai Tanding (Slot Waktu WITA)</label>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px;">
+                        @php $hasChecked = false; @endphp
+                        @for ($jam = 8; $jam <= 21; $jam++)
+                            @php
+                                $isBooked = in_array($jam, $jam_terpesan);
+                                $jam_format = sprintf('%02d:00', $jam);
+                                $shouldCheck = (!$isBooked && !$hasChecked);
+                                if ($shouldCheck) { $hasChecked = true; }
+                            @endphp
+                            <label style="position: relative; cursor: pointer;">
+                                <input type="radio" name="jam_mulai" value="{{ $jam }}" class="peer sr-only"
+                                    {{ $isBooked ? 'disabled' : '' }} onchange="hitungTotal()" {{ $shouldCheck ? 'checked' : '' }}>
+                                
+                                <div class="w-full text-center py-3 rounded-md font-mono text-xs font-bold border transition-all duration-150 select-none
+                                    peer-disabled:bg-[#0B131F]/30 peer-disabled:border-slate-800 peer-disabled:text-slate-600 peer-disabled:cursor-not-allowed peer-disabled:line-through
+                                    peer-checked:bg-[#e25e20] peer-checked:text-white peer-checked:border-transparent peer-checked:scale-105 peer-checked:shadow-lg
+                                    bg-[#212d3c] border-transparent text-slate-300 hover:border-slate-600">
+                                    {{ $jam_format }}
+                                </div>
+                            </label>
+                        @endfor
                     </div>
-                </label>
-            @endfor
-        </div>
-    </div>
+                    <span id="err_jam" class="error-msg">Silakan pilih jam tanding yang tersedia.</span>
+                </div>
 
-    <!-- step 3: durasi -->
-    <div>
-        <label class="label-title">3. Durasi Pemakaian Lapangan</label>
-        <select name="durasi" id="input_durasi" onchange="hitungTotal()">
-            <option value="1">1 Jam Sewa Match</option>
-            <option value="2" selected>2 Jam Sewa Match (Sangat Direkomendasikan)</option>
-            <option value="3">3 Jam Sewa Match</option>
-        </select>
-    </div>
+                <!-- step 3: durasi -->
+                <div>
+                    <label class="label-title">3. Durasi Pemakaian Lapangan</label>
+                    <select name="durasi" id="input_durasi" onchange="hitungTotal()">
+                        <option value="1">1 Jam Sewa Match</option>
+                        <option value="2" selected>2 Jam Sewa Match (Sangat Direkomendasikan)</option>
+                        <option value="3">3 Jam Sewa Match</option>
+                    </select>
+                </div>
 
-    <!-- BANNER INFO MEMBERSHIP (BARU) -->
-    @if(Auth::check() && Auth::user()->membership)
-        <div style="background: rgba(47, 158, 88, 0.08); border: 1px solid rgba(47, 158, 88, 0.2); padding: 16px; border-radius: 8px; display: flex; gap: 12px; align-items: center; margin-top: 10px;">
-            <div style="font-size: 24px;">🏆</div>
-            <div>
-                <b style="color: #2f9e58; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; display: block;">
-                    {{ Auth::user()->membership->membership_type }} Member
-                </b>
-                <span style="color: var(--line); font-size: 12px; font-weight: 500;">
-                    Diskon otomatis <b>{{ Auth::user()->membership->discount_percent * 100 }}%</b> telah diterapkan pada total tagihan Anda.
-                </span>
-            </div>
-        </div>
-    @endif
+                <!-- BANNER INFO MEMBERSHIP -->
+                @if(Auth::check() && Auth::user()->membership)
+                    <div style="background: rgba(47, 158, 88, 0.08); border: 1px solid rgba(47, 158, 88, 0.2); padding: 16px; border-radius: 8px; display: flex; gap: 12px; align-items: center; margin-top: 10px;">
+                        <div style="font-size: 24px;">🏆</div>
+                        <div>
+                            <b style="color: #2f9e58; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; display: block;">
+                                {{ Auth::user()->membership->membership_type }} Member
+                            </b>
+                            <span style="color: var(--line); font-size: 12px; font-weight: 500;">
+                                Diskon otomatis <b>{{ Auth::user()->membership->discount_percent * 100 }}%</b> telah diterapkan pada total tagihan Anda.
+                            </span>
+                        </div>
+                    </div>
+                @endif
 
-    <!-- total price checkout widget -->
-    <div style="background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.06); border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-        <div>
-            <span style="font-size: 12px; color: var(--muted); font-weight: 600; display: block;">Estimasi Total Tagihan</span>
-            <span id="rincian_surcharge" style="font-family: var(--mono); font-size: 10px; color: var(--muted-2); display: block; margin-top: 2px; font-weight: 700; text-transform: uppercase;"></span>
-        </div>
-        <span id="live_total_harga" style="font-family: var(--mono); font-size: 26px; color: var(--floodlight); font-weight: 700;">Rp 0</span>
-    </div>
+                <!-- total price checkout widget -->
+                <div style="background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.06); border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                    <div>
+                        <span style="font-size: 12px; color: var(--muted); font-weight: 600; display: block;">Estimasi Total Tagihan</span>
+                        <span id="rincian_surcharge" style="font-family: var(--mono); font-size: 10px; color: var(--muted-2); display: block; margin-top: 2px; font-weight: 700; text-transform: uppercase;"></span>
+                    </div>
+                    <span id="live_total_harga" style="font-family: var(--mono); font-size: 26px; color: var(--floodlight); font-weight: 700; text-align: right;">Rp 0</span>
+                </div>
 
-    <button type="submit" id="btn_submit" class="btn-ui btn-ui-primary">
-        Kunci Jadwal Arena &rarr;
-    </button>
-</form>
+                <button type="submit" id="btn_submit" class="btn-ui btn-ui-primary">
+                    Kunci Jadwal Arena &rarr;
+                </button>
+            </form>
         </div>
     </main>
 
     <!-- CALCULATION & INTERACTIVE INTEGRATION ENGINE SCRIPT -->
-   <!-- CALCULATION & INTERACTIVE INTEGRATION ENGINE SCRIPT -->
     <script>
-        // 1. Inisialisasi Data dari Server
-        const userDiscount = {{ Auth::user()->membership ? Auth::user()->membership->discount_percent : 0 }};
+        const userDiscount = {{ Auth::check() && Auth::user()->membership ? Auth::user()->membership->discount_percent : 0 }};
         const hargaPerJam = {{ $lapangan->harga_per_jam }};
+        const jamTerpesan = @json($jam_terpesan);
         const BTN_LABEL_DEFAULT = 'Kunci Jadwal Arena →';
-        const BTN_LABEL_LOADING = 'Memproses...';
+        const BTN_LABEL_LOADING = 'MEMPROSES KONTRAK SLOT...';
 
-        // Template URL — placeholder GANTI_NOMOR diganti nomor reservasi asli saat dipakai.
-        // Menghindari hardcode path manual supaya tetap ikut kalau prefix route berubah.
         const CANCEL_INSTANT_URL_TEMPLATE  = "{{ route('reservasi.cancelInstant', ['nomor_reservasi' => 'GANTI_NOMOR']) }}";
         const CONFIRM_PAYMENT_URL_TEMPLATE = "{{ route('reservasi.confirmPayment', ['nomor_reservasi' => 'GANTI_NOMOR']) }}";
 
         function csrfToken(){
             return document.querySelector('input[name="_token"]').value;
+        }
+
+        function setButtonLoading(isLoading) {
+            const btnSubmit = document.getElementById('btn_submit');
+            btnSubmit.disabled = isLoading;
+            btnSubmit.innerText = isLoading ? BTN_LABEL_LOADING : BTN_LABEL_DEFAULT;
         }
 
         function gantiTanggal(tanggal) {
@@ -230,9 +255,6 @@
             }, 4000);
         }
 
-        // Simpan pesan untuk ditampilkan SETELAH location.reload() di halaman YANG SAMA ini
-        // (dipakai khusus alur pembatalan onClose) — toast biasa akan langsung hilang
-        // karena DOM dibuang begitu halaman dimuat ulang.
         function queueToastAfterReload(type, msg){
             sessionStorage.setItem('pending_toast', JSON.stringify({ type, msg }));
         }
@@ -241,18 +263,8 @@
             document.getElementById('verify-overlay').classList.toggle('show', show);
         }
 
-        /**
-         * Panggil endpoint confirm-payment supaya server memverifikasi status ASLI ke
-         * Midtrans dan mengubah status reservasi jadi Confirmed SEBELUM kita pindah ke
-         * dashboard. Tanpa langkah ini, status akan tetap "Waiting Payment" di database
-         * walau Midtrans sudah menerima pembayaran — karena webhook tidak bisa menjangkau
-         * localhost saat development. Notifikasi sukses/gagalnya sendiri ditampilkan oleh
-         * komponen toast global (FMToast) di halaman dashboard lewat session flash yang
-         * di-set oleh controller, jadi di sini kita hanya perlu menunggu lalu redirect.
-         */
         function konfirmasiPembayaranLaluRedirect(nomorReservasi, redirectUrl) {
             showVerifyOverlay(true);
-
             const confirmUrl = CONFIRM_PAYMENT_URL_TEMPLATE.replace('GANTI_NOMOR', nomorReservasi);
 
             fetch(confirmUrl, {
@@ -262,7 +274,7 @@
                     'X-CSRF-TOKEN': csrfToken(),
                 }
             })
-            .catch(() => { /* diabaikan di sini — pesan kegagalan sudah di-flash oleh controller */ })
+            .catch(() => {})
             .finally(() => {
                 window.location.href = redirectUrl;
             });
@@ -272,17 +284,45 @@
             const inputTanggal = document.getElementById('input_tanggal').value;
             const selectDurasi = document.getElementById('input_durasi').value;
             const radioJam = document.querySelector('input[name="jam_mulai"]:checked');
+            const btnSubmit = document.getElementById('btn_submit');
+            const errJam = document.getElementById('err_jam');
 
             let startHour = radioJam ? parseInt(radioJam.value) : null;
             let durasi = parseInt(selectDurasi);
             let total = 0;
-            let infoSurcharge = [];
+            let hasPeak = false;
+            let hasConflict = false;
 
             if (!startHour) {
                 document.getElementById('live_total_harga').innerText = "Slot Kosong";
                 document.getElementById('rincian_surcharge').innerText = "";
+                btnSubmit.disabled = true;
                 return;
             }
+
+            // Validasi: Apakah jam pilihan + durasi melompati slot terpesan?
+            for (let i = 0; i < durasi; i++) {
+                let currentHour = startHour + i;
+                if (jamTerpesan.includes(currentHour) || currentHour > 21) {
+                    hasConflict = true;
+                    break;
+                }
+            }
+
+            if (hasConflict) {
+                document.getElementById('live_total_harga').innerText = "Slot Bentrok";
+                document.getElementById('rincian_surcharge').innerText = "Durasi melewati slot terisi";
+                if (errJam) {
+                    errJam.innerText = "Durasi yang dipilih melompati slot yang sudah terisi. Pilih jam atau durasi lain.";
+                    errJam.classList.add('show');
+                }
+                btnSubmit.disabled = true;
+                return;
+            }
+
+            // Clear error state jika slot valid
+            if (errJam) errJam.classList.remove('show');
+            btnSubmit.disabled = false;
 
             const parts = inputTanggal.split('-');
             const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
@@ -291,41 +331,40 @@
             for (let i = 0; i < durasi; i++) {
                 let currentHour = startHour + i;
                 let hargaSlot = hargaPerJam;
-                if (currentHour >= 16 && currentHour < 22) hargaSlot += 50000;
+                if (currentHour >= 16 && currentHour < 22) {
+                    hargaSlot += 50000;
+                    hasPeak = true;
+                }
                 if (isWeekend) hargaSlot += 20000;
                 total += hargaSlot;
             }
 
-            // --- LOGIKA DISKON MEMBERSHIP ---
             let diskonNominal = total * userDiscount;
             let totalFinal = total - diskonNominal;
 
+            let infoSurcharge = [];
             if (isWeekend) infoSurcharge.push("Weekend Rate");
-            if (startHour >= 16 || (startHour + durasi) > 16) infoSurcharge.push("Peak Rate");
+            if (hasPeak) infoSurcharge.push("Peak Rate");
 
-            // Tampilkan hasil dengan label diskon jika ada
-            let displayHtml = "Rp " + totalFinal.toLocaleString('id-ID');
+            let displayHtml = "Rp " + Math.round(totalFinal).toLocaleString('id-ID');
             if (userDiscount > 0) {
                 displayHtml += `<br><span style="font-size: 10px; color: var(--turf);">Diskon ${(userDiscount * 100)}% Applied</span>`;
             }
 
             document.getElementById('live_total_harga').innerHTML = displayHtml;
             document.getElementById('rincian_surcharge').innerText = infoSurcharge.join(' | ');
-
-            document.getElementById('err_jam').classList.remove('show');
         }
 
         window.addEventListener('DOMContentLoaded', () => {
             hitungTotal();
 
-            // Tampilkan toast yang "dititipkan" sebelum reload (misal dari pembatalan instan)
             const pending = sessionStorage.getItem('pending_toast');
             if (pending) {
                 sessionStorage.removeItem('pending_toast');
                 try {
                     const { type, msg } = JSON.parse(pending);
                     showToast(type, msg);
-                } catch (e) { /* abaikan kalau datanya rusak */ }
+                } catch (e) {}
             }
         });
 
@@ -335,15 +374,15 @@
 
             const radioJam = document.querySelector('input[name="jam_mulai"]:checked');
             if (!radioJam) {
-                document.getElementById('err_jam').classList.add('show');
-                document.getElementById('err_jam').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const errJam = document.getElementById('err_jam');
+                if (errJam) {
+                    errJam.innerText = "Silakan pilih jam tanding terlebih dahulu.";
+                    errJam.classList.add('show');
+                    errJam.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
                 return;
             }
             
-            const btnSubmit = document.getElementById('btn_submit');
-            btnSubmit.disabled = true;
-            btnSubmit.innerText = "MEMPROSES KONTRAK SLOT...";
-
             setButtonLoading(true);
             const formData = new FormData(this);
 
@@ -365,36 +404,19 @@
                 return data;
             })
             .then(data => {
-                if (data.success) {
-                    window.snap.pay(data.snap_token, {
-                        onSuccess: function(result) { window.location.href = data.redirect; },
-                        onPending: function(result) { window.location.href = data.redirect; },
-                        onError: function(result) {
-                            alert("Proses transaksi pembayaran dihentikan sistem.");
-                            btnSubmit.disabled = false;
-                            btnSubmit.innerText = "Kunci Jadwal Arena →";
-                        },
-                        onClose: function() { window.location.href = data.redirect; }
-                    });
-                } else {
+                if (!data.success) {
                     alert("Gagal mengamankan alokasi slot: " + data.message);
-                    btnSubmit.disabled = false;
-                    btnSubmit.innerText = "Kunci Jadwal Arena →";
+                    setButtonLoading(false);
+                    return;
                 }
 
                 const currentOrder = data.nomor_reservasi;
 
                 window.snap.pay(data.snap_token, {
-                    // PERBAIKAN UTAMA: sebelumnya langsung redirect tanpa pernah memberi tahu
-                    // server bahwa pembayaran sudah sukses — status jadi nyangkut "Waiting
-                    // Payment" terus. Sekarang panggil confirm-payment dulu (server mengecek
-                    // status ASLI ke Midtrans), baru redirect setelah itu selesai.
                     onSuccess: (result) => {
                         konfirmasiPembayaranLaluRedirect(currentOrder, data.redirect);
                     },
                     onPending: (result) => {
-                        // Tetap aman dipanggil di sini: kalau ternyata statusnya masih benar2
-                        // pending di Midtrans, confirm-payment tidak akan mengubah apa pun.
                         konfirmasiPembayaranLaluRedirect(currentOrder, data.redirect);
                     },
                     onError: (result) => {
@@ -414,22 +436,16 @@
                         .then(res => res.json())
                         .then(result => {
                             if (!result.success) {
-                                // Gagal cancel (misal reservasi tidak ditemukan) — jangan klaim
-                                // "slot dilepas" kalau sebenarnya kita tidak yakin statusnya.
                                 setButtonLoading(false);
                                 showToast('err', result.message || 'Gagal memproses pembatalan, periksa status booking di dashboard.');
                                 return;
                             }
 
                             if (result.already_confirmed) {
-                                // Race condition: pembayaran ternyata sudah sukses sebelum popup
-                                // ditutup — verifikasi dulu ke server, baru redirect sukses.
                                 konfirmasiPembayaranLaluRedirect(currentOrder, data.redirect);
                                 return;
                             }
 
-                            // Pembatalan normal — titip toast supaya tetap muncul setelah reload,
-                            // lalu reload untuk menyegarkan papan jadwal (slot ini kembali kosong).
                             queueToastAfterReload('err', 'Pembayaran dibatalkan, slot jam dilepas kembali.');
                             location.reload();
                         })
@@ -441,8 +457,7 @@
                 });
             })
             .catch(error => {
-                btnSubmit.disabled = false;
-                btnSubmit.innerText = "Kunci Jadwal Arena →";
+                setButtonLoading(false);
                 alert(error.message);
             });
         });
