@@ -54,7 +54,6 @@
         font-weight: 600;
     }
 
-    /* Background texture: faint grid + noise-free glow */
     .fm-scope .fm-bg-texture {
         background-image:
             radial-gradient(circle at 15% 0%, rgba(226, 96, 31, 0.06), transparent 45%),
@@ -66,17 +65,14 @@
         opacity: .5;
     }
 
-    /* Animations */
     @keyframes fm-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(0.92); } }
     @keyframes fm-fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes fm-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
     .fm-scope .fm-live-pip { animation: fm-pulse 1.8s infinite ease-in-out; }
     .fm-scope .fm-animate-in { animation: fm-fade-up .45s var(--ease) both; }
     .fm-scope .fm-animate-in:nth-child(1) { animation-delay: .02s; }
     .fm-scope .fm-animate-in:nth-child(2) { animation-delay: .08s; }
     .fm-scope .fm-animate-in:nth-child(3) { animation-delay: .14s; }
 
-    /* Cards */
     .fm-scope .fm-card {
         background: var(--color-bg-card);
         border: 1px solid var(--line);
@@ -106,7 +102,6 @@
     }
     .fm-scope .fm-metric-card:hover::before { opacity: 1; }
 
-    /* Nav chips */
     .fm-scope .fm-nav-chip {
         background: var(--color-bg-raised);
         color: var(--color-text-muted);
@@ -135,7 +130,6 @@
     .fm-scope .fm-quick-link .fm-arrow { transition: transform .2s ease; }
     .fm-scope .fm-quick-link:hover .fm-arrow { transform: translateX(3px); }
 
-    /* Table */
     .fm-scope .fm-table-row { transition: background-color .15s ease; }
     .fm-scope .fm-table-row:hover { background-color: rgba(255, 255, 255, 0.03); }
 
@@ -147,7 +141,6 @@
         flex-shrink: 0;
     }
 
-    /* Search input */
     .fm-scope .fm-search-wrap { position: relative; }
     .fm-scope .fm-search-wrap svg {
         position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
@@ -165,26 +158,14 @@
         outline: none;
     }
 
-    /* Scrollbar for table overflow */
     .fm-scope .overflow-x-auto::-webkit-scrollbar { height: 6px; }
     .fm-scope .overflow-x-auto::-webkit-scrollbar-track { background: transparent; }
     .fm-scope .overflow-x-auto::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 10px; }
-
-    /* Focus states */
-    .fm-scope a:focus-visible, .fm-scope button:focus-visible, .fm-scope input:focus-visible {
-        outline: 2px solid var(--color-primary);
-        outline-offset: 2px;
-        border-radius: 4px;
-    }
-
-    /* Pagination polish */
-    .fm-scope nav[role="navigation"] { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
 </style>
 
 <div class="fm-scope space-y-6 relative">
     <div class="fixed inset-0 fm-bg-texture pointer-events-none -z-10"></div>
 
-    {{-- Notifikasi Toast Global --}}
     @include('partials.toast')
 
     <!-- HEADER NAVIGATION BAR -->
@@ -221,7 +202,7 @@
                style="background: var(--color-bg-card); border: 1px solid var(--line); color: var(--color-text-muted);"
                onmouseover="this.style.color='#fff'; this.style.borderColor='var(--line-strong)'"
                onmouseout="this.style.color='var(--color-text-muted)'; this.style.borderColor='var(--line)'">
-               <span>🏠</span> <span class="hidden sm:inline">Beranda Utama</span>
+                <span>🏠</span> <span class="hidden sm:inline">Beranda Utama</span>
             </a>
 
             <form method="POST" action="{{ route('logout') }}" class="inline">
@@ -286,7 +267,7 @@
                        style="background: rgba(245,197,24,0.12); border: 1px solid rgba(245,197,24,0.3); color: var(--color-secondary);"
                        onmouseover="this.style.background='var(--color-secondary)'; this.style.color='#0d131a'"
                        onmouseout="this.style.background='rgba(245,197,24,0.12)'; this.style.color='var(--color-secondary)'">
-                       🛡️ Akses Admin
+                        🛡️ Akses Admin
                     </a>
                 @endif
             </div>
@@ -295,7 +276,7 @@
 
     <!-- METRICS CARDS GRID -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <!-- METRIC 1: PENDAPATAN -->
+        <!-- METRIC 1 -->
         <div class="fm-metric-card p-6 shadow-xl flex items-center justify-between fm-animate-in" style="--accent-color: var(--success);">
             <div class="space-y-2">
                 <p class="f-mono text-[10px] font-bold uppercase tracking-widest" style="color: var(--color-text-meta);">
@@ -315,7 +296,7 @@
             </div>
         </div>
 
-        <!-- METRIC 2: JADWAL AKTIF -->
+        <!-- METRIC 2 -->
         <div class="fm-metric-card p-6 shadow-xl flex items-center justify-between fm-animate-in" style="--accent-color: var(--info);">
             <div class="space-y-2">
                 <p class="f-mono text-[10px] font-bold uppercase tracking-widest" style="color: var(--color-text-meta);">
@@ -335,7 +316,7 @@
             </div>
         </div>
 
-        <!-- METRIC 3: MEMBER -->
+        <!-- METRIC 3 -->
         <div class="fm-metric-card p-6 shadow-xl flex items-center justify-between fm-animate-in" style="--accent-color: var(--color-primary);">
             <div class="space-y-2">
                 <p class="f-mono text-[10px] font-bold uppercase tracking-widest" style="color: var(--color-text-meta);">
@@ -358,7 +339,6 @@
 
     <!-- CHART & QUICK ACTIONS SECTION -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <!-- PERFORMANCE CHART -->
         <div class="lg:col-span-8 rounded-2xl p-6 shadow-2xl flex flex-col justify-between fm-card fm-animate-in">
             <div class="flex items-center justify-between border-b pb-4 mb-4" style="border-color: var(--line);">
                 <div>
@@ -415,8 +395,9 @@
                     </span>
                 </a>
 
+                {{-- PERBAIKAN ROUTE KE admin.staff.scan --}}
                 @if(Route::has('admin.staff.scan'))
-                    <a href="{{ route('admin.staff.scan') }}"
+                    <a href="{{ route('admin.staff.scan') }}" target="_blank"
                        class="fm-quick-link flex items-center justify-between p-3.5 rounded-xl group">
                         <span class="text-xs font-semibold flex items-center gap-2" style="color: var(--color-text-muted);">
                             <span>📷</span> Scanner QR Gate Check-in
@@ -478,7 +459,6 @@
                 <tbody class="divide-y text-xs font-medium" style="border-color: var(--line); color: var(--color-text-muted);">
                     @forelse($reservasis as $reservasi)
                     <tr class="fm-table-row">
-                        {{-- Lapangan --}}
                         <td class="p-5">
                             <div class="font-bold text-sm uppercase tracking-tight" style="color: var(--color-text-main);">
                                 {{ $reservasi->lapangan->nama_lapangan ?? 'Lapangan N/A' }}
@@ -488,12 +468,10 @@
                             </div>
                         </td>
 
-                        {{-- Order ID --}}
                         <td class="p-5 f-mono font-bold uppercase tracking-wider" style="color: var(--color-text-main);">
                             {{ $reservasi->nomor_reservasi ?? '#' . $reservasi->id }}
                         </td>
 
-                        {{-- Customer --}}
                         <td class="p-5">
                             <div class="flex items-center gap-2.5">
                                 <div class="fm-avatar">
@@ -531,7 +509,6 @@
                             </div>
                         </td>
 
-                        {{-- Waktu Slot --}}
                         <td class="p-5">
                             <div class="font-medium" style="color: var(--color-text-main);">
                                 {{ $reservasi->tanggal_main ? \Carbon\Carbon::parse($reservasi->tanggal_main)->translatedFormat('d M Y') : '-' }}
@@ -541,150 +518,98 @@
                             </div>
                         </td>
 
-                        {{-- Total Harga --}}
                         <td class="p-5 font-bold f-mono text-sm" style="color: var(--color-text-main);">
                             Rp {{ number_format($reservasi->total_harga, 0, ',', '.') }}
                         </td>
 
-                        {{-- Status Badge --}}
                         <td class="p-5">
                             @if(in_array($reservasi->status, ['Confirmed', 'Completed']))
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider"
                                       style="background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border);">
                                     <span class="w-1.5 h-1.5 rounded-full" style="background: var(--success);"></span> {{ $reservasi->status }}
                                 </span>
-                            @elseif($reservasi->status === 'Cancelled')
+                            @elseif($reservasi->status === 'Waiting Payment')
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider"
-                                      style="background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border);">
-                                    <span class="w-1.5 h-1.5 rounded-full" style="background: var(--danger);"></span> Batal
+                                      style="background: var(--pending-bg); color: var(--pending); border: 1px solid var(--pending-border);">
+                                    <span class="w-1.5 h-1.5 rounded-full" style="background: var(--pending);"></span> Menunggu Bayar
                                 </span>
                             @else
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider"
-                                      style="background: var(--pending-bg); color: var(--pending); border: 1px solid var(--pending-border);">
-                                    <span class="w-1.5 h-1.5 rounded-full fm-live-pip" style="background: var(--pending);"></span> {{ $reservasi->status ?? 'Pending' }}
+                                      style="background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border);">
+                                    <span class="w-1.5 h-1.5 rounded-full" style="background: var(--danger);"></span> {{ $reservasi->status }}
                                 </span>
                             @endif
                         </td>
 
-                        {{-- Action Button --}}
                         <td class="p-5 text-center">
-                            <a href="{{ route('admin.reservasi.index', ['status' => $reservasi->status]) }}"
-                               class="inline-flex items-center justify-center gap-1 px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all f-mono"
+                            <a href="{{ route('admin.reservasi.index', ['search' => $reservasi->nomor_reservasi]) }}"
+                               class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
                                style="background: var(--color-bg-main); border: 1px solid var(--line); color: var(--color-text-muted);"
-                               onmouseover="this.style.color='#fff'; this.style.borderColor='var(--color-primary)'"
-                               onmouseout="this.style.color='var(--color-text-muted)'; this.style.borderColor='var(--line)'">
-                                Detail <span>→</span>
+                               onmouseover="this.style.background='var(--color-primary)'; this.style.color='#fff'; this.style.borderColor='var(--color-primary)'"
+                               onmouseout="this.style.background='var(--color-bg-main)'; this.style.color='var(--color-text-muted)'; this.style.borderColor='var(--line)'">
+                                Kelola
                             </a>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="p-14 text-center">
-                            <div class="text-3xl mb-2 opacity-60">⚽</div>
-                            <div class="font-bold uppercase tracking-wider text-xs" style="color: var(--color-text-meta);">
-                                Belum ada log transaksi reservasi yang tercatat dalam sistem
-                            </div>
+                        <td colspan="7" class="p-12 text-center text-xs font-mono uppercase tracking-widest" style="color: var(--color-text-meta);">
+                            Tidak ada data transaksi atau reservasi ditemukan.
                         </td>
                     </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-
-        {{-- Pagination --}}
-        @if($reservasis->hasPages())
-            <div class="p-5 border-t" style="background: var(--color-bg-main); border-color: var(--line);">
-                {{ $reservasis->links() }}
-            </div>
-        @endif
     </div>
 </div>
 
-<!-- CHART.JS INTEGRATION -->
+@push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const canvas = document.getElementById('dashboardPerformanceChart');
-        if (!canvas) return;
-
-        const existingChart = Chart.getChart(canvas);
-        if (existingChart) {
-            existingChart.destroy();
-        }
-
-        const ctx = canvas.getContext('2d');
-        const labelUtilisasi = @json($labelUtilisasi ?? []);
-        const dataUtilisasi = @json($dataUtilisasi ?? []);
-
-        const gradientFill = ctx.createLinearGradient(0, 0, 0, 300);
-        gradientFill.addColorStop(0, 'rgba(226, 96, 31, 0.30)');
-        gradientFill.addColorStop(1, 'rgba(226, 96, 31, 0.0)');
-
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labelUtilisasi,
-                datasets: [{
-                    label: 'Utilisasi Arena (Jam)',
-                    data: dataUtilisasi,
-                    borderColor: '#e2601f',
-                    backgroundColor: gradientFill,
-                    borderWidth: 2.5,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#ffffff',
-                    pointBorderColor: '#e2601f',
-                    pointBorderWidth: 2,
-                    pointHoverBackgroundColor: '#e2601f',
-                    pointHoverBorderColor: '#ffffff',
-                    pointRadius: 4,
-                    pointHoverRadius: 7
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: '#0d131a',
-                        titleColor: '#ffffff',
-                        bodyColor: '#e2601f',
-                        borderColor: 'rgba(255, 255, 255, 0.15)',
-                        borderWidth: 1,
-                        padding: 12,
-                        cornerRadius: 10,
-                        displayColors: false,
-                        bodyFont: { family: 'JetBrains Mono', weight: 'bold', size: 12 },
-                        titleFont: { family: 'Work Sans', weight: 'bold', size: 11 },
-                        callbacks: {
-                            label: function(context) {
-                                return `Utilisasi: ${context.parsed.y} Jam Booking`;
-                            }
-                        }
-                    }
+        const ctx = document.getElementById('dashboardPerformanceChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
+                    datasets: [{
+                        label: 'Durasi Main (Jam)',
+                        data: [12, 19, 15, 22, 28, 35, 40],
+                        borderColor: '#e2601f',
+                        backgroundColor: 'rgba(226, 96, 31, 0.08)',
+                        borderWidth: 2,
+                        tension: 0.35,
+                        fill: true,
+                        pointBackgroundColor: '#e2601f',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
                 },
-                scales: {
-                    x: {
-                        grid: { color: 'rgba(255, 255, 255, 0.03)' },
-                        ticks: {
-                            color: '#64748b',
-                            font: { size: 10, weight: '600', family: 'JetBrains Mono' }
-                        }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
                     },
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: 'rgba(255, 255, 255, 0.03)' },
-                        ticks: {
-                            color: '#64748b',
-                            font: { size: 10, weight: '600', family: 'JetBrains Mono' },
-                            precision: 0
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                            ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                            ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
     });
 </script>
+@endpush
+
 @endsection
