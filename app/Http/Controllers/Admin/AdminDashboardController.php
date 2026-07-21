@@ -8,6 +8,10 @@ use App\Models\Lapangan;
 use App\Models\User;
 use App\Models\Membership;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class AdminDashboardController extends Controller
 {
@@ -68,16 +72,53 @@ class AdminDashboardController extends Controller
         $totalMember = User::has('membership')->count();
         $reservasis = Reservasi::with(['lapangan', 'user.membership'])->latest()->paginate(10);
 
-        // Ambil data reservasi terbaru untuk tabel utama (Real-time Monitoring)
-        $reservasis = Reservasi::with(['lapangan', 'user.membership'])
-                                ->latest()
-                                ->paginate(10);
+        // Kalkulasi Grafik Utilisasi 7 Hari Terakhir
+        $startDate = Carbon::now()->subDays(6)->startOfDay();
+        $endDate = Carbon::now()->endOfDay();
+
+        $reservasi7Hari = Reservasi::whereBetween('tanggal_main', [$startDate->toDateString(), $endDate->toDateString()])
+            ->whereIn('status', ['Confirmed', 'Completed'])
+            ->get(['tanggal_main', 'jam_mulai', 'jam_selesai'])
+            ->groupBy(function ($item) {
+                return Carbon::parse($item->tanggal_main)->format('Y-m-d');
+            });
+
+        $labelUtilisasi = [];
+        $dataUtilisasi = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i);
+            $dateString = $date->format('Y-m-d');
+
+            $labelUtilisasi[] = $date->translatedFormat('d M');
+
+            $totalJam = 0;
+            if (isset($reservasi7Hari[$dateString])) {
+                $totalJam = $reservasi7Hari[$dateString]->sum(function ($reservasi) {
+                    if (!empty($reservasi->jam_mulai) && !empty($reservasi->jam_selesai)) {
+                        try {
+                            $start = Carbon::parse($reservasi->jam_mulai);
+                            $end = Carbon::parse($reservasi->jam_selesai);
+                            $durasi = $start->diffInHours($end);
+                            return max(1, (int) $durasi);
+                        } catch (\Exception $e) {
+                            return 1;
+                        }
+                    }
+                    return 1;
+                });
+            }
+
+            $dataUtilisasi[] = (int) $totalJam;
+        }
 
         return view('admin.dashboard', compact(
             'totalPendapatan', 
             'matchTerkonfirmasi', 
             'totalMember', 
-            'reservasis'
+            'reservasis',
+            'labelUtilisasi',
+            'dataUtilisasi'
         ));
     }
 
@@ -137,7 +178,7 @@ class AdminDashboardController extends Controller
             $reservasi = Reservasi::findOrFail($id);
             $reservasi->update(['status' => $request->status]);
 
-            return back()->with('success', "Status reservasi #{$reservasi->id} berhasil diubah menjadi {$request->status}.");
+            return back()->with('success', "Status reservasi #{$reservasi->id} (Nota: {$reservasi->nomor_reservasi}) berhasil diperbarui.");
 
         } catch (\Exception $e) {
             Log::error('Gagal update status reservasi ID ' . $id . ': ' . $e->getMessage());
@@ -151,13 +192,11 @@ class AdminDashboardController extends Controller
             $reservasi = Reservasi::findOrFail($id);
             $reservasi->delete();
 
-            return redirect()->route('admin.reservasi.index')
-                ->with('success', 'Data reservasi #' . $id . ' berhasil dihapus dari sistem.');
+            return back()->with('success', 'Data reservasi #' . $id . ' berhasil dihapus dari sistem.');
 
         } catch (\Exception $e) {
             Log::error('Gagal hapus reservasi ID ' . $id . ': ' . $e->getMessage());
-            return redirect()->route('admin.reservasi.index')
-                ->with('error', 'Gagal menghapus data reservasi. Silakan coba lagi.');
+            return back()->with('error', 'Gagal menghapus data reservasi. Silakan coba lagi.');
         }
     }
 
@@ -187,34 +226,6 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * Mengubah Status Reservasi secara Manual
-     */
-    public function updateStatus(Request $request, $id)
-    {
-        $request->validate([
-            'status' => 'required|in:Confirmed,Waiting Payment,Completed,Cancelled'
-        ]);
-
-        $reservasi = Reservasi::findOrFail($id);
-        $reservasi->update([
-            'status' => $request->status
-        ]);
-
-        return redirect()->back()->with('success', "Status nota transaksi {$reservasi->nomor_reservasi} berhasil diperbarui!");
-    }
-
-    /**
-     * Menghapus Data Reservasi dari Log Sistem
-     */
-    public function deleteReservasi($id)
-    {
-        $reservasi = Reservasi::findOrFail($id);
-        $reservasi->delete();
-
-        return redirect()->back()->with('success', "Record data log reservasi berhasil dihapus dari sistem.");
-    }
-
-    /**
      * ==========================================
      * 🌱 MODUL 3: KELOLA ARENA LAPANGAN
      * ==========================================
@@ -232,11 +243,27 @@ class AdminDashboardController extends Controller
      */
     public function member(Request $request)
     {
-        $members = User::with('membership')
-            ->leftJoin('memberships', 'users.id', '=', 'memberships.user_id')
-            ->select('users.*', 'memberships.points as total_points')
-            ->orderBy('total_points', 'desc')
-            ->paginate(10);
+        $query = User::where('is_admin', 0)
+            ->with('membership')
+            ->addSelect([
+                'total_points' => Membership::select('points')
+                    ->whereColumn('user_id', 'users.id')
+                    ->limit(1)
+            ]);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $members = $query->orderByRaw('COALESCE(total_points, 0) DESC')
+            ->latest('users.created_at')
+            ->paginate(10)
+            ->withQueryString();
+
         return view('admin.member.index', compact('members'));
     }
 
@@ -265,17 +292,15 @@ class AdminDashboardController extends Controller
             DB::transaction(function () use ($member, $request) {
                 $member->update(['name' => $request->name]);
 
-                $membership = Membership::firstOrCreate(
-                    ['user_id' => $member->id],
-                    ['membership_type' => 'Bronze', 'points' => 0]
-                );
-
                 $tierBaru = $request->points >= 300 ? 'Gold' : ($request->points >= 100 ? 'Silver' : 'Bronze');
 
-                $membership->update([
-                    'points'          => $request->points,
-                    'membership_type' => $tierBaru,
-                ]);
+                $member->membership()->updateOrCreate(
+                    ['user_id' => $member->id],
+                    [
+                        'points'          => $request->points,
+                        'membership_type' => $tierBaru,
+                    ]
+                );
             });
 
             return redirect()->route('admin.member.index')
@@ -302,6 +327,7 @@ class AdminDashboardController extends Controller
 
         try {
             DB::transaction(function () use ($member) {
+                $member->reservasis()->delete();
                 $member->membership()->delete();
                 $member->delete();
             });
@@ -313,47 +339,5 @@ class AdminDashboardController extends Controller
             Log::error('Gagal hapus member ID ' . $id . ': ' . $e->getMessage());
             return back()->with('error', 'Terjadi kesalahan sistem saat menghapus data member.');
         }
-    }
-
-    /**
-     * Form Edit Member / Poin
-     */
-    public function editMember($id)
-    {
-        $member = User::with('membership')->findOrFail($id);
-        return view('admin.member.edit', compact('member'));
-    }
-
-    /**
-     * Eksekusi Update Data & Poin Member
-     */
-    public function updateMember(Request $request, $id)
-    {
-        $request->validate([
-            'name'   => 'required|string|max:255',
-            'points' => 'required|integer|min:0',
-        ]);
-
-        $member = User::findOrFail($id);
-        $member->update([
-            'name' => $request->name,
-        ]);
-
-        $tierEvaluasi = 'Bronze';
-        if ($request->points >= 300) {
-            $tierEvaluasi = 'Gold';
-        } elseif ($request->points >= 100) {
-            $tierEvaluasi = 'Silver';
-        }
-
-        $member->membership()->updateOrCreate(
-            ['user_id' => $member->id],
-            [
-                'points' => $request->points,
-                'membership_type' => $tierEvaluasi
-            ]
-        );
-
-        return redirect()->route('admin.member.index')->with('success', "Data poin loyalitas member {$member->name} berhasil diperbarui!");
     }
 }
