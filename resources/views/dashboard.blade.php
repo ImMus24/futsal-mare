@@ -66,6 +66,9 @@
 </head>
 <body class="scroll-smooth selection:bg-[#E25E20] selection:text-white">
 
+    {{-- Notifikasi Toast Global --}}
+    @include('partials.toast')
+
     <!-- NAVIGATION BAR (Brutalism Match Sync) -->
     <header style="background: rgba(10, 15, 20, 0.85); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(238, 241, 234, 0.08); position: sticky; top: 0; z-index: 50;">
         <div class="nav wrap" style="display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; height: 80px;">
@@ -76,7 +79,7 @@
 
             <!-- User Account Actions & Quick Logout -->
             <div style="display: flex; align-items: center; gap: 24px;">
-                <div class="hidden sm:flex flex-col text-right" style="border-r: 1px solid rgba(238, 241, 234, 0.1); padding-right: 16px;">
+                <div class="hidden sm:flex flex-col text-right" style="border-right: 1px solid rgba(238, 241, 234, 0.1); padding-right: 16px;">
                     <span style="font-family: var(--mono); font-size: 10px; color: var(--turf); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Sesi Member Aktif</span>
                     <span style="font-size: 13px; color: white; font-weight: 700; margin-top: 2px;">{{ Auth::user()->name }}</span>
                 </div>
@@ -94,7 +97,7 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
         
         <!-- 1. USER PROFILE & LOYALTY TIER OVERVIEW HERO -->
-        <div style="background: linear-gradient(120deg, var(--surface), #0B131F); border-radius: var(--radius); border: 1px solid rgba(238, 241, 234, 0.08); padding: 32px; display: flex; flex-direction: column; md:flex-row: justify-content: space-between; align-items: flex-start; md:align-items: center; gap: 24px; position: relative; overflow: hidden;" class="flex-col lg:flex-row lg:items-center">
+        <div style="background: linear-gradient(120deg, var(--surface), #0B131F); border-radius: var(--radius); border: 1px solid rgba(238, 241, 234, 0.08); padding: 32px; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; gap: 24px; position: relative; overflow: hidden;" class="flex-col lg:flex-row lg:items-center">
             <div class="absolute -right-16 -top-16 w-32 h-32 bg-[var(--turf)] rounded-full filter blur-[80px] opacity-5"></div>
             
             <div style="position: relative; z-index: 10;" class="space-y-4">
@@ -123,29 +126,17 @@
                 </div>
             </div>
 
-            <a href="{{ route('landingPage') }}" class="btn-ui btn-ui-primary" style="position: relative; z-index: 10; width: 100%; lg:width: auto; text-center: center;">
+            <a href="{{ route('landingPage') }}" class="btn-ui btn-ui-primary" style="position: relative; z-index: 10; width: 100%; text-align: center;">
                 + Sewa Lapangan Lagi
             </a>
         </div>
 
-        <!-- 2. SYSTEM STATUS BANNER NOTIFICATIONS -->
-        @if(session('success'))
-            <div style="padding: 16px; background: rgba(47, 158, 88, 0.15); border: 1px solid rgba(47, 158, 88, 0.3); color: #2f9e58; border-radius: 12px; font-size: 13px; font-weight: 600;" class="animate-pulse">
-                <span>✅</span> {{ session('success') }}
-            </div>
-        @endif
-        @if(session('error'))
-            <div style="padding: 16px; background: rgba(226, 87, 76, 0.15); border: 1px solid rgba(226, 87, 76, 0.3); color: #e2574c; border-radius: 12px; font-size: 13px; font-weight: 600;">
-                <span>⚠️</span> {{ session('error') }}
-            </div>
-        @endif
-
-        <!-- 3. CONTEXTUAL MEMBERSHIP AWARENESS WIDGET FOR NEW USERS -->
+        <!-- 2. CONTEXTUAL MEMBERSHIP AWARENESS WIDGET FOR NEW USERS -->
         @if($membership->points == 0 && $membership->membership_type === 'Bronze')
-            <div style="background: linear-gradient(90deg, rgba(33, 45, 60, 0.6), var(--surface)); border-radius: var(--radius); border: 1px dashed rgba(238, 241, 234, 0.15); padding: 24px; display: flex; flex-direction: column; sm:flex-row: justify-content: space-between; align-items: flex-start; sm:align-items: center; gap: 16px; position: relative; overflow: hidden;" class="group">
+            <div style="background: linear-gradient(90deg, rgba(33, 45, 60, 0.6), var(--surface)); border-radius: var(--radius); border: 1px dashed rgba(238, 241, 234, 0.15); padding: 24px; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; gap: 16px; position: relative; overflow: hidden;" class="group sm:flex-row sm:items-center">
                 <div class="absolute -right-8 -bottom-8 w-24 h-24 bg-gradient-to-tr from-amber-600 to-yellow-500 rounded-full filter blur-[40px] opacity-5"></div>
                 <div style="display: flex; align-items: flex-start; gap: 16px;">
-                    <div style="padding: 12px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 8px; font-size: 18px; select-none: none;">🎁</div>
+                    <div style="padding: 12px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 8px; font-size: 18px; user-select: none;">🎁</div>
                     <div style="display: flex; flex-direction: column; gap: 2px;">
                         <h4 style="font-family: var(--body); font-size: 14px; font-weight: 700; color: white; display: flex; align-items: center; gap: 6px;">
                             Mulai Petualangan Tim Anda! <span style="width: 6px; height: 6px; background: var(--turf); border-radius: 50%;" class="animate-ping"></span>
@@ -155,13 +146,13 @@
                         </p>
                     </div>
                 </div>
-                <button type="button" onclick="alert('💡 INFO TIER MEMBERSHIP FUTSAL MARE:\n\n🥉 Bronze (Awal): Akumulasi poin aktif.\n🥈 Silver (100 Poin): Diskon otomatis 5% setiap sewa.\n🏆 Gold (300 Poin): Diskon otomatis 10% + Akses sistem prioritas booking 24/7!')" class="btn-ui btn-ui-ghost btn-ui-sm" style="flex-shrink: 0; width: 100%; sm:width: auto;">
+                <button type="button" onclick="alert('💡 INFO TIER MEMBERSHIP FUTSAL MARE:\n\n🥉 Bronze (Awal): Akumulasi poin aktif.\n🥈 Silver (100 Poin): Diskon otomatis 5% setiap sewa.\n🏆 Gold (300 Poin): Diskon otomatis 10% + Akses sistem prioritas booking 24/7!')" class="btn-ui btn-ui-ghost btn-ui-sm" style="flex-shrink: 0; width: 100%;">
                     Pelajari Benefit Tier &rarr;
                 </button>
             </div>
         @endif
 
-        <!-- 4. REAL-TIME CORE METRICS INDEX -->
+        <!-- 3. REAL-TIME CORE METRICS INDEX -->
         @php
             $totalBooking = $reservasis->count();
             $lunasBooking = $reservasis->whereIn('status', ['Confirmed', 'Completed'])->count();
@@ -191,9 +182,9 @@
             </div>
         </div>
 
-        <!-- 5. DATA TABLES CONSOLE BOARD -->
+        <!-- 4. DATA TABLES CONSOLE BOARD -->
         <div id="riwayat-tabel" style="background: var(--surface); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: var(--radius); overflow: hidden;">
-            <div style="padding: 24px; border-bottom: 1px solid rgba(238, 241, 234, 0.08); background: rgba(15, 23, 42, 0.2); display: flex; flex-direction: column; sm:flex-row: justify-content: space-between; align-items: flex-start; sm:align-items: center; gap: 16px;">
+            <div style="padding: 24px; border-bottom: 1px solid rgba(238, 241, 234, 0.08); background: rgba(15, 23, 42, 0.2); display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; gap: 16px;" class="sm:flex-row sm:items-center">
                 <h3 style="font-family: var(--body); font-weight: 700; text-transform: none; font-size: 16px; color: white; display: flex; align-items: center; gap: 8px;">
                     <span style="width: 8px; height: 8px; background: var(--turf); border-radius: 50%;" class="animate-pulse"></span> Aliran Histori Transaksi Anda
                 </h3>
@@ -226,7 +217,7 @@
 
             @if($reservasis->isEmpty())
                 <div style="padding: 64px 24px; text-align: center; color: var(--muted-2); font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;" class="space-y-2">
-                    <div style="font-size: 32px;" class="animate-bounce">跑</div>
+                    <div style="font-size: 32px;" class="animate-bounce">🏃</div>
                     <p>Anda belum memiliki riwayat data reservasi aktif dalam database.</p>
                 </div>
             @else
