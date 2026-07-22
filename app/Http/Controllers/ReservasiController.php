@@ -15,6 +15,9 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ReservasiController extends Controller
 {
+    // Berapa lama slot "Waiting Payment" boleh menggantung sebelum otomatis dianggap kadaluarsa
+    const MENIT_KEDALUARSA_PEMBAYARAN = 10;
+
     // Menampilkan Landing Page Utama beserta daftar lapangan
     public function landingPage()
     {
@@ -23,29 +26,38 @@ class ReservasiController extends Controller
     }
 
     /**
-     * 🏟️ NEW METHOD: DETAIL INTERAKTIF LAPANGAN (GOLA BLUEPRINT)
-     * Mengelola parameter data master, kalkulasi kalender, dan isolasi slot waktu terpesan.
+     * Helper untuk mengambil jam yang sudah dipesan.
+     * PENTING: reservasi 'Waiting Payment' yang sudah lewat expired_at TIDAK dihitung
+     * sebagai terpesan, supaya slot langsung available lagi tanpa menunggu job cron.
      */
-    public function showLapangan(Request $request, $id)
+    private function getJamTerpesan($lapangan_id, $tanggal)
     {
-        // 1. Ambil data atau return fiksasi error 404 jika token ID manipulatif
-        $lapangan = Lapangan::findOrFail($id);
-        
-        // 2. Tentukan penanggalan dinamis (default hari ini)
-        $tanggal_pilihan = $request->get('tanggal_main', Carbon::today()->toDateString());
-
-        // 3. Ambil data jam operasional yang terpesan pada tanggal tersebut untuk isolasi status 'off'
-        $jam_terpesan = Reservasi::where('lapangan_id', $id)
-            ->where('tanggal_main', $tanggal_pilihan)
-            ->whereIn('status', ['Waiting Payment', 'Confirmed', 'Completed'])
+        return Reservasi::where('lapangan_id', $lapangan_id)
+            ->where('tanggal_main', $tanggal)
+            ->where(function ($q) {
+                $q->whereIn('status', ['Confirmed', 'Completed'])
+                  ->orWhere(function ($q2) {
+                      $q2->where('status', 'Waiting Payment')
+                         ->where('expired_at', '>', now());
+                  });
+            })
             ->get(['jam_mulai', 'jam_selesai'])
             ->map(function ($booking) {
                 $mulai = (int) substr($booking->jam_mulai, 0, 2);
                 $selesai = (int) substr($booking->jam_selesai, 0, 2);
                 return range($mulai, $selesai - 1);
             })->flatten()->toArray();
+    }
 
-        // 4. Kirim data ke view detail dengan data ringkas kompensasi
+    /**
+     * 🏟️ DETAIL INTERAKTIF LAPANGAN
+     */
+    public function showLapangan(Request $request, $id)
+    {
+        $lapangan = Lapangan::findOrFail($id);
+        $tanggal_pilihan = $request->get('tanggal_main', Carbon::today()->toDateString());
+        $jam_terpesan = $this->getJamTerpesan($id, $tanggal_pilihan);
+
         return view('admin.lapangan.detail', compact('lapangan', 'tanggal_pilihan', 'jam_terpesan'));
     }
 
@@ -54,41 +66,66 @@ class ReservasiController extends Controller
     {
         $lapangan = Lapangan::findOrFail($id);
         $tanggal_pilihan = $request->get('tanggal_main', Carbon::today()->toDateString());
+        $jam_terpesan = $this->getJamTerpesan($id, $tanggal_pilihan);
 
-        $jam_terpesan = Reservasi::where('lapangan_id', $id)
-            ->where('tanggal_main', $tanggal_pilihan)
-            ->whereIn('status', ['Waiting Payment', 'Confirmed', 'Completed'])
-            ->get(['jam_mulai', 'jam_selesai'])
-            ->map(function ($booking) {
-                $mulai = (int) substr($booking->jam_mulai, 0, 2);
-                $selesai = (int) substr($booking->jam_selesai, 0, 2);
-                return range($mulai, $selesai - 1);
-            })->flatten()->toArray();
+        // Ambil data membership user saat ini untuk preview diskon di form frontend
+        $user = Auth::user();
+        $membership = Membership::firstOrCreate(
+            ['user_id' => $user->id],
+            ['membership_type' => 'Bronze', 'points' => 0]
+        );
+        
+        $membershipType = $membership->membership_type;
+        // Mengambil persentase diskon langsung dari Accessor Model Membership (dikonversi ke integer persen)
+        $diskonPersen = (int) round($membership->discount_percent * 100);
 
-        return view('reservasi.create', compact('lapangan', 'tanggal_pilihan', 'jam_terpesan'));
+        return view('reservasi.create', compact('lapangan', 'tanggal_pilihan', 'jam_terpesan', 'membershipType', 'diskonPersen', 'membership'));
     }
 
     // Menyimpan Data Reservasi Baru & Menggenerasi Token Pembayaran Instan via API Direct Hit
     public function store(Request $request)
     {
+        $request->validate([
+            'lapangan_id'  => 'required|exists:lapangans,id',
+            'tanggal_main' => 'required|date|after_or_equal:today',
+            'jam_mulai'    => 'required|integer|between:8,21',
+            'durasi'       => 'required|integer|between:1,3',
+        ], [
+            'lapangan_id.required'  => 'Lapangan tidak valid.',
+            'lapangan_id.exists'    => 'Data lapangan tidak ditemukan.',
+            'tanggal_main.required' => 'Tanggal main wajib diisi.',
+            'tanggal_main.date'     => 'Format tanggal tidak valid.',
+            'tanggal_main.after_or_equal' => 'Tanggal main tidak boleh sebelum hari ini.',
+            'jam_mulai.required'    => 'Jam mulai wajib dipilih.',
+            'jam_mulai.between'     => 'Jam mulai harus antara pukul 08.00 - 21.00.',
+            'durasi.required'       => 'Durasi wajib dipilih.',
+            'durasi.between'        => 'Durasi hanya boleh 1-3 jam.',
+        ]);
+
         $lapangan = Lapangan::findOrFail($request->lapangan_id);
         $tanggal = Carbon::parse($request->tanggal_main);
-        
-        $start_hour = $request->jam_mulai;
-        $end_hour = $start_hour + $request->durasi;
+
+        $start_hour = (int) $request->jam_mulai;
+        $end_hour = $start_hour + (int) $request->durasi;
 
         $start_time = sprintf('%02d:00:00', $start_hour);
         $end_time = sprintf('%02d:00:00', $end_hour);
 
         return DB::transaction(function () use ($request, $lapangan, $tanggal, $start_hour, $end_hour, $start_time, $end_time) {
 
-            // KUNCI BARIS LAPANGAN INI (bukan baris reservasi) selama transaksi berjalan.
+            // KUNCI BARIS LAPANGAN INI selama transaksi berjalan
             Lapangan::where('id', $request->lapangan_id)->lockForUpdate()->first();
 
             // 1. VALIDASI OVERLAP JADWAL (Mencegah Race Condition)
             $bentrok = Reservasi::where('lapangan_id', $request->lapangan_id)
                 ->where('tanggal_main', $request->tanggal_main)
-                ->whereIn('status', ['Waiting Payment', 'Confirmed', 'Completed'])
+                ->where(function ($q) {
+                    $q->whereIn('status', ['Confirmed', 'Completed'])
+                      ->orWhere(function ($q2) {
+                          $q2->where('status', 'Waiting Payment')
+                             ->where('expired_at', '>', now());
+                      });
+                })
                 ->where(function ($query) use ($start_time, $end_time) {
                     $query->where(function ($q) use ($start_time, $end_time) {
                         $q->where('jam_mulai', '>=', $start_time)
@@ -97,39 +134,53 @@ class ReservasiController extends Controller
                         $q->where('jam_mulai', '<=', $start_time)
                           ->where('jam_selesai', '>', $start_time);
                     });
-                })->lockForUpdate()->exists();
+                })->exists();
 
             if ($bentrok) {
-                return response()->json(['success' => false, 'message' => 'Jadwal slot jam tersebut baru saja dipesan oleh tim lain!'], 422);
+                return response()->json(['success' => false, 'message' => 'Slot jam tersebut baru saja dipesan orang lain, silakan pilih jam lain.'], 422);
             }
 
-            // 2. PREMIUM: DYNAMIC PRICING CALCULATOR
+            // 2. DYNAMIC PRICING CALCULATOR (peak hour + weekend surcharge)
             $biaya_dasar = $lapangan->harga_per_jam;
-            $total_harga = 0;
+            $subtotal = 0;
 
             for ($hour = $start_hour; $hour < $end_hour; $hour++) {
                 $harga_slot = $biaya_dasar;
                 if ($hour >= 16 && $hour < 22) $harga_slot += 50000;
                 if ($tanggal->isWeekend()) $harga_slot += 20000;
-                $total_harga += $harga_slot;
+                $subtotal += $harga_slot;
             }
 
-            // 3. GENERATE NOMOR RESERVASI UNIK
+            // 3. TERAPKAN DISKON MEMBERSHIP BERDASARKAN TIER AKTIF (Menggunakan Model Accessor)
+            $membership = Membership::firstOrCreate(
+                ['user_id' => Auth::id()],
+                ['membership_type' => 'Bronze', 'points' => 0]
+            );
+
+            $membershipType = $membership->membership_type;
+            $diskonPersen = (int) round($membership->discount_percent * 100);
+            $nominalDiskon = (int) round($subtotal * $membership->discount_percent);
+            $total_harga = $subtotal - $nominalDiskon;
+
+            // 4. GENERATE NOMOR RESERVASI UNIK
             $nomor_reservasi = 'FM-' . date('YmdHis') . '-' . strtoupper(substr(uniqid(), -5));
 
-            // 4. SIMPAN TRANSAKSI BARU (Status awal: Waiting Payment)
+            // 5. SIMPAN TRANSAKSI BARU (Status awal: Waiting Payment + expired_at)
             $reservasi = Reservasi::create([
-                'user_id'         => Auth::id(),
-                'lapangan_id'     => $request->lapangan_id,
-                'nomor_reservasi' => $nomor_reservasi,
-                'tanggal_main'    => $request->tanggal_main,
-                'jam_mulai'       => $start_time,
-                'jam_selesai'     => $end_time,
-                'total_harga'     => (int) $total_harga,
-                'status'          => 'Waiting Payment', 
+                'user_id'                     => Auth::id(),
+                'lapangan_id'                 => $request->lapangan_id,
+                'nomor_reservasi'             => $nomor_reservasi,
+                'tanggal_main'                => $request->tanggal_main,
+                'jam_mulai'                   => $start_time,
+                'jam_selesai'                 => $end_time,
+                'subtotal_sebelum_diskon'     => $subtotal,
+                'diskon_persen'               => $diskonPersen,
+                'total_harga'                 => (int) $total_harga,
+                'status'                      => 'Waiting Payment',
+                'expired_at'                  => now()->addMinutes(self::MENIT_KEDALUARSA_PEMBAYARAN),
             ]);
 
-            // 5. BYPASS SDK MIDTRANS: PEMBUATAN STRUKTUR PAYLOAD BERSIH
+            // 6. BUAT SNAP TOKEN MIDTRANS
             $params = [
                 'transaction_details' => [
                     'order_id'     => (string) $nomor_reservasi,
@@ -138,13 +189,17 @@ class ReservasiController extends Controller
                 'customer_details' => [
                     'first_name' => (string) Auth::user()->name,
                     'email'      => (string) Auth::user()->email,
-                ]
+                ],
+                'expiry' => [
+                    'unit'     => 'minute',
+                    'duration' => self::MENIT_KEDALUARSA_PEMBAYARAN,
+                ],
             ];
 
             try {
                 $serverKey = config('services.midtrans.server_key');
                 $base64Auth = base64_encode($serverKey . ':');
-                
+
                 $response = Http::withHeaders([
                     'Accept'        => 'application/json',
                     'Content-Type'  => 'application/json',
@@ -152,24 +207,28 @@ class ReservasiController extends Controller
                 ])->post('https://app.sandbox.midtrans.com/snap/v1/transactions', $params);
 
                 if ($response->failed()) {
-                    throw new \Exception('API Midtrans Menolak Permintaan: ' . $response->body());
+                    throw new \Exception('API Midtrans menolak permintaan: ' . $response->body());
                 }
 
                 $responseData = $response->json();
                 $snapToken = $responseData['token'];
-                
+
                 $reservasi->update(['snap_token' => $snapToken]);
 
                 return response()->json([
-                    'success'    => true,
-                    'snap_token' => $snapToken,
-                    'redirect'   => route('dashboard')
+                    'success'         => true,
+                    'snap_token'      => $snapToken,
+                    'nomor_reservasi' => $nomor_reservasi,
+                    'redirect'        => route('dashboard'),
                 ]);
-                
+
             } catch (\Exception $e) {
+                $reservasi->update(['status' => 'Cancelled']);
+                Log::error('Gagal membuat Snap token Midtrans: ' . $e->getMessage());
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Gagal jabat tangan API gateway: ' . $e->getMessage()
+                    'message' => 'Gagal membuat sesi pembayaran, silakan coba lagi.'
                 ], 500);
             }
         });
@@ -216,14 +275,7 @@ class ReservasiController extends Controller
     }
 
     /**
-     * KONFIRMASI PEMBAYARAN INSTAN DARI SISI KLIEN (dipanggil dari onSuccess/onPending Snap.js).
-     *
-     * KENAPA INI DIPERLUKAN: di lingkungan development lokal (127.0.0.1/localhost),
-     * webhook Midtrans (handleNotification() di bawah) TIDAK PERNAH terpanggil,
-     * karena server Midtrans tidak bisa menjangkau alamat localhost dari internet.
-     * Endpoint ini memberi jalur konfirmasi kedua yang aman dipanggil berkali-kali
-     * (idempotent), dan TIDAK langsung percaya klaim dari browser — ia mengecek
-     * status transaksi yang sebenarnya langsung ke API status Midtrans.
+     * KONFIRMASI PEMBAYARAN INSTAN DARI SISI KLIEN (onSuccess/onPending Snap.js).
      */
     public function confirmPayment($nomor_reservasi)
     {
@@ -279,20 +331,17 @@ class ReservasiController extends Controller
             $statusAkhir = $reservasi->fresh()->status;
 
             if ($statusAkhir === 'Confirmed') {
-                session()->flash('success', 'Pembayaran berhasil dikonfirmasi! Jadwal reservasi Anda sudah lunas.');
+                session()->flash('success', 'Pembayaran berhasil dikonfirmasi! Jadwal reservasi Anda sudah lunas & poin membership bertambah.');
             } elseif ($statusAkhir === 'Cancelled' && $transactionStatus !== null) {
                 session()->flash('error', 'Transaksi pembayaran dibatalkan/kadaluarsa di sisi Midtrans.');
             }
 
-            return response()->json([
-                'success' => true,
-                'status'  => $statusAkhir,
-            ]);
+            return response()->json(['success' => true, 'status' => $statusAkhir]);
 
         } catch (\Exception $e) {
             Log::error("Gagal konfirmasi instan pembayaran {$reservasi->nomor_reservasi}: " . $e->getMessage());
 
-            session()->flash('error', 'Pembayaran diterima, namun verifikasi instan gagal. Status akan diperbarui otomatis dalam beberapa saat — refresh halaman ini jika belum berubah.');
+            session()->flash('error', 'Pembayaran diterima, namun verifikasi instan gagal. Status akan diperbarui otomatis dalam beberapa saat.');
 
             return response()->json([
                 'success' => false,
@@ -303,9 +352,8 @@ class ReservasiController extends Controller
     }
 
     /**
-     * Terapkan efek pembayaran sukses: ubah status jadi Confirmed dan tambahkan
-     * poin membership. Dipakai bersama oleh confirmPayment() (jalur klien/lokal)
-     * dan handleNotification() (webhook resmi/produksi). IDEMPOTENT.
+     * Terapkan efek pembayaran sukses: ubah status jadi Confirmed, berikan poin loyalitas,
+     * dan evaluasi kenaikan Tier Membership secara otomatis. IDEMPOTENT.
      */
     private function konfirmasiPembayaranSukses(Reservasi $reservasi, ?string $paymentType = null): void
     {
@@ -324,9 +372,11 @@ class ReservasiController extends Controller
             ['membership_type' => 'Bronze', 'points' => 0]
         );
 
+        // Poin dihitung dari nilai total_harga riil yang dibayar (setelah diskon)
         $poinBaru = floor($reservasi->total_harga / 10000);
         $totalPoinAkhir = $membership->points + $poinBaru;
 
+        // Evaluasi Tier Membership Berdasarkan Akumulasi Poin
         $tierEvaluasi = 'Bronze';
         if ($totalPoinAkhir >= 300) {
             $tierEvaluasi = 'Gold';
@@ -343,10 +393,19 @@ class ReservasiController extends Controller
     // MIDTRANS WEBHOOK NOTIFICATION HANDLER (produksi)
     public function handleNotification(Request $request)
     {
+        $request->validate([
+            'order_id'            => 'required|string',
+            'status_code'         => 'required|string',
+            'gross_amount'        => 'required|string',
+            'signature_key'       => 'required|string',
+            'transaction_status'  => 'required|string',
+        ]);
+
         $serverKey = config('services.midtrans.server_key');
         $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
 
         if ($hashed !== $request->signature_key) {
+            Log::warning('Signature Midtrans tidak valid untuk order ' . $request->order_id);
             return response()->json(['message' => 'Invalid Signature'], 403);
         }
 
@@ -367,46 +426,18 @@ class ReservasiController extends Controller
 
         DB::transaction(function () use ($transactionStatus, $reservasi, $request) {
             if ($transactionStatus == 'settlement' || $transactionStatus == 'capture') {
-                
-                $reservasi->update([
-                    'status' => 'Confirmed',
-                    'metode_pembayaran' => $request->payment_type
-                ]);
-
-                $membership = Membership::firstOrCreate(
-                    ['user_id' => $reservasi->user_id],
-                    ['membership_type' => 'Bronze', 'points' => 0]
-                );
-
-                $poinBaru = floor($reservasi->total_harga / 10000);
-                $totalPoinAkhir = $membership->points + $poinBaru;
-
-                $tierEvaluasi = 'Bronze';
-                if ($totalPoinAkhir >= 300) {
-                    $tierEvaluasi = 'Gold';
-                } elseif ($totalPoinAkhir >= 100) {
-                    $tierEvaluasi = 'Silver';
-                }
-
-                $membership->update([
-                    'points' => $totalPoinAkhir,
-                    'membership_type' => $tierEvaluasi
-                ]);
-
+                $this->konfirmasiPembayaranSukses($reservasi, $request->payment_type);
             } elseif (in_array($transactionStatus, ['cancel', 'expire', 'deny'])) {
-                $reservasi->update(['status' => 'Cancelled']);
+                if ($reservasi->status === 'Waiting Payment') {
+                    $reservasi->update(['status' => 'Cancelled']);
+                }
             }
         });
 
         return response()->json(['message' => 'Callback diproses sukses']);
     }
 
-    /**
-     * Menampilkan Halaman Dashboard Riwayat Reservasi Member.
-     * Mengirim semua variabel yang dibutuhkan dashboard.blade.php:
-     * membership, totalBooking, lunasBooking, totalPengeluaran — dihitung
-     * dari koleksi $reservasis yang sama supaya angkanya selalu konsisten.
-     */
+    // Menampilkan Halaman Dashboard Riwayat Reservasi & Status Membership Member
     public function dashboard()
     {
         $user = Auth::user();
@@ -416,21 +447,17 @@ class ReservasiController extends Controller
             ->latest()
             ->get();
 
-        $membership = $user->membership ?? (object) [
-            'membership_type' => 'Bronze',
-            'points' => 0,
-        ];
+        $membership = Membership::firstOrCreate(
+            ['user_id' => $user->id],
+            ['membership_type' => 'Bronze', 'points' => 0]
+        );
 
         $totalBooking = $reservasis->count();
         $lunasBooking = $reservasis->whereIn('status', ['Confirmed', 'Completed'])->count();
         $totalPengeluaran = $reservasis->whereIn('status', ['Confirmed', 'Completed'])->sum('total_harga');
 
         return view('dashboard', compact(
-            'reservasis',
-            'membership',
-            'totalBooking',
-            'lunasBooking',
-            'totalPengeluaran'
+            'reservasis', 'membership', 'totalBooking', 'lunasBooking', 'totalPengeluaran'
         ));
     }
 
@@ -443,9 +470,7 @@ class ReservasiController extends Controller
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
-        return response()->json([
-            'status' => $reservasi->status,
-        ]);
+        return response()->json(['status' => $reservasi->status]);
     }
 
     // PEMBATALAN MANUAL DARI TOMBOL DASHBOARD
@@ -467,18 +492,20 @@ class ReservasiController extends Controller
             $serverKey = config('services.midtrans.server_key');
             $base64Auth = base64_encode($serverKey . ':');
 
-            Http::withHeaders([
+            $response = Http::withHeaders([
                 'Authorization' => 'Basic ' . $base64Auth,
-            ])->post("https://api.sandbox.midtrans.com/v2/{$reservasi->nomor_reservasi}/cancel");
+                'Accept'        => 'application/json',
+            ])->timeout(5)->post("https://api.sandbox.midtrans.com/v2/{$reservasi->nomor_reservasi}/cancel");
 
+            if ($response->failed()) {
+                Log::warning("Gagal membatalkan order {$reservasi->nomor_reservasi} di Midtrans: " . $response->body());
+            }
         } catch (\Exception $e) {
-            Log::warning('Sinyal pembatalan ke Midtrans gagal/terbaca hangus: ' . $e->getMessage());
+            Log::error('Koneksi ke Midtrans gagal saat pembatalan: ' . $e->getMessage());
         }
 
-        $reservasi->update([
-            'status' => 'Cancelled'
-        ]);
-        
+        $reservasi->update(['status' => 'Cancelled']);
+
         return redirect()->route('dashboard')->with('success', 'Jadwal reservasi match Anda telah berhasil dibatalkan.');
     }
 
@@ -502,8 +529,11 @@ class ReservasiController extends Controller
     public function destroyMassal(Request $request)
     {
         $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'exists:reservasis,id'
+            'ids'   => 'required|array',
+            'ids.*' => 'exists:reservasis,id',
+        ], [
+            'ids.required' => 'Pilih minimal satu riwayat transaksi untuk dihapus.',
+            'ids.*.exists' => 'Salah satu transaksi yang dipilih tidak ditemukan.',
         ]);
 
         $deleted = Reservasi::whereIn('id', $request->ids)
@@ -530,75 +560,62 @@ class ReservasiController extends Controller
             return redirect()->route('dashboard')->with('error', 'Tiket tidak dapat dibuka. Pastikan reservasi sudah lunas sebelum mengunduh e-tiket.');
         }
 
-        $nama_file = 'qr_' . $reservasi->nomor_reservasi . '.svg';
-        $relative_path = 'qrcodes/' . $nama_file;
+        $folder_path = public_path('images/qrcodes');
+        if (!file_exists($folder_path)) {
+            mkdir($folder_path, 0755, true);
+        }
 
-        if (!Storage::disk('public')->exists($relative_path)) {
-            $svg = QrCode::format('svg')
+        $nama_file = 'qr_' . $reservasi->nomor_reservasi . '.svg';
+        $file_path = $folder_path . '/' . $nama_file;
+
+        if (!file_exists($file_path)) {
+            QrCode::format('svg')
                 ->size(300)
                 ->margin(2)
                 ->errorCorrection('H')
-                ->generate($reservasi->nomor_reservasi);
+                ->generate($reservasi->nomor_reservasi, $file_path);
 
-            Storage::disk('public')->put($relative_path, $svg);
             $reservasi->update(['qr_code_path' => $nama_file]);
         }
 
-        // PENTING: $qrUrl dihitung dari disk YANG SAMA dengan tempat file
-        // benar-benar disimpan (Storage::disk('public')), bukan ditebak ulang
-        // di Blade dengan public_path() folder yang berbeda — itu bug lama
-        // yang membuat QR code di tiket tidak pernah tampil sama sekali.
-        // Butuh symlink aktif: jalankan `php artisan storage:link` kalau
-        // belum pernah, atau URL ini akan 404 walau file-nya benar-benar ada.
-        $qrUrl = Storage::disk('public')->url($relative_path);
+        // Variabel $qrUrl didefinisikan ke view agar gambar QR Code terbaca dengan benar
+        $qrUrl = asset('images/qrcodes/' . $nama_file);
 
         return view('reservasi.tiket', compact('reservasi', 'qrUrl'));
     }
 
     /**
-     * TERMINAL GATE SCANNER CHECK-IN.
+     * 📷 REAL-TIME TERMINAL GATE SCANNER CHECK-IN
      */
     public function processStaffCheckIn(Request $request)
     {
         $request->validate([
             'nomor_reservasi' => 'required|string',
+        ], [
+            'nomor_reservasi.required' => 'Kode QR tidak terbaca, silakan pindai ulang.',
         ]);
 
         try {
             $reservasi = Reservasi::where('nomor_reservasi', $request->nomor_reservasi)->first();
 
             if (!$reservasi) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Kode QR tidak valid / data reservasi tidak ditemukan!'
-                ], 404);
+                return response()->json(['success' => false, 'message' => 'Kode QR tidak valid / data reservasi tidak ditemukan!'], 404);
             }
 
             if ($reservasi->status === 'Cancelled') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tiket ditolak! Jadwal match ini telah dibatalkan.'
-                ], 422);
+                return response()->json(['success' => false, 'message' => 'Tiket ditolak! Jadwal match ini telah dibatalkan.'], 422);
             }
 
             if ($reservasi->status === 'Waiting Payment') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tiket ditolak! Tim belum menyelesaikan tagihan transaksi di Midtrans.'
-                ], 422);
+                return response()->json(['success' => false, 'message' => 'Tiket ditolak! Tim belum menyelesaikan tagihan transaksi di Midtrans.'], 422);
             }
 
             if ($reservasi->status === 'Completed') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Peringatan! Tiket ini sudah pernah digunakan untuk check-in.'
-                ], 422);
+                return response()->json(['success' => false, 'message' => 'Peringatan! Tiket ini sudah pernah digunakan untuk check-in.'], 422);
             }
 
             if ($reservasi->status === 'Confirmed') {
-                $reservasi->update([
-                    'status' => 'Completed'
-                ]);
+                $reservasi->update(['status' => 'Completed']);
 
                 return response()->json([
                     'success' => true,
@@ -606,17 +623,11 @@ class ReservasiController extends Controller
                 ], 200);
             }
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi anomali status data: ' . $reservasi->status
-            ], 400);
+            return response()->json(['success' => false, 'message' => 'Terjadi anomali status data: ' . $reservasi->status], 400);
 
         } catch (\Exception $e) {
             Log::error('Gagal memproses Gate Check-In: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kegagalan sistem internal server hq.'
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Terjadi kegagalan sistem internal server hq.'], 500);
         }
     }
 }
