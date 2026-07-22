@@ -211,7 +211,6 @@
                 const temporaryLink = document.createElement('a');
                 temporaryLink.download = 'Tiket_FutsalMare_{{ $reservasi->nomor_reservasi }}.png';
                 temporaryLink.href = imageURI;
-
                 document.body.appendChild(temporaryLink);
                 temporaryLink.click();
                 document.body.removeChild(temporaryLink);
