@@ -68,56 +68,32 @@
             
             <!-- HEADER BAR CONTAINER -->
             <div style="padding: 24px; border-bottom: 1px solid rgba(238, 241, 234, 0.08); background: rgba(15, 23, 42, 0.2); display: flex; justify-content: space-between; align-items: center;">
-                <h2 style="font-size: 16px; color: white; letter-spacing: 0.05em;">✏️ Modifikasi Data Lapangan</h2>
+                <div>
+                    <span style="font-family: var(--mono); font-size: 11px; color: var(--turf); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; display: block; margin-bottom: 2px;">
+                        Modifikasi Arena
+                    </span>
+                    <h2 style="font-size: 18px; color: white; margin: 0;">✏️ Edit Lapangan: {{ $lapangan->nama_lapangan }}</h2>
+                </div>
                 <a href="{{ route('admin.lapangan.index') }}" class="btn-ui btn-ui-ghost">
                     &larr; Kembali
                 </a>
             </div>
-        @endif
 
-            <!-- ERROR HANDLING BANNER SINKRON -->
-            <div style="padding: 24px; padding-bottom: 0;">
-                @if ($errors->any())
+            <!-- ERROR HANDLING BANNER -->
+            @if ($errors->any())
+                <div style="padding: 24px; padding-bottom: 0;">
                     <div style="padding: 16px; background: rgba(226, 87, 76, 0.15); border: 1px solid rgba(226, 87, 76, 0.3); color: #e2574c; border-radius: 12px; font-size: 13px; font-weight: 600;" class="space-y-1">
-                        <p style="font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">⚠️ Perubahan Gagal Disimpan:</p>
+                        <p style="font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">⚠️ Perubahan Gagal Disimpan ({{ $errors->count() }} Kesalahan):</p>
                         <ul class="list-disc list-inside font-medium" style="opacity: 0.85;">
                             @foreach ($errors->all() as $error)
                                 <li>{{ $error }}</li>
                             @endforeach
                         </ul>
                     </div>
-                @endif
-            </div>
-        @endif
-
-        <div class="rounded-2xl shadow-2xl overflow-hidden" style="background: var(--color-bg-card); border: 1px solid var(--line);">
-
-            <!-- HEADER BAR -->
-            <div class="p-6 flex justify-between items-center relative overflow-hidden" style="border-bottom: 1px solid var(--line); background: rgba(226,94,32,0.05);">
-                <div class="absolute -right-14 -top-14 w-32 h-32 rounded-full pointer-events-none" style="background: radial-gradient(circle, rgba(226,94,32,0.18), transparent 70%);"></div>
-                <div class="relative z-10">
-                    <span class="f-mono text-[11px] font-semibold uppercase tracking-widest flex items-center gap-2" style="color: var(--color-primary);">
-                        <span class="w-1.5 h-1.5 rounded-full" style="background: var(--color-primary); animation: fm-pulse 1.6s infinite;"></span>
-                        Modifikasi Data
-                    </span>
-                    <h1 class="f-display text-xl uppercase tracking-tight mt-1">✏️ Edit Lapangan: {{ $lapangan->nama_lapangan }}</h1>
-                </div>
-                <a href="{{ route('admin.lapangan.index') }}" class="btn-ui btn-ui-ghost relative z-10">&larr; Batal</a>
-            </div>
-
-            <!-- RINGKASAN ERROR VALIDASI -->
-            @if ($errors->any())
-                <div class="p-6 pb-0">
-                    <div class="p-4 rounded-xl text-xs font-semibold" style="background: var(--danger-bg); border: 1px solid rgba(239,68,68,0.3); color: var(--danger);">
-                        <p class="f-mono uppercase tracking-wide font-bold">
-                            ⚠️ Perubahan Gagal Disimpan — {{ $errors->count() }} kolom perlu diperbaiki:
-                        </p>
-                        <p class="mt-1 font-medium" style="opacity: 0.85;">Detail kesalahan ditandai langsung di bawah setiap kolom terkait.</p>
-                    </div>
                 </div>
             @endif
 
-            <!-- CORE CONFIGURATOR EDIT FORM -->
+            <!-- EDIT FORM -->
             <form action="{{ route('admin.lapangan.update', $lapangan->id) }}" method="POST" enctype="multipart/form-data" style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
                 @csrf
                 @method('PUT')
