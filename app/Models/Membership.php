@@ -14,16 +14,15 @@ class Membership extends Model
     ];
 
     /**
-     * Mendapatkan persentase diskon berdasarkan tier membership.
-     * Penggunaan: $membership->discount_percent
+     * Mendapatkan persentase diskon berdasarkan tier membership dalam bentuk desimal/persen.
+     * Disinkronkan dengan aturan diskon utama aplikasi.
      */
     public function getDiscountPercentAttribute(): float
     {
-        return match ($this->membership_type) {
-            'Gold'   => 0.20, // 20%
-            'Silver' => 0.10, // 10%
-            'Bronze' => 0.05, // 5%
-            default  => 0.00,
+        return match (strtolower($this->membership_type ?? 'bronze')) {
+            'gold'   => 0.10, // 10%
+            'silver' => 0.05, // 5%
+            default  => 0.00, // 0% (Bronze / belum ada)
         };
     }
 
