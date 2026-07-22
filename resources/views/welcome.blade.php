@@ -572,7 +572,7 @@
                 </div>
             </div>
 
-            <div id="faqList" style="max-w: 800px;">
+            <div id="faqList" style="max-width: 800px;">
                 <!-- FAQ Item 1 -->
                 <div class="faq-item">
                     <button type="button" class="faq-btn" onclick="toggleFaq(this)">
@@ -580,7 +580,7 @@
                         <svg class="faq-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="19 9l-7 7-7-7"/></svg>
                     </button>
                     <div class="faq-answer">
-                        Pilih arena yang Anda inginkan di katalog, klik "Amankan Slot Waktu", lalu tentukan tanggal tanding serta jam operasional yang masih terbuka. Selesaikan transaksi via Midtrans sebelum batas batas pembayaran expired.
+                        Pilih arena yang Anda inginkan di katalog, klik "Amankan Slot Waktu", lalu tentukan tanggal tanding serta jam operasional yang masih terbuka. Selesaikan transaksi via Midtrans sebelum batas pembayaran expired.
                     </div>
                 </div>
 
@@ -627,22 +627,19 @@
                         Setiap kali transaksi reservasi sukses, akun Anda otomatis terisi +10 Poin. Saat mencapai 100 Poin (Silver), Anda memperoleh Diskon 5%. Jika mencapai 300 Poin (Gold), Anda memperoleh Diskon 10% otomatis yang langsung terpotong di checkout.
                     </div>
                 </div>
-
-                <!-- Empty State Search Result -->
-                <div id="faqEmpty" style="display: none; padding: 24px; text-align: center; color: var(--muted); font-size: 14px; font-family: var(--mono);">
-                    🔍 Pertanyaan tidak ditemukan. Coba gunakan kata kunci lain.
-                </div>
             </div>
         </div>
     </section>
 
-    <!-- CTA BAND SECTION -->
-    <section style="border-bottom:none;">
+    <!-- CALL TO ACTION (CTA) BAND -->
+    <section style="border-bottom: none;">
         <div class="wrap">
             <div class="cta-band">
-                <h2>Siap Mengamankan Slot Pertandingan?</h2>
-                <p>Slot waktu jam favorit (Malam & Weekend) sangat terbatas. Amankan jadwal tim Anda sekarang sebelum terisi oleh tim lain!</p>
-                <a href="#lapangan" class="btn-ui btn-ui-primary" style="position:relative; z-index:1;">Booking Arena Sekarang &rarr;</a>
+                <h2>SIAP AMANKAN JADWAL TANDING TIM ANDA?</h2>
+                <p>Jangan sampai slot waktu favorit Anda direbut tim lain. Cek ketersediaan arena sekarang dan bertanding dengan fasilitas kualitas premium.</p>
+                <a href="#lapangan" class="btn-ui btn-ui-primary" style="position: relative; z-index: 1;">
+                    Cari & Reservasi Arena Sekarang
+                </a>
             </div>
         </div>
     </section>
@@ -652,122 +649,88 @@
         <div class="wrap">
             <div class="foot-grid">
                 <div>
-                    <a href="#" class="logo" style="margin-bottom:16px;">
-                        <span class="dot"></span>FUTSAL MARE
+                    <a href="#" class="logo" style="margin-bottom: 16px;">
+                        <span class="dot"></span>FUTSAL<span style="color:var(--muted-2); font-family:var(--body); font-weight:400; font-size:12px; margin-left:2px;">MARE</span>
                     </a>
-                    <p style="color:var(--muted); font-size:13px; max-width:280px; font-weight:500;">
-                        Sistem Informasi Layanan Reservasi Penyewaan Lapangan Futsal Digital Terintegrasi Kota Baubau.
+                    <p style="font-size: 13px; color: var(--muted); max-width: 300px; line-height: 1.6;">
+                        Penyedia layanan arena futsal dengan rumput sintetis premium, sistem pencahayaan LED terarah, dan reservasi digital terintegrasi di Kota Baubau.
                     </p>
                 </div>
 
                 <div>
                     <h4>Navigasi</h4>
                     <ul>
+                        <li><a href="#">Beranda</a></li>
                         <li><a href="#lapangan">Katalog Arena</a></li>
-                        <li><a href="#membership">Sistem Membership</a></li>
+                        <li><a href="#membership">Membership Tier</a></li>
                         <li><a href="#cara-booking">Alur Prosedur</a></li>
-                        <li><a href="#faq">Pusat FAQ</a></li>
                     </ul>
                 </div>
 
                 <div>
                     <h4>Bantuan</h4>
                     <ul>
-                        <li><a href="#faq">Syarat & Ketentuan</a></li>
-                        <li><a href="#faq">Kebijakan Privasi</a></li>
-                        <li><a href="#faq">Pusat Pengaduan</a></li>
+                        <li><a href="#faq">Pusat Informasi FAQ</a></li>
+                        <li><a href="#">Syarat & Ketentuan</a></li>
+                        <li><a href="#">Kebijakan Privasi</a></li>
+                        <li><a href="#">Konfirmasi Reschedule</a></li>
                     </ul>
                 </div>
 
                 <div>
-                    <h4>Kontak Arena</h4>
+                    <h4>Lokasi & Jam</h4>
                     <ul>
-                        <li>Kota Baubau, Sulawesi Tenggara</li>
-                        <li>+62 812-3456-7890</li>
-                        <li>support@futsalmare.id</li>
+                        <li>📍 Kota Baubau, Sulawesi Tenggara</li>
+                        <li>⏰ 06:00 – 24:00 WITA</li>
+                        <li>⚡ Sistem Online 24/7</li>
                     </ul>
                 </div>
             </div>
 
             <div class="foot-bottom">
-                <span>&copy; {{ date('Y') }} Futsal Mare. Seluruh Hak Cipta Dilindungi.</span>
-                <span>Sistem Informasi Reservasi Futsal Digital.</span>
+                <div>&copy; {{ date('Y') }} Futsal Mare Baubau. All Rights Reserved.</div>
+                <div style="font-family: var(--mono); font-size: 11px;">SYSTEM STATUS: <span style="color:#2f9e58;">ONLINE</span></div>
             </div>
         </div>
     </footer>
 
-    <!-- INTERACTION SCRIPTS -->
+    <!-- JAVASCRIPT FOR FAQ TOGGLE & LIVE SEARCH -->
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // Smooth Scroll with Navbar Offset
-            document.querySelectorAll('.nav-links a, a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    const targetId = this.getAttribute('href');
-                    if (targetId === '#') {
-                        e.preventDefault();
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                        return;
-                    }
+        // Function untuk Toggle Accordion FAQ
+        function toggleFaq(button) {
+            const answer = button.nextElementSibling;
+            const isExpanded = button.classList.contains('active');
 
-                    const targetElement = document.querySelector(targetId);
-                    if (targetElement) {
-                        e.preventDefault();
-                        const navbarHeight = 80;
-                        const elementPosition = targetElement.getBoundingClientRect().top;
-                        const offsetPosition = elementPosition + window.pageYOffset - navbarHeight;
-                        
-                        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-                    }
-                });
-            });
-
-            // Live Search FAQ
-            const faqSearch = document.getElementById('faqSearch');
-            if (faqSearch) {
-                faqSearch.addEventListener('input', function (e) {
-                    const query = e.target.value.toLowerCase().trim();
-                    const faqItems = document.querySelectorAll('.faq-item');
-                    let visibleCount = 0;
-
-                    faqItems.forEach(item => {
-                        const question = item.querySelector('.faq-btn span').innerText.toLowerCase();
-                        const answer = item.querySelector('.faq-answer').innerText.toLowerCase();
-
-                        if (question.includes(query) || answer.includes(query)) {
-                            item.style.display = 'block';
-                            visibleCount++;
-                        } else {
-                            item.style.display = 'none';
-                        }
-                    });
-
-                    const emptyState = document.getElementById('faqEmpty');
-                    if (emptyState) {
-                        emptyState.style.display = (visibleCount === 0 && query !== '') ? 'block' : 'none';
-                    }
-                });
-            }
-        });
-
-        // FAQ Toggle Accordion Function
-        function toggleFaq(btn) {
-            const answer = btn.nextElementSibling;
-            const isOpen = btn.classList.contains('active');
-
-            // Close all open answers
-            document.querySelectorAll('.faq-btn').forEach(otherBtn => {
-                otherBtn.classList.remove('active');
-                if (otherBtn.nextElementSibling) {
-                    otherBtn.nextElementSibling.classList.remove('show');
+            // Tutup item FAQ lainnya (accordion murni)
+            document.querySelectorAll('.faq-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.nextElementSibling) {
+                    btn.nextElementSibling.classList.remove('show');
                 }
             });
 
-            // Toggle current answer
-            if (!isOpen) {
-                btn.classList.add('active');
+            // Buka item jika sebelumnya tertutup
+            if (!isExpanded) {
+                button.classList.add('active');
                 answer.classList.add('show');
             }
         }
+
+        // Live Search untuk FAQ
+        document.getElementById('faqSearch').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            const faqItems = document.querySelectorAll('.faq-item');
+
+            faqItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
     </script>
+
 </body>
 </html>
