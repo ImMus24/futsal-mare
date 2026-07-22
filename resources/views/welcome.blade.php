@@ -230,6 +230,92 @@
         .step h3 { font-family: var(--body); font-weight: 700; text-transform: none; font-size: 18px; margin-bottom: 10px; color: white; }
         .step p { color: var(--muted); font-size: 14px; line-height: 1.6; font-weight: 500; }
 
+        /* FAQ STYLES */
+        .faq-search-box {
+            position: relative;
+            margin-top: 24px;
+            max-width: 480px;
+        }
+        .faq-search-input {
+            width: 100%;
+            background: var(--surface-2);
+            border: 1px solid rgba(241, 245, 249, 0.12);
+            color: var(--line);
+            padding: 14px 18px 14px 44px;
+            border-radius: var(--radius-md);
+            font-family: var(--body);
+            font-size: 14px;
+            outline: none;
+            transition: all .2s ease;
+        }
+        .faq-search-input:focus {
+            border-color: var(--turf);
+            box-shadow: 0 0 15px var(--turf-glow);
+        }
+        .faq-search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted-2);
+            width: 18px;
+            height: 18px;
+        }
+        .faq-item {
+            background: var(--surface);
+            border: 1px solid rgba(241, 245, 249, 0.08);
+            border-radius: var(--radius-md);
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: border-color .2s ease;
+        }
+        .faq-item:hover {
+            border-color: rgba(226, 94, 32, 0.3);
+        }
+        .faq-btn {
+            width: 100%;
+            padding: 18px 20px;
+            background: none;
+            border: none;
+            color: white;
+            font-family: var(--body);
+            font-size: 15px;
+            font-weight: 700;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            gap: 16px;
+        }
+        .faq-chevron {
+            width: 18px;
+            height: 18px;
+            color: var(--turf);
+            transition: transform .25s ease;
+            flex-shrink: 0;
+        }
+        .faq-btn.active .faq-chevron {
+            transform: rotate(180deg);
+        }
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .3s cubic-bezier(0, 1, 0, 1), padding .3s ease;
+            padding: 0 20px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.7;
+            background: rgba(8, 12, 16, 0.3);
+        }
+        .faq-answer.show {
+            max-height: 300px;
+            padding: 0 20px 20px 20px;
+            border-top: 1px solid rgba(241, 245, 249, 0.04);
+            margin-top: 4px;
+            padding-top: 14px;
+        }
+
         /* CTA BAND */
         .cta-band {
             background: linear-gradient(135deg, #182535 0%, var(--surface-2) 50%, var(--ink) 100%);
@@ -274,6 +360,7 @@
                 <a href="#lapangan">Arena</a>
                 <a href="#membership">Membership</a>
                 <a href="#cara-booking">Alur Prosedur</a>
+                <a href="#faq">FAQ</a>
             </nav>
             
             <div class="nav-actions">
@@ -468,6 +555,87 @@
         </div>
     </section>
 
+    <!-- FAQ SECTION -->
+    <section id="faq">
+        <div class="wrap">
+            <div class="sec-head">
+                <span class="eyebrow">Pusat Bantuan</span>
+                <h2>Pertanyaan Sering Diajukan</h2>
+                <p>Punya kebingungan seputar pembayaran, reschedule, e-tiket, atau loyalty point? Temukan jawaban lengkapnya di bawah ini.</p>
+                
+                <!-- Live Search -->
+                <div class="faq-search-box">
+                    <svg class="faq-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" id="faqSearch" placeholder="Cari pertanyaan (misal: bayar, tiket, reschedule)..." class="faq-search-input">
+                </div>
+            </div>
+
+            <div id="faqList" style="max-w: 800px;">
+                <!-- FAQ Item 1 -->
+                <div class="faq-item">
+                    <button type="button" class="faq-btn" onclick="toggleFaq(this)">
+                        <span>Bagaimana cara melakukan pemesanan lapangan di Futsal Mare?</span>
+                        <svg class="faq-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="faq-answer">
+                        Pilih arena yang Anda inginkan di katalog, klik "Amankan Slot Waktu", lalu tentukan tanggal tanding serta jam operasional yang masih terbuka. Selesaikan transaksi via Midtrans sebelum batas batas pembayaran expired.
+                    </div>
+                </div>
+
+                <!-- FAQ Item 2 -->
+                <div class="faq-item">
+                    <button type="button" class="faq-btn" onclick="toggleFaq(this)">
+                        <span>Metode pembayaran apa saja yang bisa digunakan?</span>
+                        <svg class="faq-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="faq-answer">
+                        Sistem mendukung pembayaran otomatis melalui Midtrans yang mencakup QRIS (GoPay, DANA, OVO, ShopeePay), Transfer Bank Virtual Account (BCA, Mandiri, BNI, BRI), serta Kartu Kredit.
+                    </div>
+                </div>
+
+                <!-- FAQ Item 3 -->
+                <div class="faq-item">
+                    <button type="button" class="faq-btn" onclick="toggleFaq(this)">
+                        <span>Apakah jadwal tanding bisa diubah (Reschedule)?</span>
+                        <svg class="faq-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="faq-answer">
+                        Permintaan Ubah Jadwal (Reschedule) dapat dikonfirmasikan kepada admin operasional minimal H-1 (24 Jam) sebelum jadwal pertandingan awal, selama ketersediaan slot pengganti masih ada.
+                    </div>
+                </div>
+
+                <!-- FAQ Item 4 -->
+                <div class="faq-item">
+                    <button type="button" class="faq-btn" onclick="toggleFaq(this)">
+                        <span>Bagaimana cara melakukan check-in saat tiba di arena?</span>
+                        <svg class="faq-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="faq-answer">
+                        Tunjukkan e-tiket yang tersedia di Member Dashboard atau bukti transaksi reservasi lunas kepada petugas kasir/gate Futsal Mare untuk diverifikasi sebelum memasuki arena.
+                    </div>
+                </div>
+
+                <!-- FAQ Item 5 -->
+                <div class="faq-item">
+                    <button type="button" class="faq-btn" onclick="toggleFaq(this)">
+                        <span>Bagaimana cara menghitung dan menggunakan Loyalty Point?</span>
+                        <svg class="faq-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="faq-answer">
+                        Setiap kali transaksi reservasi sukses, akun Anda otomatis terisi +10 Poin. Saat mencapai 100 Poin (Silver), Anda memperoleh Diskon 5%. Jika mencapai 300 Poin (Gold), Anda memperoleh Diskon 10% otomatis yang langsung terpotong di checkout.
+                    </div>
+                </div>
+
+                <!-- Empty State Search Result -->
+                <div id="faqEmpty" style="display: none; padding: 24px; text-align: center; color: var(--muted); font-size: 14px; font-family: var(--mono);">
+                    🔍 Pertanyaan tidak ditemukan. Coba gunakan kata kunci lain.
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- CTA BAND SECTION -->
     <section style="border-bottom:none;">
         <div class="wrap">
@@ -498,15 +666,16 @@
                         <li><a href="#lapangan">Katalog Arena</a></li>
                         <li><a href="#membership">Sistem Membership</a></li>
                         <li><a href="#cara-booking">Alur Prosedur</a></li>
+                        <li><a href="#faq">Pusat FAQ</a></li>
                     </ul>
                 </div>
 
                 <div>
                     <h4>Bantuan</h4>
                     <ul>
-                        <li><a href="#">Syarat & Ketentuan</a></li>
-                        <li><a href="#">Kebijakan Privasi</a></li>
-                        <li><a href="#">Pusat Pengaduan</a></li>
+                        <li><a href="#faq">Syarat & Ketentuan</a></li>
+                        <li><a href="#faq">Kebijakan Privasi</a></li>
+                        <li><a href="#faq">Pusat Pengaduan</a></li>
                     </ul>
                 </div>
 
@@ -527,9 +696,10 @@
         </div>
     </footer>
 
-    <!-- SMOOTH SCROLL OFFSET SCRIPT -->
+    <!-- INTERACTION SCRIPTS -->
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+            // Smooth Scroll with Navbar Offset
             document.querySelectorAll('.nav-links a, a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener('click', function (e) {
                     const targetId = this.getAttribute('href');
@@ -550,7 +720,54 @@
                     }
                 });
             });
+
+            // Live Search FAQ
+            const faqSearch = document.getElementById('faqSearch');
+            if (faqSearch) {
+                faqSearch.addEventListener('input', function (e) {
+                    const query = e.target.value.toLowerCase().trim();
+                    const faqItems = document.querySelectorAll('.faq-item');
+                    let visibleCount = 0;
+
+                    faqItems.forEach(item => {
+                        const question = item.querySelector('.faq-btn span').innerText.toLowerCase();
+                        const answer = item.querySelector('.faq-answer').innerText.toLowerCase();
+
+                        if (question.includes(query) || answer.includes(query)) {
+                            item.style.display = 'block';
+                            visibleCount++;
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+
+                    const emptyState = document.getElementById('faqEmpty');
+                    if (emptyState) {
+                        emptyState.style.display = (visibleCount === 0 && query !== '') ? 'block' : 'none';
+                    }
+                });
+            }
         });
+
+        // FAQ Toggle Accordion Function
+        function toggleFaq(btn) {
+            const answer = btn.nextElementSibling;
+            const isOpen = btn.classList.contains('active');
+
+            // Close all open answers
+            document.querySelectorAll('.faq-btn').forEach(otherBtn => {
+                otherBtn.classList.remove('active');
+                if (otherBtn.nextElementSibling) {
+                    otherBtn.nextElementSibling.classList.remove('show');
+                }
+            });
+
+            // Toggle current answer
+            if (!isOpen) {
+                btn.classList.add('active');
+                answer.classList.add('show');
+            }
+        }
     </script>
 </body>
 </html>
