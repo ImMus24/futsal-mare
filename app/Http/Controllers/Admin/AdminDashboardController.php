@@ -50,8 +50,11 @@ class AdminDashboardController extends Controller
                     ->with('success', 'Selamat Datang Kembali di Panel Kontrol Utama!');
             }
 
-            // Jika bukan admin, paksa logout
+            // Jika bukan admin, paksa logout dan hapus sesi
             Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
             return redirect()->back()
                 ->withErrors(['email' => 'Akses Ditolak. Akun Anda tidak memiliki otoritas Administrator.'])
                 ->withInput();
