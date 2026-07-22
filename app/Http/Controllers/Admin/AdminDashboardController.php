@@ -339,4 +339,63 @@ class AdminDashboardController extends Controller
             return back()->with('error', 'Terjadi kesalahan sistem saat menghapus data member.');
         }
     }
+
+    /**
+     * ==========================================
+     * 🔑 MODUL 5: PENGELOLAAN HAK AKSES & ROLE
+     * ==========================================
+     */
+
+    /**
+     * Menampilkan daftar pengguna untuk manajemen role
+     */
+    public function role(Request $request)
+    {
+        $search = $request->get('search');
+
+        $users = User::when($search, function ($q) use ($search) {
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
+            })
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('admin.role.index', compact('users'));
+    }
+
+    /**
+     * Memproses update status admin (is_admin) via dropdown select Blade
+     */
+    public function updateRole(Request $request, $id)
+    {
+        $request->validate([
+            'is_admin' => 'required|in:0,1',
+        ], [
+            'is_admin.required' => 'Status akses wajib dipilih.',
+            'is_admin.in'       => 'Pilihan status akses tidak valid.',
+        ]);
+
+        $user = User::findOrFail($id);
+
+        if ($user->id === Auth::id()) {
+            return back()->with('error', 'Anda tidak dapat mengubah status akses akun Anda sendiri.');
+        }
+
+        try {
+            $user->update([
+                'is_admin' => (int) $request->is_admin,
+            ]);
+
+            $statusText = $user->is_admin == 1 ? 'Administrator (Admin)' : 'Member';
+
+            return back()->with('success', "Akses akun \"{$user->name}\" berhasil diperbarui menjadi {$statusText}.");
+
+        } catch (\Exception $e) {
+            Log::error("Gagal update role user ID {$id}: {$e->getMessage()}");
+            return back()->with('error', 'Terjadi kesalahan sistem saat memperbarui hak akses pengguna.');
+        }
+    }
 }
