@@ -259,12 +259,14 @@ class ReservasiController extends Controller
                 Log::warning("Gagal cancel instant di Midtrans untuk {$reservasi->nomor_reservasi}: " . $e->getMessage());
             }
 
-            $reservasi->update(['status' => 'Cancelled']);
+            // Jika bukan admin, paksa logout dan hapus sesi
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Reservasi dibatalkan, slot jam dilepas kembali.',
-            ]);
+            return redirect()->back()
+                ->withErrors(['email' => 'Akses Ditolak. Akun Anda tidak memiliki otoritas Administrator.'])
+                ->withInput();
         }
 
         return response()->json([
