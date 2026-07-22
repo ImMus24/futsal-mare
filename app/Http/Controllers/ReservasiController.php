@@ -26,6 +26,21 @@ class ReservasiController extends Controller
     }
 
     /**
+     * Persentase diskon otomatis berdasarkan tier membership.
+     * SATU tempat saja dipakai bersama oleh create() (untuk preview harga di form)
+     * dan store() (untuk perhitungan final) — supaya angka yang dilihat user
+     * sebelum bayar selalu sama persis dengan yang benar-benar ditagihkan.
+     */
+    private function getDiskonPersen(?string $membershipType): int
+    {
+        return match (strtolower($membershipType ?? 'bronze')) {
+            'gold'   => 10,
+            'silver' => 5,
+            default  => 0, // Bronze / belum punya membership sama sekali
+        };
+    }
+
+    /**
      * Helper untuk mengambil jam yang sudah dipesan.
      * PENTING: reservasi 'Waiting Payment' yang sudah lewat expired_at TIDAK dihitung
      * sebagai terpesan, supaya slot langsung available lagi tanpa menunggu job cron.
@@ -76,8 +91,7 @@ class ReservasiController extends Controller
         );
         
         $membershipType = $membership->membership_type;
-        // Mengambil persentase diskon langsung dari Accessor Model Membership (dikonversi ke integer persen)
-        $diskonPersen = (int) round($membership->discount_percent * 100);
+        $diskonPersen = $this->getDiskonPersen($membershipType);
 
         return view('reservasi.create', compact('lapangan', 'tanggal_pilihan', 'jam_terpesan', 'membershipType', 'diskonPersen', 'membership'));
     }
@@ -151,15 +165,15 @@ class ReservasiController extends Controller
                 $subtotal += $harga_slot;
             }
 
-            // 3. TERAPKAN DISKON MEMBERSHIP BERDASARKAN TIER AKTIF (Menggunakan Model Accessor)
+            // 3. TERAPKAN DISKON MEMBERSHIP BERDASARKAN TIER AKTIF
             $membership = Membership::firstOrCreate(
                 ['user_id' => Auth::id()],
                 ['membership_type' => 'Bronze', 'points' => 0]
             );
 
             $membershipType = $membership->membership_type;
-            $diskonPersen = (int) round($membership->discount_percent * 100);
-            $nominalDiskon = (int) round($subtotal * $membership->discount_percent);
+            $diskonPersen = $this->getDiskonPersen($membershipType);
+            $nominalDiskon = (int) round($subtotal * $diskonPersen / 100);
             $total_harga = $subtotal - $nominalDiskon;
 
             // 4. GENERATE NOMOR RESERVASI UNIK
@@ -167,17 +181,17 @@ class ReservasiController extends Controller
 
             // 5. SIMPAN TRANSAKSI BARU (Status awal: Waiting Payment + expired_at)
             $reservasi = Reservasi::create([
-                'user_id'                     => Auth::id(),
-                'lapangan_id'                 => $request->lapangan_id,
-                'nomor_reservasi'             => $nomor_reservasi,
-                'tanggal_main'                => $request->tanggal_main,
-                'jam_mulai'                   => $start_time,
-                'jam_selesai'                 => $end_time,
-                'subtotal_sebelum_diskon'     => $subtotal,
-                'diskon_persen'               => $diskonPersen,
-                'total_harga'                 => (int) $total_harga,
-                'status'                      => 'Waiting Payment',
-                'expired_at'                  => now()->addMinutes(self::MENIT_KEDALUARSA_PEMBAYARAN),
+                'user_id'                   => Auth::id(),
+                'lapangan_id'               => $request->lapangan_id,
+                'nomor_reservasi'           => $nomor_reservasi,
+                'tanggal_main'              => $request->tanggal_main,
+                'jam_mulai'                 => $start_time,
+                'jam_selesai'               => $end_time,
+                'subtotal_sebelum_diskon'   => $subtotal,
+                'diskon_persen'             => $diskonPersen,
+                'total_harga'               => (int) $total_harga,
+                'status'                    => 'Waiting Payment',
+                'expired_at'                => now()->addMinutes(self::MENIT_KEDALUARSA_PEMBAYARAN),
             ]);
 
             // 6. BUAT SNAP TOKEN MIDTRANS
@@ -373,6 +387,7 @@ class ReservasiController extends Controller
         );
 
         // Poin dihitung dari nilai total_harga riil yang dibayar (setelah diskon)
+        // Contoh: setiap Rp 10.000 mendapatkan 1 poin loyalitas
         $poinBaru = floor($reservasi->total_harga / 10000);
         $totalPoinAkhir = $membership->points + $poinBaru;
 
@@ -578,10 +593,7 @@ class ReservasiController extends Controller
             $reservasi->update(['qr_code_path' => $nama_file]);
         }
 
-        // Variabel $qrUrl didefinisikan ke view agar gambar QR Code terbaca dengan benar
-        $qrUrl = asset('images/qrcodes/' . $nama_file);
-
-        return view('reservasi.tiket', compact('reservasi', 'qrUrl'));
+        return view('reservasi.tiket', compact('reservasi'));
     }
 
     /**

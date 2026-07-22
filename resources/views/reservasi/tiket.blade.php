@@ -205,7 +205,7 @@
                 useCORS: true,       // Mengizinkan pengambilan gambar lintas domain (misal dari storage/URL eksternal)
                 allowTaint: false    // Menjaga keamanan canvas agar data URL tetap dapat diekstrak
             }).then(function (canvas) {
-                if (actionButtons) actionButtons.style.display = 'flex';
+                actionButtons.style.display = 'flex';
 
                 const imageURI = canvas.toDataURL("image/png");
                 const temporaryLink = document.createElement('a');
@@ -218,9 +218,8 @@
                 // Berikan notifikasi sukses kecil yang elegan (opsional)
                 console.log("E-Tiket berhasil diunduh.");
             }).catch(function (error) {
-                if (actionButtons) actionButtons.style.display = 'flex';
-                console.error("html2canvas error:", error);
-                alert("Gagal merender file gambar. Pastikan library QR code Anda menghasilkan gambar format PNG/JPG yang mendukung akses CORS, atau gunakan tombol 'Cetak / Simpan PDF' sebagai alternatif.");
+                actionButtons.style.display = 'flex';
+                alert("Gagal merender file gambar. Kalau QR code sudah tampil normal di halaman ini tapi hasil download tetap kosong/tidak terbaca scanner, kemungkinan penyebabnya format SVG QR tidak selalu bisa di-screenshot html2canvas — hubungi admin untuk beralih ke format PNG.");
             });
         });
     </script>
