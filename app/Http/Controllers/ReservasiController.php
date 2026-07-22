@@ -593,7 +593,10 @@ class ReservasiController extends Controller
             $reservasi->update(['qr_code_path' => $nama_file]);
         }
 
-        return view('reservasi.tiket', compact('reservasi'));
+        // Generasi URL publik untuk gambar QR Code
+        $qrUrl = asset('images/qrcodes/' . ($reservasi->qr_code_path ?? $nama_file));
+
+        return view('reservasi.tiket', compact('reservasi', 'qrUrl'));
     }
 
     /**
