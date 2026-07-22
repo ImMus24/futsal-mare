@@ -96,6 +96,7 @@
                 <span class="print-badge" style="display: inline-block; padding: 4px 12px; background: var(--turf); color: white; font-family: var(--mono); font-size: 10px; font-weight: 700; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">
                     E-Tiket Resmi Match
                 </span>
+
                 <h3 style="font-size: 13px; color: var(--muted); letter-spacing: 0.05em; margin-top: 16px;">NOMOR INVOICE RESERVASI</h3>
                 <p style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--floodlight); letter-spacing: 0.02em; margin-top: 2px;">
                     {{ $reservasi->nomor_reservasi }}
@@ -144,9 +145,9 @@
                 <!-- QR Scanner Content Center Display -->
                 <div class="print-box" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.06); border-radius: 12px; margin: 20px 0;">
                     @if(!empty($qrUrl))
-                        <img src="{{ $qrUrl }}" alt="QR Code E-Tiket" style="width: 180px; height: 180px; background: white; padding: 12px; border-radius: 8px;" class="print:p-0">
+                        <!-- Tambahkan atribut crossorigin="anonymous" untuk mencegah masalah CORS pada html2canvas -->
+                        <img src="{{ $qrUrl }}" crossorigin="anonymous" alt="QR Code E-Tiket" style="width: 180px; height: 180px; background: white; padding: 12px; border-radius: 8px;" class="print:p-0">
                     @else
-                        {{-- Fallback kalau QR gagal dibuat/tidak ditemukan — jangan biarkan kotak kosong tanpa penjelasan --}}
                         <div style="width: 180px; height: 180px; display: flex; align-items: center; justify-content: center; background: rgba(226,87,76,0.08); border: 1px dashed rgba(226,87,76,0.3); border-radius: 8px; text-align: center; padding: 12px;">
                             <span style="font-family: var(--mono); font-size: 10px; color: #e2574c; font-weight: 700; text-transform: uppercase;">QR tidak tersedia, hubungi admin</span>
                         </div>
@@ -193,54 +194,34 @@
         document.getElementById('downloadImageBtn').addEventListener('click', function () {
             const targetElement = document.getElementById('element-to-capture');
             const actionButtons = targetElement.querySelector('.no-print');
-<<<<<<< HEAD
 
-            actionButtons.style.display = 'none';
+            // Sembunyikan tombol aksi agar tidak ikut ter-render di dalam gambar PNG
+            if (actionButtons) actionButtons.style.display = 'none';
 
             html2canvas(targetElement, {
                 backgroundColor: '#121a23',
                 scale: 2,
                 logging: false,
-                useCORS: true
+                useCORS: true,       // Mengizinkan pengambilan gambar lintas domain (misal dari storage/URL eksternal)
+                allowTaint: false    // Menjaga keamanan canvas agar data URL tetap dapat diekstrak
             }).then(function (canvas) {
-                actionButtons.style.display = 'flex';
+                if (actionButtons) actionButtons.style.display = 'flex';
 
-=======
-            
-            // Sembunyikan tombol aksi agar tidak ikut terfoto masuk gambar
-            actionButtons.style.display = 'none';
-
-            // Ambil screenshot elemen html secara presisi menggunakan konfigurasi engine canvas
-            html2canvas(targetElement, {
-                backgroundColor: '#121a23', // Selaras dengan warna --surface dasar
-                scale: 2, // Meningkatkan resolusi gambar agar kode QR tajam saat dipindai staff
-                logging: false,
-                useCORS: true
-            }).then(function (canvas) {
-                // Munculkan kembali tombol aksi di halaman web setelah pemotretan selesai
-                actionButtons.style.display = 'flex';
-
-                // Ubah data canvas menjadi link download instan
->>>>>>> main
                 const imageURI = canvas.toDataURL("image/png");
                 const temporaryLink = document.createElement('a');
                 temporaryLink.download = 'Tiket_FutsalMare_{{ $reservasi->nomor_reservasi }}.png';
                 temporaryLink.href = imageURI;
-<<<<<<< HEAD
 
-=======
-                
->>>>>>> main
                 document.body.appendChild(temporaryLink);
                 temporaryLink.click();
                 document.body.removeChild(temporaryLink);
+            }).then(() => {
+                // Berikan notifikasi sukses kecil yang elegan (opsional)
+                console.log("E-Tiket berhasil diunduh.");
             }).catch(function (error) {
-                actionButtons.style.display = 'flex';
-<<<<<<< HEAD
-                alert("Gagal merender file gambar. Kalau QR code sudah tampil normal di halaman ini tapi hasil download tetap kosong/tidak terbaca scanner, kemungkinan penyebabnya format SVG QR tidak selalu bisa di-screenshot html2canvas — hubungi admin untuk beralih ke format PNG.");
-=======
-                alert("Gagal merender file gambar.");
->>>>>>> main
+                if (actionButtons) actionButtons.style.display = 'flex';
+                console.error("html2canvas error:", error);
+                alert("Gagal merender file gambar. Pastikan library QR code Anda menghasilkan gambar format PNG/JPG yang mendukung akses CORS, atau gunakan tombol 'Cetak / Simpan PDF' sebagai alternatif.");
             });
         });
     </script>
