@@ -193,7 +193,6 @@
         document.getElementById('downloadImageBtn').addEventListener('click', function () {
             const targetElement = document.getElementById('element-to-capture');
             const actionButtons = targetElement.querySelector('.no-print');
-<<<<<<< HEAD
 
             actionButtons.style.display = 'none';
 
@@ -205,42 +204,16 @@
             }).then(function (canvas) {
                 actionButtons.style.display = 'flex';
 
-=======
-            
-            // Sembunyikan tombol aksi agar tidak ikut terfoto masuk gambar
-            actionButtons.style.display = 'none';
-
-            // Ambil screenshot elemen html secara presisi menggunakan konfigurasi engine canvas
-            html2canvas(targetElement, {
-                backgroundColor: '#121a23', // Selaras dengan warna --surface dasar
-                scale: 2, // Meningkatkan resolusi gambar agar kode QR tajam saat dipindai staff
-                logging: false,
-                useCORS: true
-            }).then(function (canvas) {
-                // Munculkan kembali tombol aksi di halaman web setelah pemotretan selesai
-                actionButtons.style.display = 'flex';
-
-                // Ubah data canvas menjadi link download instan
->>>>>>> main
                 const imageURI = canvas.toDataURL("image/png");
                 const temporaryLink = document.createElement('a');
                 temporaryLink.download = 'Tiket_FutsalMare_{{ $reservasi->nomor_reservasi }}.png';
                 temporaryLink.href = imageURI;
-<<<<<<< HEAD
-
-=======
-                
->>>>>>> main
                 document.body.appendChild(temporaryLink);
                 temporaryLink.click();
                 document.body.removeChild(temporaryLink);
             }).catch(function (error) {
                 actionButtons.style.display = 'flex';
-<<<<<<< HEAD
                 alert("Gagal merender file gambar. Kalau QR code sudah tampil normal di halaman ini tapi hasil download tetap kosong/tidak terbaca scanner, kemungkinan penyebabnya format SVG QR tidak selalu bisa di-screenshot html2canvas — hubungi admin untuk beralih ke format PNG.");
-=======
-                alert("Gagal merender file gambar.");
->>>>>>> main
             });
         });
     </script>

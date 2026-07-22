@@ -7,8 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
-    <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
+
+    <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('services.midtrans.client_key') }}"></script>
     <style>
         :root {
             --ink: #0a0f14;
@@ -28,6 +28,7 @@
             --body: 'Work Sans', sans-serif;
             --mono: 'JetBrains Mono', monospace;
         }
+        * { box-sizing: border-box; }
         body {
             background: var(--ink);
             color: var(--line);
@@ -37,7 +38,17 @@
         }
         .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
         h1, h2, h3, h4 { font-family: var(--display); letter-spacing: .01em; text-transform: uppercase; }
-        
+
+        /* Visible keyboard focus everywhere — accessibility floor */
+        a:focus-visible, button:focus-visible, input:focus-visible {
+            outline: 2px solid var(--turf);
+            outline-offset: 2px;
+        }
+        .sr-only {
+            position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+            overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+        }
+
         .btn-ui {
             display: inline-flex; align-items: center; justify-content: center; gap: 8px;
             padding: 14px 26px; border-radius: 8px; font-weight: 600; font-size: 14px;
@@ -52,16 +63,31 @@
         .btn-ui-danger { background: rgba(226, 87, 76, 0.15); border-color: rgba(226, 87, 76, 0.3); color: #e2574c; }
         .btn-ui-danger:hover { background: rgba(226, 87, 76, 0.25); }
         .btn-ui-sm { padding: 8px 14px; font-size: 12px; border-radius: 6px; }
+        .btn-ui:disabled { opacity: .4; cursor: not-allowed; }
 
         table.brutal-data { width: 100%; border-collapse: collapse; }
         table.brutal-data th { text-align: left; font-family: var(--mono); font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: .05em; padding: 12px 16px; border-bottom: 1px solid rgba(238, 241, 234, 0.1); background: rgba(15, 23, 42, 0.2); }
         table.brutal-data td { padding: 16px; border-bottom: 1px solid rgba(238, 241, 234, 0.06); font-size: 13px; font-weight: 500; }
         table.brutal-data tr:last-child td { border-bottom: none; }
+        table.brutal-data tr.row-hidden { display: none; }
 
         .badge-brutal { font-family: var(--mono); font-size: 11px; padding: 4px 10px; border-radius: 6px; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; }
         .badge-brutal-pending { background: rgba(245, 197, 24, 0.15); color: var(--floodlight); border: 1px solid rgba(245, 197, 24, 0.25); }
         .badge-brutal-confirmed { background: rgba(47, 158, 88, 0.18); color: #2f9e58; border: 1px solid rgba(47, 158, 88, 0.25); }
         .badge-brutal-cancelled { background: rgba(226, 87, 76, 0.15); color: #e2574c; border: 1px solid rgba(226, 87, 76, 0.25); }
+
+        /* Loyalty progress bar */
+        .tier-track { width: 100%; height: 6px; background: var(--ink); border-radius: 999px; overflow: hidden; border: 1px solid rgba(238, 241, 234, 0.08); }
+        .tier-fill { height: 100%; background: linear-gradient(90deg, var(--turf), var(--floodlight)); border-radius: 999px; transition: width .5s ease; }
+
+        .search-input {
+            background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.12); color: var(--line);
+            font-family: var(--body); font-size: 13px; padding: 9px 14px 9px 34px; border-radius: 8px;
+            min-width: 220px;
+        }
+        .search-input::placeholder { color: var(--muted-2); }
+        .search-wrap { position: relative; }
+        .search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--muted-2); pointer-events: none; }
     </style>
 </head>
 <body class="scroll-smooth selection:bg-[#E25E20] selection:text-white">
@@ -69,15 +95,13 @@
     {{-- Notifikasi Toast Global --}}
     @include('partials.toast')
 
-    <!-- NAVIGATION BAR (Brutalism Match Sync) -->
+    <!-- NAVIGATION BAR -->
     <header style="background: rgba(10, 15, 20, 0.85); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(238, 241, 234, 0.08); position: sticky; top: 0; z-index: 50;">
         <div class="nav wrap" style="display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; height: 80px;">
-            <!-- Brand Identity -->
             <a href="{{ route('landingPage') }}" style="display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 24px; color: white;">
                 <span style="width: 10px; height: 10px; background: var(--turf); border-radius: 2px; transform: rotate(45deg);"></span>FUTSAL MARE
             </a>
 
-            <!-- User Account Actions & Quick Logout -->
             <div style="display: flex; align-items: center; gap: 24px;">
                 <div class="hidden sm:flex flex-col text-right" style="border-right: 1px solid rgba(238, 241, 234, 0.1); padding-right: 16px;">
                     <span style="font-family: var(--mono); font-size: 10px; color: var(--turf); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Sesi Member Aktif</span>
@@ -95,38 +119,60 @@
 
     <!-- MAIN DASHBOARD CONSOLE CONTAINER -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
-        
+
+        @php
+            $tierColors = [
+                'Gold' => 'from-amber-500 to-yellow-400 text-slate-950 border-amber-600',
+                'Silver' => 'from-slate-500 to-slate-400 text-white border-slate-600',
+                'Bronze' => 'from-amber-800 to-amber-700 text-white border-amber-900'
+            ];
+            // Batas poin tiap tier — sesuaikan dengan aturan bisnis yang berlaku
+            $tierThresholds = ['Bronze' => 0, 'Silver' => 100, 'Gold' => 300];
+            $nextTier = $membership->membership_type === 'Gold' ? null : ($membership->membership_type === 'Silver' ? 'Gold' : 'Silver');
+            $progressPercent = $nextTier
+                ? min(100, round(($membership->points / $tierThresholds[$nextTier]) * 100))
+                : 100;
+            $pointsToGo = $nextTier ? max(0, $tierThresholds[$nextTier] - $membership->points) : 0;
+        @endphp
+
         <!-- 1. USER PROFILE & LOYALTY TIER OVERVIEW HERO -->
-        <div style="background: linear-gradient(120deg, var(--surface), #0B131F); border-radius: var(--radius); border: 1px solid rgba(238, 241, 234, 0.08); padding: 32px; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; gap: 24px; position: relative; overflow: hidden;" class="flex-col lg:flex-row lg:items-center">
+        <div style="background: linear-gradient(120deg, var(--surface), #0B131F); border-radius: var(--radius); border: 1px solid rgba(238, 241, 234, 0.08); padding: 32px; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; position: relative; overflow: hidden;" class="flex-col lg:flex-row lg:items-center">
             <div class="absolute -right-16 -top-16 w-32 h-32 bg-[var(--turf)] rounded-full filter blur-[80px] opacity-5"></div>
-            
-            <div style="position: relative; z-index: 10;" class="space-y-4">
+
+            <div style="position: relative; z-index: 10; width: 100%;" class="space-y-4">
                 <div>
                     <h1 style="font-size: 32px; color: white; line-height: 1;">Selamat Datang, {{ explode(' ', Auth::user()->name)[0] }}! 👋</h1>
                     <p style="color: var(--muted); font-size: 14px; font-weight: 500; margin-top: 6px;">Pantau jadwal tanding tim Anda dan dapatkan keuntungan prioritas booking arena.</p>
                 </div>
 
-                @php
-                    $tierColors = [
-                        'Gold' => 'from-amber-500 to-yellow-400 text-slate-950 border-amber-600',
-                        'Silver' => 'from-slate-500 to-slate-400 text-white border-slate-600',
-                        'Bronze' => 'from-amber-800 to-amber-700 text-white border-amber-900'
-                    ];
-                @endphp
-                <div style="display: inline-flex; align-items: center; gap: 12px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 12px; padding: 10px 16px;">
-                    <span class="bg-gradient-to-r {{ $tierColors[$membership->membership_type] ?? $tierColors['Bronze'] }}" style="font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.05em; border: 1px solid transparent;">
-                        🏆 Tier {{ $membership->membership_type }}
-                    </span>
-                    <span style="font-family: var(--mono); font-size: 12px; color: var(--line); font-weight: 700;">
-                        ⭐ {{ $membership->points }} Loyalty Points
-                    </span>
-                    @if($membership->membership_type === 'Gold')
-                        <span style="font-family: var(--mono); font-size: 10px; color: var(--floodlight); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(245, 197, 24, 0.1); border: 1px solid rgba(245, 197, 24, 0.2); padding: 2px 6px; border-radius: 4px;" class="animate-pulse">• Prioritas Aktif</span>
+                <div style="display: flex; flex-direction: column; gap: 10px; max-width: 420px;">
+                    <div style="display: inline-flex; align-items: center; gap: 12px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 12px; padding: 10px 16px; width: fit-content;">
+                        <span class="bg-gradient-to-r {{ $tierColors[$membership->membership_type] ?? $tierColors['Bronze'] }}" style="font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.05em; border: 1px solid transparent;">
+                            🏆 Tier {{ $membership->membership_type }}
+                        </span>
+                        <span style="font-family: var(--mono); font-size: 12px; color: var(--line); font-weight: 700;">
+                            ⭐ {{ $membership->points }} Poin
+                        </span>
+                        @if($membership->membership_type === 'Gold')
+                            <span style="font-family: var(--mono); font-size: 10px; color: var(--floodlight); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(245, 197, 24, 0.1); border: 1px solid rgba(245, 197, 24, 0.2); padding: 2px 6px; border-radius: 4px;" class="animate-pulse">• Prioritas Aktif</span>
+                        @endif
+                    </div>
+
+                    @if($nextTier)
+                        <div style="padding: 0 2px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                <span style="font-family: var(--mono); font-size: 10px; color: var(--muted-2); text-transform: uppercase; letter-spacing: .05em;">Menuju {{ $nextTier }}</span>
+                                <span style="font-family: var(--mono); font-size: 10px; color: var(--muted); font-weight: 700;">{{ $pointsToGo }} poin lagi</span>
+                            </div>
+                            <div class="tier-track" role="progressbar" aria-valuenow="{{ $progressPercent }}" aria-valuemin="0" aria-valuemax="100" aria-label="Progres menuju tier {{ $nextTier }}">
+                                <div class="tier-fill" style="width: {{ $progressPercent }}%;"></div>
+                            </div>
+                        </div>
                     @endif
                 </div>
             </div>
 
-            <a href="{{ route('landingPage') }}" class="btn-ui btn-ui-primary" style="position: relative; z-index: 10; width: 100%; text-align: center;">
+            <a href="{{ route('landingPage') }}" class="btn-ui btn-ui-primary" style="position: relative; z-index: 10; width: 100%; text-align: center; flex-shrink: 0;" class="lg:w-auto">
                 + Sewa Lapangan Lagi
             </a>
         </div>
@@ -136,20 +182,30 @@
             <div style="background: linear-gradient(90deg, rgba(33, 45, 60, 0.6), var(--surface)); border-radius: var(--radius); border: 1px dashed rgba(238, 241, 234, 0.15); padding: 24px; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; gap: 16px; position: relative; overflow: hidden;" class="group sm:flex-row sm:items-center">
                 <div class="absolute -right-8 -bottom-8 w-24 h-24 bg-gradient-to-tr from-amber-600 to-yellow-500 rounded-full filter blur-[40px] opacity-5"></div>
                 <div style="display: flex; align-items: flex-start; gap: 16px;">
-                    <div style="padding: 12px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 8px; font-size: 18px; user-select: none;">🎁</div>
+                    <div style="padding: 12px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 8px; font-size: 18px; user-select: none;" aria-hidden="true">🎁</div>
                     <div style="display: flex; flex-direction: column; gap: 2px;">
                         <h4 style="font-family: var(--body); font-size: 14px; font-weight: 700; color: white; display: flex; align-items: center; gap: 6px;">
-                            Mulai Petualangan Tim Anda! <span style="width: 6px; height: 6px; background: var(--turf); border-radius: 50%;" class="animate-ping"></span>
+                            Mulai Petualangan Tim Anda! <span style="width: 6px; height: 6px; background: var(--turf); border-radius: 50%;" class="animate-ping" aria-hidden="true"></span>
                         </h4>
                         <p style="color: var(--muted); font-size: 13px; font-weight: 500; line-height: 1.6; max-width: 860px;">
                             Status Anda saat ini adalah <span style="color: var(--turf); font-weight: 700;">Bronze Member</span>. Kumpulkan poin dengan melakukan booking lapangan! Setiap transaksi sukses bernilai <span style="color: white; font-weight: 700; font-family: var(--mono);">+10 Poin</span>, mendekatkan Anda ke tingkatan <span style="color: var(--line); font-weight: 600;">Silver (100 Poin)</span> atau <span style="color: var(--floodlight); font-weight: 700;">Gold (300 Poin)</span> untuk menikmati diskon sewa otomatis hingga 10%.
                         </p>
                     </div>
                 </div>
-                <button type="button" onclick="alert('💡 INFO TIER MEMBERSHIP FUTSAL MARE:\n\n🥉 Bronze (Awal): Akumulasi poin aktif.\n🥈 Silver (100 Poin): Diskon otomatis 5% setiap sewa.\n🏆 Gold (300 Poin): Diskon otomatis 10% + Akses sistem prioritas booking 24/7!')" class="btn-ui btn-ui-ghost btn-ui-sm" style="flex-shrink: 0; width: 100%;">
+                <button type="button" onclick="document.getElementById('tier_info_dialog').showModal()" class="btn-ui btn-ui-ghost btn-ui-sm" style="flex-shrink: 0; width: 100%;">
                     Pelajari Benefit Tier &rarr;
                 </button>
             </div>
+
+            <dialog id="tier_info_dialog" style="background: var(--surface); color: var(--line); border: 1px solid rgba(238, 241, 234, 0.12); border-radius: var(--radius); padding: 28px; max-width: 420px; width: 90%;">
+                <h4 style="font-size: 18px; color: white; margin-bottom: 16px;">Benefit Tier Membership</h4>
+                <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 13px; font-weight: 500; color: var(--muted);">
+                    <li>🥉 <strong style="color: var(--line);">Bronze (Awal)</strong> — Akumulasi poin aktif dari setiap booking.</li>
+                    <li>🥈 <strong style="color: var(--line);">Silver (100 Poin)</strong> — Diskon otomatis 5% setiap sewa.</li>
+                    <li>🏆 <strong style="color: var(--floodlight);">Gold (300 Poin)</strong> — Diskon otomatis 10% + akses prioritas booking 24/7.</li>
+                </ul>
+                <button type="button" onclick="document.getElementById('tier_info_dialog').close()" class="btn-ui btn-ui-primary btn-ui-sm" style="margin-top: 20px; width: 100%;">Mengerti</button>
+            </dialog>
         @endif
 
         <!-- 3. REAL-TIME CORE METRICS INDEX -->
@@ -164,21 +220,21 @@
                     <p style="font-family: var(--mono); font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: .06em;">Total Akumulasi Reservasi</p>
                     <p style="font-family: var(--mono); font-size: 28px; color: white; font-weight: 700; line-height: 1;">{{ $totalBooking }} <span style="font-size: 12px; font-family: 'Work Sans'; color: var(--muted); font-weight: 600; text-transform: uppercase;">Slot</span></p>
                 </div>
-                <div style="padding: 14px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 8px; font-size: 20px;" class="shadow-inner group-hover:scale-110 transition duration-300">📅</div>
+                <div style="padding: 14px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 8px; font-size: 20px;" class="shadow-inner group-hover:scale-110 transition duration-300" aria-hidden="true">📅</div>
             </div>
             <div style="background: var(--surface); padding: 24px; border-radius: 12px; border: 1px solid rgba(238, 241, 234, 0.08); display: flex; align-items: center; justify-content: space-between;" class="group hover:border-emerald-500/30 transition duration-300">
                 <div style="display: flex; flex-direction: column; gap: 4px;">
                     <p style="font-family: var(--mono); font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: .06em;">Match Terkonfirmasi</p>
                     <p style="font-family: var(--mono); font-size: 28px; color: #2f9e58; font-weight: 700; line-height: 1;">{{ $lunasBooking }} <span style="font-size: 12px; font-family: 'Work Sans'; color: var(--muted); font-weight: 600; text-transform: uppercase;">Match</span></p>
                 </div>
-                <div style="padding: 14px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 8px; font-size: 20px;" class="shadow-inner group-hover:scale-110 transition duration-300 group-hover:bg-emerald-950/20">✅</div>
+                <div style="padding: 14px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 8px; font-size: 20px;" class="shadow-inner group-hover:scale-110 transition duration-300 group-hover:bg-emerald-950/20" aria-hidden="true">✅</div>
             </div>
             <div style="background: var(--surface); padding: 24px; border-radius: 12px; border: 1px solid rgba(238, 241, 234, 0.08); display: flex; align-items: center; justify-content: space-between;" class="group hover:border-blue-500/30 transition duration-300">
                 <div style="display: flex; flex-direction: column; gap: 4px;">
                     <p style="font-family: var(--mono); font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: .06em;">Kontribusi Finansial</p>
                     <p style="font-family: var(--mono); font-size: 24px; color: var(--floodlight); font-weight: 700; line-height: 1;">Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}</p>
                 </div>
-                <div style="padding: 14px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 8px; font-size: 20px;" class="shadow-inner group-hover:scale-110 transition duration-300 group-hover:bg-blue-950/20">🪙</div>
+                <div style="padding: 14px; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: 8px; font-size: 20px;" class="shadow-inner group-hover:scale-110 transition duration-300 group-hover:bg-blue-950/20" aria-hidden="true">🪙</div>
             </div>
         </div>
 
@@ -186,10 +242,17 @@
         <div id="riwayat-tabel" style="background: var(--surface); border: 1px solid rgba(238, 241, 234, 0.08); border-radius: var(--radius); overflow: hidden;">
             <div style="padding: 24px; border-bottom: 1px solid rgba(238, 241, 234, 0.08); background: rgba(15, 23, 42, 0.2); display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; gap: 16px;" class="sm:flex-row sm:items-center">
                 <h3 style="font-family: var(--body); font-weight: 700; text-transform: none; font-size: 16px; color: white; display: flex; align-items: center; gap: 8px;">
-                    <span style="width: 8px; height: 8px; background: var(--turf); border-radius: 50%;" class="animate-pulse"></span> Aliran Histori Transaksi Anda
+                    <span style="width: 8px; height: 8px; background: var(--turf); border-radius: 50%;" class="animate-pulse" aria-hidden="true"></span> Aliran Histori Transaksi Anda
                 </h3>
-                
-                <div style="display: flex; align-items: center; gap: 12px;">
+
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    @if($reservasis->isNotEmpty())
+                        <div class="search-wrap">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
+                            <label for="table_search" class="sr-only">Cari riwayat transaksi</label>
+                            <input type="text" id="table_search" class="search-input" placeholder="Cari nomor order / arena...">
+                        </div>
+                    @endif
                     <div id="bulk_action_panel" class="hidden items-center gap-2 bg-[#0a0f14] border border-slate-800 px-3 py-1.5 rounded-lg animate-fade-in shadow-inner">
                         <span id="selected_count" style="font-family: var(--mono); font-size: 11px; font-weight: 700; background: var(--surface-3); color: var(--line); padding: 2px 6px; border-radius: 4px;">0</span>
                         <span style="font-size: 11px; font-weight: 700; color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.05em;">Terpilih</span>
@@ -201,7 +264,6 @@
                 </div>
             </div>
 
-            <!-- ACTION ACTION DATA FORM GATEWAYS -->
             <form id="bulk_delete_form" action="{{ route('reservasi.destroyMassal') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus semua riwayat transaksi terpilih sekaligus dari sistem?')">
                 @csrf
                 @method('DELETE')
@@ -216,16 +278,22 @@
             @endforeach
 
             @if($reservasis->isEmpty())
-                <div style="padding: 64px 24px; text-align: center; color: var(--muted-2); font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;" class="space-y-2">
-                    <div style="font-size: 32px;" class="animate-bounce">🏃</div>
+                <div style="padding: 64px 24px; text-align: center; color: var(--muted-2); font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;" class="space-y-4">
+                    <div style="font-size: 32px;" class="animate-bounce" aria-hidden="true">🏃</div>
                     <p>Anda belum memiliki riwayat data reservasi aktif dalam database.</p>
+                    <a href="{{ route('landingPage') }}" class="btn-ui btn-ui-primary btn-ui-sm" style="width: fit-content; margin: 0 auto;">
+                        + Buat Reservasi Pertama Anda
+                    </a>
                 </div>
             @else
                 <div class="overflow-x-auto">
-                    <table class="brutal-data">
+                    <table class="brutal-data" id="riwayat_table">
                         <thead>
                             <tr>
-                                <th style="width: 48px; text-align: center;"><input type="checkbox" id="check_all_master" style="width: 15px; height: 14px; cursor: pointer;"></th>
+                                <th style="width: 48px; text-align: center;">
+                                    <label class="sr-only" for="check_all_master">Pilih semua baris</label>
+                                    <input type="checkbox" id="check_all_master" style="width: 15px; height: 14px; cursor: pointer;">
+                                </th>
                                 <th>Detail Arena</th>
                                 <th>Nomor Order</th>
                                 <th>Tanggal Main</th>
@@ -238,67 +306,62 @@
                         </thead>
                         <tbody>
                             @foreach($reservasis as $reservasi)
-                                <tr class="data-row" style="transition: background 0.15s ease;">
-                                    <!-- Bulk Selection Row Node -->
+                                <tr class="data-row" data-search="{{ strtolower($reservasi->nomor_reservasi.' '.($reservasi->lapangan->nama_lapangan ?? '')) }}" style="transition: background 0.15s ease;">
                                     <td style="text-align: center;">
                                         @if(strtolower($reservasi->status) != 'waiting payment')
-                                            <input type="checkbox" name="ids[]" value="{{ $reservasi->id }}" form="bulk_delete_form" class="row-checkbox" style="width: 15px; height: 14px; cursor: pointer;">
+                                            <label class="sr-only" for="chk_{{ $reservasi->id }}">Pilih reservasi {{ $reservasi->nomor_reservasi }}</label>
+                                            <input type="checkbox" id="chk_{{ $reservasi->id }}" name="ids[]" value="{{ $reservasi->id }}" form="bulk_delete_form" class="row-checkbox" style="width: 15px; height: 14px; cursor: pointer;">
                                         @else
-                                            <input type="checkbox" disabled style="opacity: 0.25; cursor: not-allowed;" title="Selesaikan tagihan Midtrans Anda terlebih dahulu">
+                                            <input type="checkbox" disabled aria-label="Selesaikan pembayaran terlebih dahulu" style="opacity: 0.25; cursor: not-allowed;" title="Selesaikan tagihan Midtrans Anda terlebih dahulu">
                                         @endif
                                     </td>
-                                    
-                                    <!-- Field Arena Detail Info -->
+
                                     <td>
-                                        <div style="font-size: 15px; font-weight: 700; color: white;">{{ $reservasi->lapangan->nama_lapangan }}</div>
+                                        <div style="font-size: 15px; font-weight: 700; color: white;">{{ $reservasi->lapangan->nama_lapangan ?? 'Arena Utama' }}</div>
                                         <div style="font-family: var(--mono); font-size: 10px; color: var(--muted-2); text-transform: uppercase; font-weight: 700; margin-top: 2px;">Rumput {{ $reservasi->lapangan->jenis_rumput ?? 'Sintetis' }}</div>
                                     </td>
-                                    
-                                    <!-- Field Order Invoice Token -->
-                                    <td style="font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.02em;">
-                                        {{ $reservasi->nomor_reservasi }}
+
+                                    <td>
+                                        <button type="button" onclick="salinTeks('{{ $reservasi->nomor_reservasi }}', this)" style="background: none; border: none; padding: 0; cursor: pointer; font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.02em; display: inline-flex; align-items: center; gap: 6px;" title="Salin nomor order">
+                                            {{ $reservasi->nomor_reservasi }}
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                        </button>
                                     </td>
-                                    
-                                    <!-- Field Tanggal Pertandingan -->
+
                                     <td style="color: var(--line); font-weight: 600;">
                                         {{ \Carbon\Carbon::parse($reservasi->tanggal_main)->translatedFormat('d M Y') }}
                                     </td>
-                                    
-                                    <!-- Field Alokasi Slot Jam -->
+
                                     <td style="font-family: var(--mono); color: var(--turf); font-weight: 700;">
                                         ⏱️ {{ substr($reservasi->jam_mulai, 0, 5) }} - {{ substr($reservasi->jam_selesai, 0, 5) }} WITA
                                     </td>
-                                    
-                                    <!-- Field Metode Pembayaran Node -->
+
                                     <td>
                                         <span style="font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; background: var(--ink); border: 1px solid rgba(238, 241, 234, 0.08); padding: 4px 8px; border-radius: 4px; color: var(--muted);">
                                             {{ str_replace('_', ' ', $reservasi->metode_pembayaran ?? 'Midtrans') }}
                                         </span>
                                     </td>
-                                    
-                                    <!-- Field Finansial Cost -->
+
                                     <td style="font-family: var(--mono); font-size: 14px; font-weight: 700; color: white;">
                                         Rp {{ number_format($reservasi->total_harga, 0, ',', '.') }}
                                     </td>
-                                    
-                                    <!-- Field Transaction Status Node -->
+
                                     <td>
                                         @if($reservasi->status == 'Confirmed' || $reservasi->status == 'Completed')
                                             <span class="badge-brutal badge-brutal-confirmed">
-                                                <span style="width: 6px; height: 6px; background: #2f9e58; border-radius: 50%;"></span> Confirmed
+                                                <span style="width: 6px; height: 6px; background: #2f9e58; border-radius: 50%;" aria-hidden="true"></span> Confirmed
                                             </span>
                                         @elseif($reservasi->status == 'Cancelled')
                                             <span class="badge-brutal badge-brutal-cancelled">
-                                                <span style="width: 6px; height: 6px; background: #e2574c; border-radius: 50%;"></span> Cancelled
+                                                <span style="width: 6px; height: 6px; background: #e2574c; border-radius: 50%;" aria-hidden="true"></span> Cancelled
                                             </span>
                                         @else
                                             <span class="badge-brutal badge-brutal-pending">
-                                                <span style="width: 6px; height: 6px; background: var(--floodlight); border-radius: 50%;" class="animate-pulse"></span> Pending
+                                                <span style="width: 6px; height: 6px; background: var(--floodlight); border-radius: 50%;" class="animate-pulse" aria-hidden="true"></span> Pending
                                             </span>
                                         @endif
                                     </td>
-                                    
-                                    <!-- Field Action Interaction Nodes -->
+
                                     <td style="text-align: center;">
                                         <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
                                             @if(strtolower($reservasi->status) == 'waiting payment')
@@ -306,7 +369,7 @@
                                                     ❌ Batalkan Match
                                                 </button>
                                             @elseif($reservasi->status == 'Confirmed' || $reservasi->status == 'Completed')
-                                                <a href="{{ route('reservasi.tiket', $reservasi->id) }}" target="_blank" class="btn-ui btn-ui-ghost btn-ui-sm" style="padding: 6px 12px; font-size: 11px; border-radius: 6px; background: var(--surface-3);">
+                                                <a href="{{ route('reservasi.tiket', $reservasi->id) }}" target="_blank" rel="noopener" class="btn-ui btn-ui-ghost btn-ui-sm" style="padding: 6px 12px; font-size: 11px; border-radius: 6px; background: var(--surface-3);">
                                                     🎟️ Unduh Tiket
                                                 </a>
                                             @else
@@ -318,7 +381,16 @@
                             @endforeach
                         </tbody>
                     </table>
+                    <p id="no_search_result" class="hidden" style="padding: 32px; text-align: center; color: var(--muted-2); font-size: 13px; font-weight: 600;">
+                        Tidak ada transaksi yang cocok dengan pencarian Anda.
+                    </p>
                 </div>
+
+                @if(method_exists($reservasis, 'links'))
+                    <div style="padding: 16px 24px; border-top: 1px solid rgba(238, 241, 234, 0.08);">
+                        {{ $reservasis->links() }}
+                    </div>
+                @endif
             @endif
         </div>
     </main>
@@ -330,38 +402,38 @@
             const rowChecks = document.querySelectorAll('.row-checkbox');
             const actionPanel = document.getElementById('bulk_action_panel');
             const selectedCount = document.getElementById('selected_count');
+            const searchInput = document.getElementById('table_search');
+            const allRows = document.querySelectorAll('#riwayat_table tbody .data-row');
+            const noResultMsg = document.getElementById('no_search_result');
 
-            if (!masterCheck) return;
-
-            masterCheck.addEventListener('change', function () {
-                rowChecks.forEach(checkbox => {
-                    checkbox.checked = masterCheck.checked;
-                    toggleRowStyle(checkbox);
-                });
-                refreshPanelVisibility();
-            });
-
-            rowChecks.forEach(checkbox => {
-                checkbox.addEventListener('change', function () {
-                    toggleRowStyle(checkbox);
-                    if (!checkbox.checked) masterCheck.checked = false;
+            if (masterCheck) {
+                masterCheck.addEventListener('change', function () {
+                    rowChecks.forEach(checkbox => {
+                        if (!checkbox.disabled && checkbox.closest('.data-row').style.display !== 'none') {
+                            checkbox.checked = masterCheck.checked;
+                            toggleRowStyle(checkbox);
+                        }
+                    });
                     refreshPanelVisibility();
                 });
-            });
+
+                rowChecks.forEach(checkbox => {
+                    checkbox.addEventListener('change', function () {
+                        toggleRowStyle(checkbox);
+                        if (!checkbox.checked) masterCheck.checked = false;
+                        refreshPanelVisibility();
+                    });
+                });
+            }
 
             function toggleRowStyle(checkbox) {
                 const row = checkbox.closest('.data-row');
-                if (checkbox.checked) {
-                    row.style.background = "rgba(238, 241, 234, 0.03)";
-                } else {
-                    row.style.background = "transparent";
-                }
+                row.style.background = checkbox.checked ? "rgba(238, 241, 234, 0.03)" : "transparent";
             }
 
             function refreshPanelVisibility() {
                 const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
                 selectedCount.innerText = checkedCount;
-
                 if (checkedCount > 0) {
                     actionPanel.classList.remove('hidden');
                     actionPanel.classList.add('flex');
@@ -370,7 +442,29 @@
                     actionPanel.classList.add('hidden');
                 }
             }
+
+            // Client-side search — cukup untuk daftar per-halaman, tidak menggantikan pencarian server-side untuk data besar
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    const term = this.value.trim().toLowerCase();
+                    let visibleCount = 0;
+                    allRows.forEach(row => {
+                        const match = row.dataset.search.includes(term);
+                        row.classList.toggle('row-hidden', !match);
+                        if (match) visibleCount++;
+                    });
+                    noResultMsg.classList.toggle('hidden', visibleCount !== 0);
+                });
+            }
         });
+
+        function salinTeks(teks, btn) {
+            navigator.clipboard.writeText(teks).then(function () {
+                const original = btn.innerHTML;
+                btn.innerHTML = teks + ' ✓';
+                setTimeout(() => { btn.innerHTML = original; }, 1500);
+            });
+        }
     </script>
 </body>
 </html>
