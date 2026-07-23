@@ -19,12 +19,15 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [ReservasiController::class, 'landingPage'])->name('landingPage');
 Route::get('/lapangan/{id}', [ReservasiController::class, 'showLapangan'])->name('lapangan.detail');
 
-// Portal Auth Admin Gateway (Publik agar form login bisa diakses)
+// Portal Auth Admin Gateway
 Route::get('/admin/login', [AdminDashboardController::class, 'showLoginForm'])->name('admin.login');
 Route::post('/admin/login', [AdminDashboardController::class, 'login'])->name('admin.login.submit');
 
+// 👈 Route khusus login Google untuk Admin
+Route::get('/admin/auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('admin.google.redirect');
+
 // ==========================================
-// 2. GOOGLE OAUTH ROUTES
+// 2. GOOGLE OAUTH ROUTES (General User)
 // ==========================================
 Route::get('auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
@@ -90,7 +93,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::put('/role/{id}', [AdminDashboardController::class, 'updateRole'])->name('role.update');
 
     // 🛡️ Terminal Gate Scanner & Check-in Request
-    // Terdaftar otomatis sebagai: 'admin.staff.scan' & 'admin.staff.checkin'
     Route::get('/staff/scan', function () { 
         return view('staff.scan'); 
     })->name('staff.scan');
