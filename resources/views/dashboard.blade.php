@@ -15,18 +15,18 @@
 
     <style>
         :root {
-            --ink: #070a0e;
-            --surface: #0f172a;
-            --surface-2: #1e293b;
-            --surface-3: #334155;
-            --turf: #e25e20;
-            --turf-dark: #c44a12;
-            --turf-glow: rgba(226, 94, 32, 0.25);
-            --floodlight: #f5c518;
+            --ink: #05070a;
+            --surface: #0b111e;
+            --surface-2: #131c31;
+            --surface-3: #1e293b;
+            --turf: #f97316;
+            --turf-dark: #ea580c;
+            --turf-glow: rgba(249, 115, 22, 0.25);
+            --floodlight: #fbbf24;
             --line: #f8fafc;
             --muted: #94a3b8;
             --muted-2: #64748b;
-            --radius: 16px;
+            --radius: 18px;
             --display: 'Anton', sans-serif;
             --body: 'Plus Jakarta Sans', sans-serif;
             --mono: 'JetBrains Mono', monospace;
@@ -41,12 +41,12 @@
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             background-image: 
-                radial-gradient(circle at 15% 15%, rgba(226, 94, 32, 0.04) 0%, transparent 40%),
-                radial-gradient(circle at 85% 85%, rgba(245, 197, 24, 0.03) 0%, transparent 40%);
+                radial-gradient(circle at 10% 10%, rgba(249, 115, 22, 0.05) 0%, transparent 45%),
+                radial-gradient(circle at 90% 90%, rgba(251, 191, 36, 0.03) 0%, transparent 45%);
             background-attachment: fixed;
         }
 
-        h1, h2, h3, h4 { font-family: var(--display); letter-spacing: .02em; text-transform: uppercase; }
+        h1, h2, h3, h4 { font-family: var(--display); letter-spacing: .03em; text-transform: uppercase; }
 
         a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
             outline: 2px solid var(--turf);
@@ -61,7 +61,7 @@
         /* Modern UI Buttons */
         .btn-ui {
             display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-            padding: 12px 22px; border-radius: 12px; font-weight: 700; font-size: 13px;
+            padding: 10px 20px; border-radius: 12px; font-weight: 700; font-size: 13px;
             cursor: pointer; border: 1px solid transparent; transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
             font-family: var(--body); text-transform: uppercase; letter-spacing: .04em;
         }
@@ -72,30 +72,30 @@
             box-shadow: 0 4px 20px var(--turf-glow); 
         }
         .btn-ui-primary:hover { 
-            box-shadow: 0 6px 24px rgba(226, 94, 32, 0.45); 
+            box-shadow: 0 6px 24px rgba(249, 115, 22, 0.45); 
             filter: brightness(1.1);
         }
         .btn-ui-ghost { background: transparent; border-color: rgba(248, 250, 252, 0.12); color: var(--line); }
         .btn-ui-ghost:hover { border-color: var(--line); background: rgba(248, 250, 252, 0.06); }
-        .btn-ui-danger { background: rgba(226, 87, 76, 0.12); border-color: rgba(226, 87, 76, 0.25); color: #f87171; }
-        .btn-ui-danger:hover { background: rgba(226, 87, 76, 0.22); border-color: rgba(226, 87, 76, 0.4); }
-        .btn-ui-sm { padding: 8px 14px; font-size: 11px; border-radius: 8px; }
+        .btn-ui-danger { background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.25); color: #f87171; }
+        .btn-ui-danger:hover { background: rgba(239, 68, 68, 0.22); border-color: rgba(239, 68, 68, 0.4); }
+        .btn-ui-sm { padding: 7px 14px; font-size: 11px; border-radius: 8px; }
 
         /* Modern Table Components */
         table.brutal-data { width: 100%; border-collapse: separate; border-spacing: 0; }
         table.brutal-data th { 
             text-align: left; font-family: var(--mono); font-size: 11px; color: var(--muted-2); 
             text-transform: uppercase; letter-spacing: .06em; padding: 16px 20px; 
-            border-bottom: 1px solid rgba(248, 250, 252, 0.08); background: rgba(15, 23, 42, 0.8);
+            border-bottom: 1px solid rgba(248, 250, 252, 0.08); background: rgba(11, 17, 30, 0.9);
             backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 10;
         }
-        table.brutal-data td { padding: 18px 20px; border-bottom: 1px solid rgba(248, 250, 252, 0.05); font-size: 13px; font-weight: 500; transition: background .15s ease; }
+        table.brutal-data td { padding: 18px 20px; border-bottom: 1px solid rgba(248, 250, 252, 0.04); font-size: 13px; font-weight: 500; transition: background .15s ease; }
         table.brutal-data tr:hover td { background: rgba(248, 250, 252, 0.02); }
         table.brutal-data tr.row-hidden { display: none; }
 
         /* Brutal Badges */
         .badge-brutal { font-family: var(--mono); font-size: 11px; padding: 5px 10px; border-radius: 6px; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; }
-        .badge-brutal-pending { background: rgba(245, 197, 24, 0.12); color: var(--floodlight); border: 1px solid rgba(245, 197, 24, 0.25); }
+        .badge-brutal-pending { background: rgba(251, 191, 36, 0.12); color: var(--floodlight); border: 1px solid rgba(251, 191, 36, 0.25); }
         .badge-brutal-confirmed { background: rgba(34, 197, 94, 0.12); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.25); }
         .badge-brutal-cancelled { background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); }
 
@@ -116,15 +116,15 @@
 
         /* Glassmorphism Card Effect */
         .card-glass {
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.4));
-            backdrop-filter: blur(12px);
+            background: linear-gradient(135deg, rgba(11, 17, 30, 0.85), rgba(11, 17, 30, 0.5));
+            backdrop-filter: blur(16px);
             border: 1px solid rgba(248, 250, 252, 0.08);
             border-radius: var(--radius);
         }
         
         /* Modal Backdrop */
         .modal-backdrop {
-            position: fixed; inset: 0; background: rgba(7, 10, 14, 0.85); backdrop-filter: blur(8px);
+            position: fixed; inset: 0; background: rgba(5, 7, 10, 0.85); backdrop-filter: blur(8px);
             z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0;
             pointer-events: none; transition: opacity .25s ease;
         }
@@ -137,13 +137,13 @@
         .modal-backdrop.active .modal-card { transform: scale(1); }
     </style>
 </head>
-<body class="selection:bg-[#E25E20] selection:text-white">
+<body class="selection:bg-[var(--turf)] selection:text-white">
 
     {{-- Notifikasi Global Toast --}}
     @include('partials.toast')
 
     <!-- NAVIGATION BAR -->
-    <header class="sticky top-0 z-50 bg-[#070a0e]/90 backdrop-blur-md border-b border-slate-800">
+    <header class="sticky top-0 z-50 bg-[var(--ink)]/90 backdrop-blur-md border-b border-slate-800/80">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <a href="{{ route('landingPage') }}" class="flex items-center gap-3 font-display text-2xl text-white no-underline tracking-wide hover:opacity-90 transition">
                 <span class="w-3.5 h-3.5 bg-[var(--turf)] rounded-sm rotate-45 shadow-[0_0_12px_var(--turf)]"></span>
@@ -191,11 +191,11 @@
             <div class="relative z-10 space-y-6 flex-1">
                 <div>
                     <h1 class="text-3xl sm:text-4xl text-white leading-tight">Selamat Datang, {{ explode(' ', Auth::user()->name)[0] }}! ⚽</h1>
-                    <p class="text-[var(--muted)] text-sm font-medium mt-2 max-w-2xl">Kelola reservasi arena futsal, kelola transaksi, dan kumpulkan poin loyalitas Anda untuk mendapatkan diskon eksklusif.</p>
+                    <p class="text-[var(--muted)] text-sm font-medium mt-2 max-w-2xl">Kelola reservasi arena futsal, pantau status transaksi, dan kumpulkan poin loyalitas untuk membuka diskon sewa lapangan eksklusif.</p>
                 </div>
 
                 <div class="flex flex-col gap-3 max-w-md">
-                    <div class="inline-flex items-center gap-3 bg-[var(--ink)] border border-slate-800 rounded-xl p-3 w-fit shadow-inner">
+                    <div class="inline-flex items-center gap-3 bg-[var(--ink)] border border-slate-800/80 rounded-xl p-3 w-fit shadow-inner">
                         <span class="bg-gradient-to-r {{ $tierColors[$currentTier] ?? $tierColors['Bronze'] }} font-mono text-[11px] font-bold uppercase px-3 py-1 rounded-md tracking-wider border">
                             🏆 Tier {{ $currentTier }}
                         </span>
@@ -234,7 +234,6 @@
             $lunasBooking = $reservasis->whereIn('status', ['Confirmed', 'Completed'])->count();
             $totalPengeluaran = $reservasis->whereIn('status', ['Confirmed', 'Completed'])->sum('total_harga');
             
-            // Mencari jadwal pertandingan terdekat
             $upcomingMatch = $reservasis->where('status', 'Confirmed')
                 ->where('tanggal_main', '>=', now()->toDateString())
                 ->sortBy('tanggal_main')
@@ -261,23 +260,22 @@
             <div class="card-glass p-6 flex items-center justify-between">
                 <div class="space-y-1">
                     <p class="font-mono text-[11px] text-[var(--muted-2)] uppercase tracking-wider">Total Pengeluaran</p>
-                    <p class="font-mono text-2xl text-[var(--floodlight)] font-bold leading-none">Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}</p>
+                    <p class="font-mono text-xl text-[var(--floodlight)] font-bold leading-none">Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}</p>
                 </div>
                 <div class="p-3.5 bg-[var(--ink)] border border-slate-800 rounded-xl text-xl">🪙</div>
             </div>
 
-            <!-- FITUR BARU: Jadwal Terdekat Card -->
             <div class="card-glass p-6 flex flex-col justify-between border-l-4 border-l-[var(--turf)]">
                 <p class="font-mono text-[11px] text-[var(--muted-2)] uppercase tracking-wider">Jadwal Terdekat</p>
                 @if($upcomingMatch)
-                    <div>
+                    <div class="space-y-0.5 mt-2">
                         <p class="text-sm font-bold text-white truncate">{{ $upcomingMatch->lapangan->nama_lapangan ?? 'Arena Futsal' }}</p>
                         <p class="font-mono text-xs text-[var(--turf)] font-semibold">
                             {{ \Carbon\Carbon::parse($upcomingMatch->tanggal_main)->translatedFormat('d M Y') }} • {{ substr($upcomingMatch->jam_mulai, 0, 5) }}
                         </p>
                     </div>
                 @else
-                    <p class="text-xs text-[var(--muted)] italic">Tidak ada jadwal mendatang.</p>
+                    <p class="text-xs text-[var(--muted)] italic mt-2">Tidak ada jadwal mendatang.</p>
                 @endif
             </div>
         </div>
@@ -285,7 +283,7 @@
         <!-- 3. DATA TABLES CONSOLE BOARD -->
         <div class="card-glass overflow-hidden shadow-2xl">
             <!-- Filter & Search Controls Header -->
-            <div class="p-6 border-b border-slate-800 bg-slate-900/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="p-6 border-b border-slate-800/80 bg-slate-900/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <h3 class="font-body font-bold text-base text-white flex items-center gap-2.5">
                     <span class="w-2.5 h-2.5 bg-[var(--turf)] rounded-full animate-pulse" aria-hidden="true"></span>
                     Riwayat Transaksi & Reservasi
@@ -293,7 +291,6 @@
 
                 <div class="flex items-center gap-3 flex-wrap w-full sm:w-auto">
                     @if($reservasis->isNotEmpty())
-                        <!-- FITUR BARU: Filter Status Dropdown -->
                         <div class="w-full sm:w-36">
                             <label for="status_filter" class="sr-only">Filter Status</label>
                             <select id="status_filter" class="select-input">
@@ -304,7 +301,6 @@
                             </select>
                         </div>
 
-                        <!-- Live Search Input -->
                         <div class="search-wrap flex-1 sm:flex-initial">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
                             <label for="table_search" class="sr-only">Cari riwayat transaksi</label>
@@ -312,7 +308,6 @@
                         </div>
                     @endif
 
-                    <!-- Bulk Action Control Panel -->
                     <div id="bulk_action_panel" class="hidden items-center gap-2 bg-[var(--ink)] border border-slate-800 px-3 py-1.5 rounded-xl">
                         <span id="selected_count" class="font-mono text-xs font-bold bg-[var(--surface-3)] text-white px-2 py-0.5 rounded">0</span>
                         <span class="text-[11px] font-bold text-[var(--muted-2)] uppercase">Terpilih</span>
@@ -323,15 +318,13 @@
                 </div>
             </div>
 
-            <!-- Form Mass Delete dengan CSRF -->
             <form id="bulk_delete_form" action="{{ route('reservasi.destroyMassal') }}" method="POST" class="hidden">
                 @csrf
                 @method('DELETE')
             </form>
 
-            <!-- Hidden forms untuk Cancel Request -->
             @foreach($reservasis as $reservasi)
-                @if(strtolower($reservasi->status) == 'waiting payment' || strtolower($reservasi->status) == 'pending')
+                @if(in_array(strtolower($reservasi->status), ['waiting payment', 'pending']))
                     <form id="form_batal_{{ $reservasi->id }}" action="{{ route('reservasi.batal', $reservasi->id) }}" method="POST" class="hidden">
                         @csrf
                     </form>
@@ -372,13 +365,14 @@
                             @foreach($reservasis as $reservasi)
                                 @php 
                                     $statusLower = strtolower($reservasi->status); 
+                                    $normalizedStatus = in_array($statusLower, ['waiting payment', 'pending']) ? 'pending' : $statusLower;
                                 @endphp
                                 <tr class="data-row" 
                                     data-search="{{ strtolower($reservasi->nomor_reservasi.' '.($reservasi->lapangan->nama_lapangan ?? '')) }}"
-                                    data-status="{{ $statusLower == 'waiting payment' ? 'pending' : $statusLower }}">
+                                    data-status="{{ $normalizedStatus }}">
                                     
                                     <td class="text-center">
-                                        @if($statusLower != 'waiting payment' && $statusLower != 'pending')
+                                        @if($normalizedStatus != 'pending')
                                             <label class="sr-only" for="chk_{{ $reservasi->id }}">Pilih reservasi {{ $reservasi->nomor_reservasi }}</label>
                                             <input type="checkbox" id="chk_{{ $reservasi->id }}" name="ids[]" value="{{ $reservasi->id }}" form="bulk_delete_form" class="row-checkbox w-4 h-4 rounded border-slate-700 bg-slate-900 text-[var(--turf)] focus:ring-[var(--turf)] cursor-pointer">
                                         @else
@@ -417,7 +411,7 @@
                                     </td>
                                     
                                     <td>
-                                        @if($reservasi->status == 'Confirmed' || $reservasi->status == 'Completed')
+                                        @if(in_array($reservasi->status, ['Confirmed', 'Completed']))
                                             <span class="badge-brutal badge-brutal-confirmed">Confirmed</span>
                                         @elseif($reservasi->status == 'Cancelled')
                                             <span class="badge-brutal badge-brutal-cancelled">Cancelled</span>
@@ -428,8 +422,7 @@
                                     
                                     <td class="text-center">
                                         <div class="flex items-center justify-center gap-2">
-                                            @if($statusLower == 'waiting payment' || $statusLower == 'pending')
-                                                <!-- FITUR TERHUBUNG: Tombol Pay Now untuk Midtrans & Cancel Modal -->
+                                            @if($normalizedStatus == 'pending')
                                                 @if(isset($reservasi->snap_token))
                                                     <button type="button" onclick="paySnap('{{ $reservasi->snap_token }}')" class="btn-ui btn-ui-primary btn-ui-sm">
                                                         Bayar
@@ -438,7 +431,7 @@
                                                 <button type="button" onclick="confirmCancel('{{ $reservasi->id }}')" class="btn-ui btn-ui-danger btn-ui-sm">
                                                     Batal
                                                 </button>
-                                            @elseif($reservasi->status == 'Confirmed' || $reservasi->status == 'Completed')
+                                            @elseif(in_array($reservasi->status, ['Confirmed', 'Completed']))
                                                 <a href="{{ route('reservasi.tiket', $reservasi->id) }}" target="_blank" rel="noopener" class="btn-ui btn-ui-ghost btn-ui-sm !bg-slate-800/80">
                                                     Tiket
                                                 </a>
@@ -458,7 +451,7 @@
                 </div>
 
                 @if(method_exists($reservasis, 'links'))
-                    <div class="p-5 border-t border-slate-800">
+                    <div class="p-5 border-t border-slate-800/80">
                         {{ $reservasis->links() }}
                     </div>
                 @endif
@@ -466,7 +459,7 @@
         </div>
     </main>
 
-    <!-- MODERN MODAL CONFIRMATION (Custom UX alih-alih confirm() browser) -->
+    <!-- MODERN MODAL CONFIRMATION -->
     <div id="confirmation_modal" class="modal-backdrop">
         <div class="modal-card space-y-5">
             <div class="space-y-2">
@@ -492,12 +485,11 @@
             const allRows = document.querySelectorAll('#riwayat_table tbody .data-row');
             const noResultMsg = document.getElementById('no_search_result');
 
-            // 1. Bulk Checkbox Logic
             if (masterCheck) {
                 masterCheck.addEventListener('change', function () {
                     rowChecks.forEach(checkbox => {
                         const row = checkbox.closest('.data-row');
-                        if (!checkbox.disabled && row.style.display !== 'none') {
+                        if (!checkbox.disabled && !row.classList.contains('row-hidden')) {
                             checkbox.checked = masterCheck.checked;
                             toggleRowStyle(checkbox);
                         }
@@ -538,7 +530,6 @@
                 }
             }
 
-            // 2. Real-time Search & Filter Combination Logic
             function filterTable() {
                 const term = searchInput ? searchInput.value.trim().toLowerCase() : '';
                 const selectedStatus = statusFilter ? statusFilter.value.toLowerCase() : '';
@@ -551,7 +542,6 @@
                     const isVisible = matchesSearch && matchesStatus;
                     row.classList.toggle('row-hidden', !isVisible);
 
-                    // Uncheck hidden rows
                     if (!isVisible) {
                         const cb = row.querySelector('.row-checkbox');
                         if (cb && cb.checked) {
@@ -574,7 +564,6 @@
             if (statusFilter) statusFilter.addEventListener('change', filterTable);
         });
 
-        // 3. Salin Teks ke Clipboard dengan Feedack Toast Ringan
         function salinTeks(teks, btn) {
             navigator.clipboard.writeText(teks).then(function () {
                 const innerSpan = btn.querySelector('span');
@@ -588,7 +577,6 @@
             });
         }
 
-        // 4. Integrated Midtrans Snap Pay Trigger
         function paySnap(snapToken) {
             if (typeof snap !== 'undefined' && snapToken) {
                 snap.pay(snapToken, {
@@ -600,7 +588,6 @@
             }
         }
 
-        // 5. Custom Modal Dialog Logic (Pengganti Native confirm)
         let pendingAction = null;
 
         function openModal(title, description, onConfirm) {
