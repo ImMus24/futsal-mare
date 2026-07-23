@@ -21,9 +21,6 @@ class AdminDashboardController extends Controller
      * ==========================================
      */
 
-    /**
-     * Menampilkan Form Login Khusus Portal Admin
-     */
     public function showLoginForm()
     {
         if (Auth::check() && Auth::user()->is_admin) { 
@@ -33,9 +30,6 @@ class AdminDashboardController extends Controller
         return view('admin.auth.login');
     }
 
-    /**
-     * Memproses Autentikasi Login Masuk Admin
-     */
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -50,7 +44,6 @@ class AdminDashboardController extends Controller
                     ->with('success', 'Selamat Datang Kembali di Panel Kontrol Utama!');
             }
 
-            // Jika bukan admin, paksa logout
             Auth::logout();
             return redirect()->back()
                 ->withErrors(['email' => 'Akses Ditolak. Akun Anda tidak memiliki otoritas Administrator.'])
@@ -103,13 +96,16 @@ class AdminDashboardController extends Controller
                     if ($reservasi->jam_mulai && $reservasi->jam_selesai) {
                         $start = Carbon::parse($reservasi->jam_mulai);
                         $end = Carbon::parse($reservasi->jam_selesai);
-                        return max(1, (int) $start->diffInHours($end));
+                        
+                        // Perhitungan presisi dalam jam (mendukung pecahan jam)
+                        $diffInMinutes = $start->diffInMinutes($end);
+                        return max(1, round($diffInMinutes / 60, 1));
                     }
                     return 1;
                 });
             }
 
-            $dataUtilisasi[] = (int) $totalJam;
+            $dataUtilisasi[] = $totalJam;
         }
 
         return view('admin.dashboard', compact(
@@ -140,9 +136,6 @@ class AdminDashboardController extends Controller
         return view('admin.reservasi.index', compact('reservasis'));
     }
 
-    /**
-     * Fitur Ekspor Excel Data Reservasi Dinamis
-     */
     public function exportExcel(Request $request)
     {
         $status = $request->get('status');
@@ -345,10 +338,6 @@ class AdminDashboardController extends Controller
      * 🔑 MODUL 5: PENGELOLAAN HAK AKSES & ROLE
      * ==========================================
      */
-
-    /**
-     * Menampilkan daftar pengguna untuk manajemen role
-     */
     public function role(Request $request)
     {
         $search = $request->get('search');
@@ -366,9 +355,6 @@ class AdminDashboardController extends Controller
         return view('admin.role.index', compact('users'));
     }
 
-    /**
-     * Memproses update status admin (is_admin) via dropdown select Blade
-     */
     public function updateRole(Request $request, $id)
     {
         $request->validate([
