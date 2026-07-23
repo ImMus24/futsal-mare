@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 // ==========================================
-// 1. PUBLIC ROUTES
+// 1. PUBLIC ROUTES & GATEWAYS
 // ==========================================
 Route::get('/', [ReservasiController::class, 'landingPage'])->name('landingPage');
 Route::get('/lapangan/{id}', [ReservasiController::class, 'showLapangan'])->name('lapangan.detail');
@@ -23,7 +23,13 @@ Route::get('/lapangan/{id}', [ReservasiController::class, 'showLapangan'])->name
 Route::get('/admin/login', [AdminDashboardController::class, 'showLoginForm'])->name('admin.login');
 Route::post('/admin/login', [AdminDashboardController::class, 'login'])->name('admin.login.submit');
 
-// 👈 Route khusus login Google untuk Admin
+// 📲 Portal Auth Staff Gateway
+Route::get('/staff/login', function () {
+    return view('staff.login');
+})->name('staff.login');
+Route::post('/staff/login', [AdminDashboardController::class, 'loginStaff'])->name('staff.login.submit');
+
+// 🔑 Route khusus login Google untuk Admin
 Route::get('/admin/auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('admin.google.redirect');
 
 // ==========================================
@@ -58,7 +64,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // ==========================================
-// 4. ADMIN PANEL & GATEWAY ROUTES
+// 4. ADMIN & STAFF PANEL ROUTES
 // ==========================================
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     
@@ -92,7 +98,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/role', [AdminDashboardController::class, 'role'])->name('role.index');
     Route::put('/role/{id}', [AdminDashboardController::class, 'updateRole'])->name('role.update');
 
-    // 🛡️ Terminal Gate Scanner & Check-in Request
+    // 🛡️ Terminal Gate Scanner & Check-in Request (Khusus Petugas & Admin)
     Route::get('/staff/scan', function () { 
         return view('staff.scan'); 
     })->name('staff.scan');
