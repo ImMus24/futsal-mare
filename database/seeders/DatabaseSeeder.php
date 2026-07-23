@@ -33,7 +33,18 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 3. Memanggil Data Lapangan Futsal Kota Baubau
+        // 📲 3. MENYUNTIKKAN KREDENSIAL STAFF GATE / OPERATOR SCANNER (Untuk Login Staff)
+        User::updateOrCreate(
+            ['email' => 'staff@futsalmare.com'],
+            [
+                'name'              => 'Operator Gate Terminal 01',
+                'password'          => Hash::make('staff123'),
+                'is_admin'          => true, // Atau disesuaikan dengan flag/role staff di sistem kamu
+                'email_verified_at' => now(),
+            ]
+        );
+
+        // 4. Memanggil Data Lapangan Futsal Kota Baubau
         $this->call([
             LapanganSeeder::class,
         ]);

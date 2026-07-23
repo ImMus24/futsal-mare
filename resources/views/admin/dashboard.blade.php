@@ -3,7 +3,7 @@
 @section('content')
 
 {{-- ============================================================
-     DESIGN SYSTEM — Futsal Mare HQ (Elite Enterprise Admin v3)
+     DESIGN SYSTEM — Futsal Mare HQ (Elite Enterprise Admin v4)
      ============================================================ --}}
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
@@ -118,6 +118,43 @@
         box-shadow: 0 6px 20px var(--color-primary-glow);
     }
 
+    .fm-scope .fm-nav-chip-alt {
+        background: rgba(251,191,36,0.12);
+        border: 1px solid rgba(251,191,36,0.3);
+        color: var(--color-secondary);
+        transition: all .2s var(--ease);
+        white-space: nowrap;
+    }
+    .fm-scope .fm-nav-chip-alt:hover {
+        background: var(--color-secondary);
+        color: #0d131a;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(251,191,36,0.25);
+    }
+
+    /* Unified header action buttons (Beranda / Keluar) */
+    .fm-scope .fm-header-btn {
+        background: var(--color-bg-card);
+        border: 1px solid var(--line);
+        color: var(--color-text-muted);
+        transition: all .2s var(--ease);
+    }
+    .fm-scope .fm-header-btn:hover {
+        color: #ffffff;
+        border-color: var(--line-strong);
+        background: var(--color-bg-hover);
+    }
+    .fm-scope .fm-header-btn.is-danger {
+        background: var(--danger-bg);
+        border-color: var(--danger-border);
+        color: var(--danger);
+    }
+    .fm-scope .fm-header-btn.is-danger:hover {
+        background: var(--danger);
+        color: #ffffff;
+        border-color: var(--danger);
+    }
+
     .fm-scope .fm-quick-link {
         background: var(--color-bg-main);
         border: 1px solid var(--line);
@@ -133,6 +170,19 @@
 
     .fm-scope .fm-table-row { transition: background-color .15s ease; }
     .fm-scope .fm-table-row:hover { background-color: rgba(255, 255, 255, 0.025); }
+
+    /* Unified table row action button (Kelola) */
+    .fm-scope .fm-table-action {
+        background: var(--color-bg-main);
+        border: 1px solid var(--line);
+        color: var(--color-text-muted);
+        transition: all .2s ease;
+    }
+    .fm-scope .fm-table-action:hover {
+        background: var(--color-primary);
+        color: #ffffff;
+        border-color: var(--color-primary);
+    }
 
     .fm-scope .fm-avatar {
         width: 36px; height: 36px; border-radius: 10px;
@@ -181,7 +231,7 @@
                 <h1 class="f-display text-xl uppercase tracking-wider leading-none" style="color: var(--color-text-main);">Futsal Mare HQ</h1>
                 <div class="f-mono text-[10px] font-bold uppercase tracking-widest mt-1.5 flex items-center gap-2" style="color: var(--color-text-meta);">
                     <span class="w-2 h-2 rounded-full fm-live-pip" style="background: var(--success);"></span>
-                    Enterprise Admin Terminal v3.0
+                    Enterprise Admin Terminal v4.0
                 </div>
             </div>
         </div>
@@ -200,20 +250,14 @@
             </div>
 
             <a href="{{ url('/') }}"
-               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200"
-               style="background: var(--color-bg-card); border: 1px solid var(--line); color: var(--color-text-muted);"
-               onmouseover="this.style.color='#fff'; this.style.borderColor='var(--line-strong)'"
-               onmouseout="this.style.color='var(--color-text-muted)'; this.style.borderColor='var(--line)'">
+               class="fm-header-btn inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider">
                 <span>🏠</span> <span class="hidden sm:inline">Beranda</span>
             </a>
 
             <form method="POST" action="{{ route('logout') }}" class="inline">
                 @csrf
                 <button type="submit"
-                        class="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl uppercase tracking-wider transition-all duration-200 cursor-pointer"
-                        style="background: var(--danger-bg); border: 1px solid var(--danger-border); color: var(--danger);"
-                        onmouseover="this.style.background='var(--danger)'; this.style.color='#fff'"
-                        onmouseout="this.style.background='var(--danger-bg)'; this.style.color='var(--danger)'">
+                        class="fm-header-btn is-danger inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl uppercase tracking-wider cursor-pointer">
                     <span>🚪</span> <span class="hidden sm:inline">Keluar</span>
                 </button>
             </form>
@@ -261,17 +305,9 @@
                 <a href="{{ route('admin.member.index') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-3 font-bold text-[11px] rounded-xl uppercase tracking-wider">
                     👥 Data Member
                 </a>
-                @if(Route::has('admin.staff.scan'))
-                    <a href="{{ route('admin.staff.scan') }}" class="fm-nav-chip flex-1 lg:flex-none text-center px-4 py-3 font-bold text-[11px] rounded-xl uppercase tracking-wider">
-                        📷 QR Gate
-                    </a>
-                @endif
                 @if(auth()->user()->is_admin == 1 && Route::has('admin.role.index'))
                     <a href="{{ route('admin.role.index') }}"
-                       class="flex-1 lg:flex-none text-center px-4 py-3 font-bold text-[11px] rounded-xl uppercase tracking-wider transition-all"
-                       style="background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.3); color: var(--color-secondary);"
-                       onmouseover="this.style.background='var(--color-secondary)'; this.style.color='#0d131a'"
-                       onmouseout="this.style.background='rgba(251,191,36,0.12)'; this.style.color='var(--color-secondary)'">
+                       class="fm-nav-chip-alt flex-1 lg:flex-none text-center px-4 py-3 font-bold text-[11px] rounded-xl uppercase tracking-wider">
                         🛡️ Akses Admin
                     </a>
                 @endif
@@ -401,18 +437,16 @@
                     </span>
                 </a>
 
-                @if(Route::has('admin.staff.scan'))
-                    <a href="{{ route('admin.staff.scan') }}" target="_blank"
-                       class="fm-quick-link flex items-center justify-between p-4 rounded-2xl group">
-                        <span class="text-xs font-semibold flex items-center gap-3" style="color: var(--color-text-muted);">
-                            <span class="text-base">📷</span> Scanner QR Gate Check-in
-                        </span>
-                        <span class="flex items-center gap-1.5 f-mono text-[10px] font-bold px-3 py-1.5 rounded-lg uppercase tracking-wider"
-                              style="background: var(--info-bg); color: var(--info); border: 1px solid var(--info-border);">
-                            Terminal <span class="fm-arrow">→</span>
-                        </span>
-                    </a>
-                @endif
+                <a href="{{ route('admin.member.index') }}"
+                   class="fm-quick-link flex items-center justify-between p-4 rounded-2xl group">
+                    <span class="text-xs font-semibold flex items-center gap-3" style="color: var(--color-text-muted);">
+                        <span class="text-base">👥</span> Kelola Data Member
+                    </span>
+                    <span class="flex items-center gap-1.5 f-mono text-[10px] font-bold px-3 py-1.5 rounded-lg uppercase tracking-wider"
+                          style="background: var(--info-bg); color: var(--info); border: 1px solid var(--info-border);">
+                        Buka <span class="fm-arrow">→</span>
+                    </span>
+                </a>
             </div>
 
             <div class="p-3.5 rounded-xl text-[10px] font-bold text-center uppercase tracking-widest f-mono flex items-center justify-center gap-2"
@@ -548,10 +582,7 @@
 
                         <td class="p-5 text-center">
                             <a href="{{ route('admin.reservasi.index', ['search' => $reservasi->nomor_reservasi]) }}"
-                               class="inline-flex items-center justify-center px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
-                               style="background: var(--color-bg-main); border: 1px solid var(--line); color: var(--color-text-muted);"
-                               onmouseover="this.style.background='var(--color-primary)'; this.style.color='#fff'; this.style.borderColor='var(--color-primary)'"
-                               onmouseout="this.style.background='var(--color-bg-main)'; this.style.color='var(--color-text-muted)'; this.style.borderColor='var(--line)'">
+                               class="fm-table-action inline-flex items-center justify-center px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider">
                                 Kelola
                             </a>
                         </td>
